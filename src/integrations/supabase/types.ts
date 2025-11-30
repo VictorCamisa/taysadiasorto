@@ -152,44 +152,51 @@ export type Database = {
       estoque_compras: {
         Row: {
           conta_financeira_id: string | null
-          created_at: string | null
+          created_at: string
           data_compra: string
           forma_pagamento_id: string | null
           fornecedor_id: string | null
           id: string
           numero_nf: string | null
           observacoes: string | null
-          updated_at: string | null
+          updated_at: string
           user_id: string
-          valor_total: number | null
+          valor_total: number
         }
         Insert: {
           conta_financeira_id?: string | null
-          created_at?: string | null
+          created_at?: string
           data_compra: string
           forma_pagamento_id?: string | null
           fornecedor_id?: string | null
           id?: string
           numero_nf?: string | null
           observacoes?: string | null
-          updated_at?: string | null
+          updated_at?: string
           user_id: string
-          valor_total?: number | null
+          valor_total?: number
         }
         Update: {
           conta_financeira_id?: string | null
-          created_at?: string | null
+          created_at?: string
           data_compra?: string
           forma_pagamento_id?: string | null
           fornecedor_id?: string | null
           id?: string
           numero_nf?: string | null
           observacoes?: string | null
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
-          valor_total?: number | null
+          valor_total?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "estoque_compras_conta_financeira_fk"
+            columns: ["conta_financeira_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_contas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estoque_compras_conta_financeira_id_fkey"
             columns: ["conta_financeira_id"]
@@ -198,10 +205,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "estoque_compras_forma_pagamento_fk"
+            columns: ["forma_pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_formas_pagamento"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "estoque_compras_forma_pagamento_id_fkey"
             columns: ["forma_pagamento_id"]
             isOneToOne: false
             referencedRelation: "financeiro_formas_pagamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_compras_fornecedor_fk"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_fornecedores"
             referencedColumns: ["id"]
           },
           {
@@ -216,37 +237,51 @@ export type Database = {
       estoque_compras_itens: {
         Row: {
           compra_id: string
-          created_at: string | null
+          created_at: string
           id: string
           produto_id: string
           quantidade: number
-          valor_total: number
+          valor_total: number | null
           valor_unitario: number
         }
         Insert: {
           compra_id: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           produto_id: string
-          quantidade: number
-          valor_total: number
-          valor_unitario: number
+          quantidade?: number
+          valor_total?: number | null
+          valor_unitario?: number
         }
         Update: {
           compra_id?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           produto_id?: string
           quantidade?: number
-          valor_total?: number
+          valor_total?: number | null
           valor_unitario?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "estoque_compras_itens_compra_fk"
+            columns: ["compra_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_compras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estoque_compras_itens_compra_id_fkey"
             columns: ["compra_id"]
             isOneToOne: false
             referencedRelation: "estoque_compras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_compras_itens_produto_fk"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_produtos"
             referencedColumns: ["id"]
           },
           {
@@ -260,54 +295,61 @@ export type Database = {
       }
       estoque_produtos: {
         Row: {
-          ativo: boolean | null
+          ativo: boolean
           categoria: string
-          created_at: string | null
-          custo_medio: number | null
-          estoque_atual: number | null
-          estoque_minimo: number | null
+          created_at: string
+          custo_medio: number
+          estoque_atual: number
+          estoque_minimo: number
           fornecedor_id: string | null
           id: string
           lote: string | null
           nome: string
           unidade_medida: string
-          updated_at: string | null
+          updated_at: string
           user_id: string
           validade: string | null
         }
         Insert: {
-          ativo?: boolean | null
+          ativo?: boolean
           categoria: string
-          created_at?: string | null
-          custo_medio?: number | null
-          estoque_atual?: number | null
-          estoque_minimo?: number | null
+          created_at?: string
+          custo_medio?: number
+          estoque_atual?: number
+          estoque_minimo?: number
           fornecedor_id?: string | null
           id?: string
           lote?: string | null
           nome: string
           unidade_medida: string
-          updated_at?: string | null
+          updated_at?: string
           user_id: string
           validade?: string | null
         }
         Update: {
-          ativo?: boolean | null
+          ativo?: boolean
           categoria?: string
-          created_at?: string | null
-          custo_medio?: number | null
-          estoque_atual?: number | null
-          estoque_minimo?: number | null
+          created_at?: string
+          custo_medio?: number
+          estoque_atual?: number
+          estoque_minimo?: number
           fornecedor_id?: string | null
           id?: string
           lote?: string | null
           nome?: string
           unidade_medida?: string
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
           validade?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "estoque_produtos_fornecedor_fk"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_fornecedores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estoque_produtos_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
