@@ -335,11 +335,11 @@ const DRE = () => {
             <h3 className="text-lg font-semibold mb-3">(-) Despesas Operacionais</h3>
             {dreData?.despesaPorCategoria.map((cat, idx) => (
               <div key={idx} className="mb-4">
-                <h4 className="font-semibold text-sm mb-2">{cat.sintetica}</h4>
+                <h4 className="font-semibold text-sm mb-2 text-primary">{cat.sintetica}</h4>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Categoria Analítica</TableHead>
+                      <TableHead>Subcategoria</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                     </TableRow>
                   </TableHeader>

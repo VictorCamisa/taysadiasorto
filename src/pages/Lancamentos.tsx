@@ -358,6 +358,9 @@ const Lancamentos = () => {
                       {categorias.map((cat: any) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           {cat.categoria_sintetica}
+                          {cat.categoria_analitica && (
+                            <span className="text-muted-foreground"> → {cat.categoria_analitica}</span>
+                          )}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -545,6 +548,9 @@ const Lancamentos = () => {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {lanc.financeiro_categorias?.categoria_sintetica || "-"}
+                      {lanc.financeiro_categorias?.categoria_analitica && (
+                        <span className="text-xs block">↳ {lanc.financeiro_categorias.categoria_analitica}</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {lanc.financeiro_formas_pagamento?.nome || "-"}

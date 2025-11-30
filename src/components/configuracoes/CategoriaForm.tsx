@@ -9,8 +9,8 @@ import { z } from "zod";
 
 const categoriaSchema = z.object({
   tipo: z.enum(["fixa", "variavel", "impostos", "estruturais", "comissoes", "marketing", "servicos"]),
-  categoria_sintetica: z.string().trim().min(1, "Categoria sintética é obrigatória").max(100, "Categoria sintética muito longa"),
-  categoria_analitica: z.string().trim().max(100, "Categoria analítica muito longa").optional(),
+  categoria_sintetica: z.string().trim().min(1, "Categoria Principal é obrigatória").max(100, "Categoria Principal muito longa"),
+  categoria_analitica: z.string().trim().max(100, "Subcategoria muito longa").optional(),
   ativa: z.boolean(),
 });
 
@@ -77,11 +77,11 @@ export const CategoriaForm = ({ open, onClose, onSave, categoria }: CategoriaFor
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{categoria ? "Editar Categoria" : "Nova Categoria"}</DialogTitle>
+          <DialogTitle>{categoria ? "Editar Categoria Financeira" : "Nova Categoria Financeira"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="tipo">Tipo *</Label>
             <Select
@@ -104,30 +104,34 @@ export const CategoriaForm = ({ open, onClose, onSave, categoria }: CategoriaFor
             {errors.tipo && <p className="text-sm text-destructive">{errors.tipo}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="categoria_sintetica">Categoria Sintética *</Label>
-            <Input
-              id="categoria_sintetica"
-              value={formData.categoria_sintetica}
-              onChange={(e) => setFormData({ ...formData, categoria_sintetica: e.target.value })}
-              className={errors.categoria_sintetica ? "border-destructive" : ""}
-            />
-            {errors.categoria_sintetica && (
-              <p className="text-sm text-destructive">{errors.categoria_sintetica}</p>
-            )}
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="categoria_sintetica">Categoria Principal *</Label>
+              <Input
+                id="categoria_sintetica"
+                placeholder="Ex.: Marketing, Insumos, Vendas..."
+                value={formData.categoria_sintetica}
+                onChange={(e) => setFormData({ ...formData, categoria_sintetica: e.target.value })}
+                className={errors.categoria_sintetica ? "border-destructive" : ""}
+              />
+              {errors.categoria_sintetica && (
+                <p className="text-sm text-destructive">{errors.categoria_sintetica}</p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="categoria_analitica">Categoria Analítica</Label>
-            <Input
-              id="categoria_analitica"
-              value={formData.categoria_analitica}
-              onChange={(e) => setFormData({ ...formData, categoria_analitica: e.target.value })}
-              className={errors.categoria_analitica ? "border-destructive" : ""}
-            />
-            {errors.categoria_analitica && (
-              <p className="text-sm text-destructive">{errors.categoria_analitica}</p>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="categoria_analitica">Subcategoria <span className="text-muted-foreground">(opcional)</span></Label>
+              <Input
+                id="categoria_analitica"
+                placeholder="Ex.: Facebook Ads, Agulhas, Pix..."
+                value={formData.categoria_analitica}
+                onChange={(e) => setFormData({ ...formData, categoria_analitica: e.target.value })}
+                className={errors.categoria_analitica ? "border-destructive" : ""}
+              />
+              {errors.categoria_analitica && (
+                <p className="text-sm text-destructive">{errors.categoria_analitica}</p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
