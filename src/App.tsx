@@ -10,6 +10,8 @@ import ContasPagar from "./pages/ContasPagar";
 import Tratamentos from "./pages/Tratamentos";
 import Estoque from "./pages/Estoque";
 import Fornecedores from "./pages/Fornecedores";
+import DRE from "./pages/DRE";
+import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +31,8 @@ const App = () => (
             <Route path="/tratamentos" element={<Tratamentos />} />
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/fornecedores" element={<Fornecedores />} />
+            <Route path="/dre" element={<DRE />} />
+            <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

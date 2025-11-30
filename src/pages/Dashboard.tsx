@@ -1,78 +1,91 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, TrendingDown, Package } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Package, FileText, AlertCircle, Wallet } from "lucide-react";
+import { KPICard } from "@/components/dashboard/KPICard";
+import { RevenueByTreatmentChart } from "@/components/dashboard/RevenueByTreatmentChart";
+import { RevenueByOriginChart } from "@/components/dashboard/RevenueByOriginChart";
+import { MonthlyRevenueChart } from "@/components/dashboard/MonthlyRevenueChart";
+import { LowStockAlert } from "@/components/dashboard/LowStockAlert";
+import { UpcomingPayments } from "@/components/dashboard/UpcomingPayments";
+import { useFinanceData } from "@/hooks/useFinanceData";
 
 const Dashboard = () => {
+  const { kpis } = useFinanceData();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Dashboard Financeiro</h1>
-        <p className="text-muted-foreground">Visão geral do sistema financeiro</p>
+        <h1 className="text-4xl font-bold">Dashboard Financeiro</h1>
+        <p className="text-muted-foreground mt-1">Visão geral do sistema financeiro da clínica</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receitas do Mês</CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 0,00</div>
-            <p className="text-xs text-muted-foreground">0% em relação ao mês anterior</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Despesas do Mês</CardTitle>
-            <TrendingDown className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 0,00</div>
-            <p className="text-xs text-muted-foreground">0% em relação ao mês anterior</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo em Contas</CardTitle>
-            <DollarSign className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 0,00</div>
-            <p className="text-xs text-muted-foreground">Total em todas as contas</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtos em Estoque</CardTitle>
-            <Package className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">Produtos cadastrados</p>
-          </CardContent>
-        </Card>
+      {/* KPIs principais */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <KPICard
+          title="Receitas do Mês"
+          value={`R$ ${kpis.receitaMes.toFixed(2)}`}
+          description="Total de receitas no mês atual"
+          icon={TrendingUp}
+          variant="success"
+        />
+        <KPICard
+          title="Despesas do Mês"
+          value={`R$ ${kpis.despesaMes.toFixed(2)}`}
+          description="Total de despesas no mês atual"
+          icon={TrendingDown}
+          variant="danger"
+        />
+        <KPICard
+          title="Lucro Líquido"
+          value={`R$ ${kpis.lucroMes.toFixed(2)}`}
+          description="Resultado do mês"
+          icon={DollarSign}
+          variant={kpis.lucroMes >= 0 ? "success" : "danger"}
+        />
+        <KPICard
+          title="Saldo em Contas"
+          value={`R$ ${kpis.saldoTotal.toFixed(2)}`}
+          description="Saldo total disponível"
+          icon={Wallet}
+          variant="default"
+        />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Contas a Pagar Próximas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Nenhuma conta próxima do vencimento</p>
-          </CardContent>
-        </Card>
+      {/* KPIs secundários */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <KPICard
+          title="Lançamentos do Mês"
+          value={kpis.totalLancamentos}
+          description="Total de movimentações"
+          icon={FileText}
+        />
+        <KPICard
+          title="Contas Vencidas"
+          value={kpis.contasVencidas}
+          description="Contas em atraso"
+          icon={AlertCircle}
+          variant={kpis.contasVencidas > 0 ? "warning" : "default"}
+        />
+        <KPICard
+          title="Estoque Baixo"
+          value={kpis.produtosBaixos}
+          description="Produtos abaixo do mínimo"
+          icon={Package}
+          variant={kpis.produtosBaixos > 0 ? "warning" : "default"}
+        />
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Produtos com Estoque Baixo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Nenhum produto com estoque abaixo do mínimo</p>
-          </CardContent>
-        </Card>
+      {/* Gráfico de linha mensal */}
+      <MonthlyRevenueChart />
+
+      {/* Gráficos lado a lado */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <RevenueByTreatmentChart />
+        <RevenueByOriginChart />
+      </div>
+
+      {/* Alertas e avisos */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <UpcomingPayments />
+        <LowStockAlert />
       </div>
     </div>
   );
