@@ -14,8 +14,10 @@ import { CategoriaForm } from "@/components/configuracoes/CategoriaForm";
 import { ContaForm } from "@/components/configuracoes/ContaForm";
 import { FormaPagamentoForm } from "@/components/configuracoes/FormaPagamentoForm";
 import { OrigemForm } from "@/components/configuracoes/OrigemForm";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Configuracoes = () => {
+  const { user } = useAuth();
   const {
     categorias,
     contas,
@@ -44,7 +46,6 @@ const Configuracoes = () => {
   // Categoria mutations
   const saveCategoriaMutation = useMutation({
     mutationFn: async (categoria: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       if (categoria.id) {
@@ -74,7 +75,6 @@ const Configuracoes = () => {
   // Conta mutations
   const saveContaMutation = useMutation({
     mutationFn: async (conta: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       if (conta.id) {
@@ -104,7 +104,6 @@ const Configuracoes = () => {
   // Forma pagamento mutations
   const saveFormaMutation = useMutation({
     mutationFn: async (forma: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       if (forma.id) {
@@ -134,7 +133,6 @@ const Configuracoes = () => {
   // Origem mutations
   const saveOrigemMutation = useMutation({
     mutationFn: async (origem: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       if (origem.id) {

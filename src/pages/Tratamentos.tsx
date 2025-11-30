@@ -11,6 +11,7 @@ import { TratamentosKPIs } from "@/components/tratamentos/TratamentosKPIs";
 import { TratamentosFilters } from "@/components/tratamentos/TratamentosFilters";
 import { TratamentoForm } from "@/components/tratamentos/TratamentoForm";
 import { useTratamentoCalculations } from "@/components/tratamentos/hooks/useTratamentoCalculations";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Tratamentos() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { getMargemColor } = useTratamentoCalculations();
   
@@ -91,7 +93,6 @@ export default function Tratamentos() {
       const { fichaTecnica, ...tratamentoData } = data;
       
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
       
       if (selectedTratamento) {
