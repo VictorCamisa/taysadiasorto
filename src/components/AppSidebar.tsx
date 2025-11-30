@@ -16,7 +16,8 @@ import {
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Lançamentos", url: "/lancamentos", icon: FileText },
+  { title: "Diário de Caixa", url: "/diario-caixa", icon: FileText },
+  { title: "Lançamentos", url: "/lancamentos", icon: DollarSign },
   { title: "Contas a Pagar", url: "/contas-pagar", icon: CreditCard },
   { title: "Tratamentos", url: "/tratamentos", icon: TrendingUp },
   { title: "Estoque", url: "/estoque", icon: Package },
