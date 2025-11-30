@@ -207,18 +207,15 @@ const Relatorios = () => {
     queryFn: async () => {
       let query = supabase
         .from('estoque_produtos')
-        .select(`
-          *,
-          fornecedor:financeiro_fornecedores!fornecedor_id(nome)
-        `);
+        .select('*');
 
-      if (categoriaEstoqueFiltro !== 'todos') query = query.eq('categoria', categoriaEstoqueFiltro);
+      if (categoriaEstoqueFiltro !== 'todos') {
+        query = query.eq('categoria', categoriaEstoqueFiltro);
+      }
 
       const { data, error } = await query.order('nome');
-      
-      console.log('🔍 Relatórios Estoque - Dados brutos:', data);
-      console.log('🔍 Relatórios Estoque - Erro:', error);
-      console.log('🔍 Relatórios Estoque - Filtro status:', statusEstoqueFiltro);
+
+      if (error) throw error;
       
       let filteredData = data || [];
       if (statusEstoqueFiltro === 'baixo') {
@@ -226,8 +223,6 @@ const Relatorios = () => {
       } else if (statusEstoqueFiltro === 'ok') {
         filteredData = filteredData.filter(p => (p.estoque_atual || 0) > (p.estoque_minimo || 0));
       }
-      
-      console.log('🔍 Relatórios Estoque - Dados filtrados:', filteredData);
       
       return filteredData;
     }
@@ -292,19 +287,13 @@ const Relatorios = () => {
   }, []).sort((a, b) => b.valor - a.valor) || [];
 
   // Cálculos para Margens
-  console.log('🔍 Margens - Receitas totais:', receitas?.length);
-  console.log('🔍 Margens - Período:', dataInicio, 'até', dataFim);
-  console.log('🔍 Margens - Receitas com tratamento_id:', receitas?.filter(r => r.tratamento_id).length);
-  
-  const margensPorTratamento = receitas?.reduce((acc: any[], r) => {
+  let margensPorTratamento = receitas?.reduce((acc: any[], r) => {
     if (!r.tratamento_id) return acc;
     
     const nome = r.tratamento?.nome || 'Sem nome';
     const receita = r.valor_entrada || 0;
     const custo = r.custo_tratamento || 0;
     const margem = receita - custo;
-    
-    console.log('🔍 Margem calculada para', nome, '- receita:', receita, 'custo:', custo, 'margem:', margem);
     
     const existing = acc.find(item => item.nome === nome);
     if (existing) {
@@ -325,15 +314,37 @@ const Relatorios = () => {
     return acc;
   }, []) || [];
   
-  console.log('🔍 Margens por tratamento final:', margensPorTratamento);
-
   margensPorTratamento.forEach(item => {
     item.percentual = item.receita > 0 ? (item.margem / item.receita) * 100 : 0;
   });
 
-  const margemBrutaTotal = margensPorTratamento.reduce((sum, m) => sum + m.margem, 0);
-  const margemPercentualTotal = receitaTotal > 0 ? (margemBrutaTotal / receitaTotal) * 100 : 0;
-  const tratamentoMaisRentavel = margensPorTratamento.sort((a, b) => b.margem - a.margem)[0];
+  let margemBrutaTotal = margensPorTratamento.reduce((sum, m) => sum + m.margem, 0);
+  let margemPercentualTotal = receitaTotal > 0 ? (margemBrutaTotal / receitaTotal) * 100 : 0;
+  let tratamentoMaisRentavel = margensPorTratamento.sort((a, b) => b.margem - a.margem)[0];
+
+  // Fallback: se não houver receitas no período, usar cadastro de tratamentos
+  if ((!receitas || receitas.length === 0) && tratamentos && tratamentos.length > 0) {
+    margensPorTratamento = tratamentos.map((t: any) => {
+      const receita = Number(t.preco_venda || 0);
+      const custo = Number(t.custo_total || 0);
+      const margem = receita - custo;
+
+      return {
+        nome: t.nome,
+        receita,
+        custo,
+        margem,
+        quantidade: 1,
+        percentual: receita > 0 ? (margem / receita) * 100 : 0,
+      };
+    });
+
+    const receitaTotalTratamentos = margensPorTratamento.reduce((sum, m) => sum + m.receita, 0);
+    margemBrutaTotal = margensPorTratamento.reduce((sum, m) => sum + m.margem, 0);
+    margemPercentualTotal =
+      receitaTotalTratamentos > 0 ? (margemBrutaTotal / receitaTotalTratamentos) * 100 : 0;
+    tratamentoMaisRentavel = margensPorTratamento.slice().sort((a, b) => b.margem - a.margem)[0];
+  }
 
   const margensPorTratamentoComp = receitasComp?.reduce((acc: any[], r) => {
     if (!r.tratamento_id) return acc;
@@ -1123,7 +1134,7 @@ const Relatorios = () => {
                         <TableRow key={p.id} className={isBaixo ? 'bg-destructive/5' : ''}>
                           <TableCell className="font-medium">{p.nome}</TableCell>
                           <TableCell>{p.categoria}</TableCell>
-                          <TableCell>{p.fornecedor?.nome || '-'}</TableCell>
+                          <TableCell>{(p as any).fornecedor?.nome || '-'}</TableCell>
                           <TableCell className="text-right">{p.estoque_atual || 0} {p.unidade_medida}</TableCell>
                           <TableCell className="text-right">{p.estoque_minimo || 0} {p.unidade_medida}</TableCell>
                           <TableCell className="text-right">
