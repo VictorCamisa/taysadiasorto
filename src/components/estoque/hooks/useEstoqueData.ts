@@ -10,6 +10,8 @@ export const useEstoqueData = () => {
         .select('*')
         .order("nome");
       
+      console.log("[Estoque] Resultado estoque_produtos:", { data, error });
+
       if (error) throw error;
       return data || [];
     },
