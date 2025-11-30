@@ -5,23 +5,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, DollarSign, TrendingUp, Package, Filter, AlertTriangle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Download, FileText, DollarSign, TrendingUp, Package, Filter, AlertTriangle, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#f97316'];
+
+// Componente de Badge de Variação
+const VariacaoBadge = ({ valor }: { valor: number }) => {
+  if (valor === 0) return null;
+  
+  const isPositivo = valor > 0;
+  const Icon = isPositivo ? ArrowUpRight : ArrowDownRight;
+  
+  return (
+    <Badge variant={isPositivo ? "default" : "destructive"} className="ml-2">
+      <Icon className="h-3 w-3 mr-1" />
+      {Math.abs(valor).toFixed(1)}%
+    </Badge>
+  );
+};
 
 const Relatorios = () => {
   const [dataInicio, setDataInicio] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [dataFim, setDataFim] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [compararPeriodos, setCompararPeriodos] = useState(false);
+  const [dataInicioComp, setDataInicioComp] = useState(format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'));
+  const [dataFimComp, setDataFimComp] = useState(format(endOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'));
   const [tratamentoFiltro, setTratamentoFiltro] = useState<string>("todos");
   const [origemFiltro, setOrigemFiltro] = useState<string>("todos");
   const [categoriaSinteticaFiltro, setCategoriaSinteticaFiltro] = useState<string>("todos");
-  const [categoriaAnaliticaFiltro, setCategoriaAnaliticaFiltro] = useState<string>("todos");
   const [fornecedorFiltro, setFornecedorFiltro] = useState<string>("todos");
   const [categoriaEstoqueFiltro, setCategoriaEstoqueFiltro] = useState<string>("todos");
   const [statusEstoqueFiltro, setStatusEstoqueFiltro] = useState<string>("todos");
@@ -71,7 +89,7 @@ const Relatorios = () => {
     }
   });
 
-  // Query para receitas
+  // Query para receitas - Período Principal
   const { data: receitas, isLoading: loadingReceitas } = useQuery({
     queryKey: ['relatorio-receitas', dataInicio, dataFim, tratamentoFiltro, origemFiltro],
     queryFn: async () => {
@@ -87,21 +105,44 @@ const Relatorios = () => {
         .gte('data', dataInicio)
         .lte('data', dataFim);
 
-      if (tratamentoFiltro !== 'todos') {
-        query = query.eq('tratamento_id', tratamentoFiltro);
-      }
-      if (origemFiltro !== 'todos') {
-        query = query.eq('origem_id', origemFiltro);
-      }
+      if (tratamentoFiltro !== 'todos') query = query.eq('tratamento_id', tratamentoFiltro);
+      if (origemFiltro !== 'todos') query = query.eq('origem_id', origemFiltro);
 
       const { data } = await query.order('data', { ascending: false });
       return data || [];
     }
   });
 
-  // Query para despesas
+  // Query para receitas - Período de Comparação
+  const { data: receitasComp } = useQuery({
+    queryKey: ['relatorio-receitas-comp', dataInicioComp, dataFimComp, tratamentoFiltro, origemFiltro, compararPeriodos],
+    queryFn: async () => {
+      if (!compararPeriodos) return [];
+      
+      let query = supabase
+        .from('financeiro_lancamentos')
+        .select(`
+          *,
+          tratamento:tratamento_id(nome, grupo),
+          origem:origem_id(nome),
+          forma_pagamento:forma_pagamento_id(nome)
+        `)
+        .eq('tipo', 'receita')
+        .gte('data', dataInicioComp)
+        .lte('data', dataFimComp);
+
+      if (tratamentoFiltro !== 'todos') query = query.eq('tratamento_id', tratamentoFiltro);
+      if (origemFiltro !== 'todos') query = query.eq('origem_id', origemFiltro);
+
+      const { data } = await query.order('data', { ascending: false });
+      return data || [];
+    },
+    enabled: compararPeriodos
+  });
+
+  // Query para despesas - Período Principal
   const { data: despesas, isLoading: loadingDespesas } = useQuery({
-    queryKey: ['relatorio-despesas', dataInicio, dataFim, categoriaSinteticaFiltro, categoriaAnaliticaFiltro, fornecedorFiltro],
+    queryKey: ['relatorio-despesas', dataInicio, dataFim, categoriaSinteticaFiltro, fornecedorFiltro],
     queryFn: async () => {
       let query = supabase
         .from('financeiro_lancamentos')
@@ -115,23 +156,49 @@ const Relatorios = () => {
         .gte('data', dataInicio)
         .lte('data', dataFim);
 
-      if (fornecedorFiltro !== 'todos') {
-        query = query.eq('fornecedor_id', fornecedorFiltro);
-      }
+      if (fornecedorFiltro !== 'todos') query = query.eq('fornecedor_id', fornecedorFiltro);
 
       const { data } = await query.order('data', { ascending: false });
       
-      // Filtrar por categoria depois de buscar
       let filteredData = data || [];
       if (categoriaSinteticaFiltro !== 'todos') {
         filteredData = filteredData.filter(d => d.categoria?.categoria_sintetica === categoriaSinteticaFiltro);
       }
-      if (categoriaAnaliticaFiltro !== 'todos') {
-        filteredData = filteredData.filter(d => d.categoria?.categoria_analitica === categoriaAnaliticaFiltro);
-      }
       
       return filteredData;
     }
+  });
+
+  // Query para despesas - Período de Comparação
+  const { data: despesasComp } = useQuery({
+    queryKey: ['relatorio-despesas-comp', dataInicioComp, dataFimComp, categoriaSinteticaFiltro, fornecedorFiltro, compararPeriodos],
+    queryFn: async () => {
+      if (!compararPeriodos) return [];
+      
+      let query = supabase
+        .from('financeiro_lancamentos')
+        .select(`
+          *,
+          categoria:categoria_id(categoria_sintetica, categoria_analitica),
+          fornecedor:fornecedor_id(nome),
+          forma_pagamento:forma_pagamento_id(nome)
+        `)
+        .eq('tipo', 'despesa')
+        .gte('data', dataInicioComp)
+        .lte('data', dataFimComp);
+
+      if (fornecedorFiltro !== 'todos') query = query.eq('fornecedor_id', fornecedorFiltro);
+
+      const { data } = await query.order('data', { ascending: false });
+      
+      let filteredData = data || [];
+      if (categoriaSinteticaFiltro !== 'todos') {
+        filteredData = filteredData.filter(d => d.categoria?.categoria_sintetica === categoriaSinteticaFiltro);
+      }
+      
+      return filteredData;
+    },
+    enabled: compararPeriodos
   });
 
   // Query para estoque
@@ -146,9 +213,7 @@ const Relatorios = () => {
         `)
         .eq('ativo', true);
 
-      if (categoriaEstoqueFiltro !== 'todos') {
-        query = query.eq('categoria', categoriaEstoqueFiltro);
-      }
+      if (categoriaEstoqueFiltro !== 'todos') query = query.eq('categoria', categoriaEstoqueFiltro);
 
       const { data } = await query.order('nome');
       
@@ -167,6 +232,14 @@ const Relatorios = () => {
   const receitaTotal = receitas?.reduce((sum, r) => sum + (r.valor_entrada || 0), 0) || 0;
   const quantidadeVendas = receitas?.length || 0;
   const ticketMedio = quantidadeVendas > 0 ? receitaTotal / quantidadeVendas : 0;
+  
+  const receitaTotalComp = receitasComp?.reduce((sum, r) => sum + (r.valor_entrada || 0), 0) || 0;
+  const quantidadeVendasComp = receitasComp?.length || 0;
+  const ticketMedioComp = quantidadeVendasComp > 0 ? receitaTotalComp / quantidadeVendasComp : 0;
+  
+  const variacaoReceita = receitaTotalComp > 0 ? ((receitaTotal - receitaTotalComp) / receitaTotalComp) * 100 : 0;
+  const variacaoQuantidade = quantidadeVendasComp > 0 ? ((quantidadeVendas - quantidadeVendasComp) / quantidadeVendasComp) * 100 : 0;
+  const variacaoTicket = ticketMedioComp > 0 ? ((ticketMedio - ticketMedioComp) / ticketMedioComp) * 100 : 0;
 
   const receitasPorTratamento = receitas?.reduce((acc: any[], r) => {
     const nome = r.tratamento?.nome || 'Sem tratamento';
@@ -195,6 +268,12 @@ const Relatorios = () => {
   const despesaTotal = despesas?.reduce((sum, d) => sum + (d.valor_saida || 0), 0) || 0;
   const despesaMedia = despesas && despesas.length > 0 ? despesaTotal / despesas.length : 0;
   const maiorDespesa = despesas?.reduce((max, d) => Math.max(max, d.valor_saida || 0), 0) || 0;
+  
+  const despesaTotalComp = despesasComp?.reduce((sum, d) => sum + (d.valor_saida || 0), 0) || 0;
+  const despesaMediaComp = despesasComp && despesasComp.length > 0 ? despesaTotalComp / despesasComp.length : 0;
+  
+  const variacaoDespesa = despesaTotalComp > 0 ? ((despesaTotal - despesaTotalComp) / despesaTotalComp) * 100 : 0;
+  const variacaoDespesaMedia = despesaMediaComp > 0 ? ((despesaMedia - despesaMediaComp) / despesaMediaComp) * 100 : 0;
 
   const despesasPorCategoria = despesas?.reduce((acc: any[], d) => {
     const nome = d.categoria?.categoria_sintetica || 'Sem categoria';
@@ -229,13 +308,12 @@ const Relatorios = () => {
         custo,
         margem,
         quantidade: r.quantidade || 1,
-        percentual: receita > 0 ? (margem / receita) * 100 : 0
+        percentual: 0
       });
     }
     return acc;
   }, []) || [];
 
-  // Recalcular percentuais após agregação
   margensPorTratamento.forEach(item => {
     item.percentual = item.receita > 0 ? (item.margem / item.receita) * 100 : 0;
   });
@@ -243,6 +321,43 @@ const Relatorios = () => {
   const margemBrutaTotal = margensPorTratamento.reduce((sum, m) => sum + m.margem, 0);
   const margemPercentualTotal = receitaTotal > 0 ? (margemBrutaTotal / receitaTotal) * 100 : 0;
   const tratamentoMaisRentavel = margensPorTratamento.sort((a, b) => b.margem - a.margem)[0];
+
+  const margensPorTratamentoComp = receitasComp?.reduce((acc: any[], r) => {
+    if (!r.tratamento_id) return acc;
+    
+    const nome = r.tratamento?.nome || 'Sem nome';
+    const receita = r.valor_entrada || 0;
+    const custo = r.custo_tratamento || 0;
+    const margem = receita - custo;
+    
+    const existing = acc.find(item => item.nome === nome);
+    if (existing) {
+      existing.receita += receita;
+      existing.custo += custo;
+      existing.margem += margem;
+      existing.quantidade += r.quantidade || 1;
+    } else {
+      acc.push({
+        nome,
+        receita,
+        custo,
+        margem,
+        quantidade: r.quantidade || 1,
+        percentual: 0
+      });
+    }
+    return acc;
+  }, []) || [];
+
+  margensPorTratamentoComp.forEach(item => {
+    item.percentual = item.receita > 0 ? (item.margem / item.receita) * 100 : 0;
+  });
+
+  const margemBrutaTotalComp = margensPorTratamentoComp.reduce((sum, m) => sum + m.margem, 0);
+  const margemPercentualTotalComp = receitaTotalComp > 0 ? (margemBrutaTotalComp / receitaTotalComp) * 100 : 0;
+  
+  const variacaoMargemBruta = margemBrutaTotalComp > 0 ? ((margemBrutaTotal - margemBrutaTotalComp) / margemBrutaTotalComp) * 100 : 0;
+  const variacaoMargemPercentual = margemPercentualTotalComp > 0 ? ((margemPercentualTotal - margemPercentualTotalComp) / margemPercentualTotalComp) * 100 : 0;
 
   // Cálculos para Estoque
   const totalProdutos = estoque?.length || 0;
@@ -257,7 +372,7 @@ const Relatorios = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold">Relatórios</h1>
-          <p className="text-muted-foreground mt-1">Análises e relatórios detalhados do seu negócio</p>
+          <p className="text-muted-foreground mt-1">Análises e relatórios detalhados com comparação de períodos</p>
         </div>
       </div>
 
@@ -271,51 +386,78 @@ const Relatorios = () => {
 
         {/* ABA RECEITAS */}
         <TabsContent value="receitas" className="space-y-6">
-          {/* Filtros */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Filter className="h-5 w-5" />
-                Filtros
+                Filtros e Comparação
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>Data Início</Label>
-                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 pb-2 border-b">
+                  <Switch
+                    id="comparar-periodos"
+                    checked={compararPeriodos}
+                    onCheckedChange={setCompararPeriodos}
+                  />
+                  <Label htmlFor="comparar-periodos" className="cursor-pointer font-medium">
+                    Comparar com período anterior
+                  </Label>
                 </div>
-                <div className="space-y-2">
-                  <Label>Data Fim</Label>
-                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Data Início (Período Atual)</Label>
+                    <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data Fim (Período Atual)</Label>
+                    <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+                  </div>
+                  {compararPeriodos && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-accent-foreground">Data Início (Comparação)</Label>
+                        <Input type="date" value={dataInicioComp} onChange={(e) => setDataInicioComp(e.target.value)} className="border-accent" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-accent-foreground">Data Fim (Comparação)</Label>
+                        <Input type="date" value={dataFimComp} onChange={(e) => setDataFimComp(e.target.value)} className="border-accent" />
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label>Tratamento</Label>
-                  <Select value={tratamentoFiltro} onValueChange={setTratamentoFiltro}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos</SelectItem>
-                      {tratamentos?.map(t => (
-                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Origem</Label>
-                  <Select value={origemFiltro} onValueChange={setOrigemFiltro}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todas</SelectItem>
-                      {origens?.map(o => (
-                        <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tratamento</Label>
+                    <Select value={tratamentoFiltro} onValueChange={setTratamentoFiltro}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        {tratamentos?.map(t => (
+                          <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Origem</Label>
+                    <Select value={origemFiltro} onValueChange={setOrigemFiltro}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todas</SelectItem>
+                        {origens?.map(o => (
+                          <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -329,10 +471,17 @@ const Relatorios = () => {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">
-                  {receitaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold text-primary">
+                    {receitaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                  {compararPeriodos && <VariacaoBadge valor={variacaoReceita} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Período selecionado</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {compararPeriodos && receitaTotalComp > 0 
+                    ? `Comparado a ${receitaTotalComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` 
+                    : 'Período selecionado'}
+                </p>
               </CardContent>
             </Card>
 
@@ -342,10 +491,17 @@ const Relatorios = () => {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold">
+                    {ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                  {compararPeriodos && <VariacaoBadge valor={variacaoTicket} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Valor médio por venda</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {compararPeriodos && ticketMedioComp > 0
+                    ? `Comparado a ${ticketMedioComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+                    : 'Valor médio por venda'}
+                </p>
               </CardContent>
             </Card>
 
@@ -355,8 +511,15 @@ const Relatorios = () => {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{quantidadeVendas}</div>
-                <p className="text-xs text-muted-foreground mt-1">Total de transações</p>
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold">{quantidadeVendas}</div>
+                  {compararPeriodos && <VariacaoBadge valor={variacaoQuantidade} />}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {compararPeriodos && quantidadeVendasComp > 0
+                    ? `Comparado a ${quantidadeVendasComp} vendas`
+                    : 'Total de transações'}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -458,51 +621,78 @@ const Relatorios = () => {
 
         {/* ABA DESPESAS */}
         <TabsContent value="despesas" className="space-y-6">
-          {/* Filtros */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Filter className="h-5 w-5" />
-                Filtros
+                Filtros e Comparação
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>Data Início</Label>
-                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 pb-2 border-b">
+                  <Switch
+                    id="comparar-periodos-despesas"
+                    checked={compararPeriodos}
+                    onCheckedChange={setCompararPeriodos}
+                  />
+                  <Label htmlFor="comparar-periodos-despesas" className="cursor-pointer font-medium">
+                    Comparar com período anterior
+                  </Label>
                 </div>
-                <div className="space-y-2">
-                  <Label>Data Fim</Label>
-                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Data Início (Período Atual)</Label>
+                    <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data Fim (Período Atual)</Label>
+                    <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+                  </div>
+                  {compararPeriodos && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-accent-foreground">Data Início (Comparação)</Label>
+                        <Input type="date" value={dataInicioComp} onChange={(e) => setDataInicioComp(e.target.value)} className="border-accent" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-accent-foreground">Data Fim (Comparação)</Label>
+                        <Input type="date" value={dataFimComp} onChange={(e) => setDataFimComp(e.target.value)} className="border-accent" />
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label>Categoria Sintética</Label>
-                  <Select value={categoriaSinteticaFiltro} onValueChange={setCategoriaSinteticaFiltro}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todas</SelectItem>
-                      {categoriasSinteticasUnicas.map(cat => (
-                        <SelectItem key={cat} value={cat || ''}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Fornecedor</Label>
-                  <Select value={fornecedorFiltro} onValueChange={setFornecedorFiltro}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos</SelectItem>
-                      {fornecedores?.map(f => (
-                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Categoria Sintética</Label>
+                    <Select value={categoriaSinteticaFiltro} onValueChange={setCategoriaSinteticaFiltro}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todas</SelectItem>
+                        {categoriasSinteticasUnicas.map(cat => (
+                          <SelectItem key={cat} value={cat || ''}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fornecedor</Label>
+                    <Select value={fornecedorFiltro} onValueChange={setFornecedorFiltro}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        {fornecedores?.map(f => (
+                          <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -516,10 +706,17 @@ const Relatorios = () => {
                 <DollarSign className="h-4 w-4 text-destructive" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">
-                  {despesaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold text-destructive">
+                    {despesaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                  {compararPeriodos && <VariacaoBadge valor={-variacaoDespesa} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Período selecionado</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {compararPeriodos && despesaTotalComp > 0
+                    ? `Comparado a ${despesaTotalComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+                    : 'Período selecionado'}
+                </p>
               </CardContent>
             </Card>
 
@@ -529,10 +726,17 @@ const Relatorios = () => {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {despesaMedia.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold">
+                    {despesaMedia.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                  {compararPeriodos && <VariacaoBadge valor={-variacaoDespesaMedia} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Média por transação</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {compararPeriodos && despesaMediaComp > 0
+                    ? `Comparado a ${despesaMediaComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+                    : 'Média por transação'}
+                </p>
               </CardContent>
             </Card>
 
@@ -616,23 +820,47 @@ const Relatorios = () => {
 
         {/* ABA MARGENS */}
         <TabsContent value="margens" className="space-y-6">
-          {/* Filtros */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Filter className="h-5 w-5" />
-                Filtros
+                Filtros e Comparação
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Data Início</Label>
-                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 pb-2 border-b">
+                  <Switch
+                    id="comparar-periodos-margens"
+                    checked={compararPeriodos}
+                    onCheckedChange={setCompararPeriodos}
+                  />
+                  <Label htmlFor="comparar-periodos-margens" className="cursor-pointer font-medium">
+                    Comparar com período anterior
+                  </Label>
                 </div>
-                <div className="space-y-2">
-                  <Label>Data Fim</Label>
-                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Data Início (Período Atual)</Label>
+                    <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data Fim (Período Atual)</Label>
+                    <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+                  </div>
+                  {compararPeriodos && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-accent-foreground">Data Início (Comparação)</Label>
+                        <Input type="date" value={dataInicioComp} onChange={(e) => setDataInicioComp(e.target.value)} className="border-accent" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-accent-foreground">Data Fim (Comparação)</Label>
+                        <Input type="date" value={dataFimComp} onChange={(e) => setDataFimComp(e.target.value)} className="border-accent" />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -646,10 +874,17 @@ const Relatorios = () => {
                 <TrendingUp className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">
-                  {margemBrutaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold text-primary">
+                    {margemBrutaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                  {compararPeriodos && <VariacaoBadge valor={variacaoMargemBruta} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Período selecionado</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {compararPeriodos && margemBrutaTotalComp > 0
+                    ? `Comparado a ${margemBrutaTotalComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+                    : 'Período selecionado'}
+                </p>
               </CardContent>
             </Card>
 
@@ -659,10 +894,17 @@ const Relatorios = () => {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {margemPercentualTotal.toFixed(1)}%
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold">
+                    {margemPercentualTotal.toFixed(1)}%
+                  </div>
+                  {compararPeriodos && <VariacaoBadge valor={variacaoMargemPercentual} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Sobre a receita total</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {compararPeriodos && margemPercentualTotalComp > 0
+                    ? `Comparado a ${margemPercentualTotalComp.toFixed(1)}%`
+                    : 'Sobre a receita total'}
+                </p>
               </CardContent>
             </Card>
 
@@ -753,7 +995,6 @@ const Relatorios = () => {
 
         {/* ABA ESTOQUE */}
         <TabsContent value="estoque" className="space-y-6">
-          {/* Filtros */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
