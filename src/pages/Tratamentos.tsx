@@ -90,13 +90,13 @@ export default function Tratamentos() {
   // Create/Update mutation
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      const { fichaTecnica, ...tratamentoData } = data;
+      const { fichaTecnica, lucro_sessao, margem_bruta, margem_contribuicao, ...tratamentoData } = data;
       
       // Get current user
       if (!user) throw new Error("Usuário não autenticado");
       
       if (selectedTratamento) {
-        // Update tratamento - não incluir user_id
+        // Update tratamento - não incluir user_id nem campos gerados
         const { user_id, ...tratamentoUpdate } = tratamentoData;
         const { error: updateError } = await supabase
           .from("financeiro_tratamentos")
@@ -130,7 +130,7 @@ export default function Tratamentos() {
 
         return selectedTratamento.id;
       } else {
-        // Create tratamento with user_id and all calculated fields
+        // Create tratamento with user_id (sem campos gerados)
         const { data: newTratamento, error: createError } = await supabase
           .from("financeiro_tratamentos")
           .insert([{
