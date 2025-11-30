@@ -24,7 +24,7 @@ const DiarioCaixa = () => {
           *,
           financeiro_categorias(categoria_sintetica, categoria_analitica),
           financeiro_formas_pagamento(nome),
-          financeiro_contas(nome),
+          conta_financeira:financeiro_contas!financeiro_lancamentos_conta_financeira_id_fkey(nome),
           financeiro_tratamentos(nome),
           financeiro_origens(nome)
         `)
@@ -216,8 +216,8 @@ const DiarioCaixa = () => {
                             {lanc.financeiro_formas_pagamento && (
                               <span>Pgto: {lanc.financeiro_formas_pagamento.nome}</span>
                             )}
-                            {lanc.financeiro_contas && (
-                              <span>Conta: {lanc.financeiro_contas.nome}</span>
+                            {lanc.conta_financeira && (
+                              <span>Conta: {lanc.conta_financeira.nome}</span>
                             )}
                           </div>
                         </div>
