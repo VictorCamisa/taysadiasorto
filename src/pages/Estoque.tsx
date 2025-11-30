@@ -1,102 +1,195 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEstoqueData } from "@/components/estoque/hooks/useEstoqueData";
+import { EstoqueKPIs } from "@/components/estoque/EstoqueKPIs";
+import { ProdutosTab } from "@/components/estoque/ProdutosTab";
+import { ComprasTab } from "@/components/estoque/ComprasTab";
+import { MovimentacoesTab } from "@/components/estoque/MovimentacoesTab";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const Estoque = () => {
+  const {
+    produtos,
+    compras,
+    fornecedores,
+    formasPagamento,
+    contasFinanceiras,
+    refetchProdutos,
+    refetchCompras,
+    kpis,
+  } = useEstoqueData();
+
+  const saveProdutoMutation = useMutation({
+    mutationFn: async (produto: any) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      if (produto.id) {
+        const { error } = await supabase
+          .from("estoque_produtos")
+          .update(produto)
+          .eq("id", produto.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("estoque_produtos")
+          .insert({ ...produto, user_id: user.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      refetchProdutos();
+      toast({ title: "Produto salvo com sucesso!" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao salvar produto",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteProdutoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("estoque_produtos")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchProdutos();
+      toast({ title: "Produto excluído com sucesso!" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir produto",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveCompraMutation = useMutation({
+    mutationFn: async (compra: any) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      // Insert compra
+      const { data: compraData, error: compraError } = await supabase
+        .from("estoque_compras")
+        .insert({
+          user_id: user.id,
+          numero_nf: compra.numero_nf,
+          data_compra: compra.data_compra,
+          fornecedor_id: compra.fornecedor_id,
+          forma_pagamento_id: compra.forma_pagamento_id,
+          conta_financeira_id: compra.conta_financeira_id,
+          valor_total: compra.valor_total,
+          observacoes: compra.observacoes,
+        })
+        .select()
+        .single();
+
+      if (compraError) throw compraError;
+
+      // Insert itens
+      const itensToInsert = compra.itens.map((item: any) => ({
+        compra_id: compraData.id,
+        produto_id: item.produto_id,
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+      }));
+
+      const { error: itensError } = await supabase
+        .from("estoque_compras_itens")
+        .insert(itensToInsert);
+
+      if (itensError) throw itensError;
+
+      // Update produtos estoque and custo_medio
+      for (const item of compra.itens) {
+        const produto = produtos.find((p) => p.id === item.produto_id);
+        if (produto) {
+          const estoqueAtual = Number(produto.estoque_atual);
+          const custoMedioAtual = Number(produto.custo_medio);
+          const novoEstoque = estoqueAtual + Number(item.quantidade);
+          
+          const valorEstoqueAtual = estoqueAtual * custoMedioAtual;
+          const valorCompra = Number(item.quantidade) * Number(item.valor_unitario);
+          const novoCustoMedio = (valorEstoqueAtual + valorCompra) / novoEstoque;
+
+          const { error: updateError } = await supabase
+            .from("estoque_produtos")
+            .update({
+              estoque_atual: novoEstoque,
+              custo_medio: novoCustoMedio,
+            })
+            .eq("id", item.produto_id);
+
+          if (updateError) throw updateError;
+        }
+      }
+    },
+    onSuccess: () => {
+      refetchCompras();
+      refetchProdutos();
+      toast({ title: "Compra registrada com sucesso!" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao registrar compra",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Gestão de Estoque</h1>
-          <p className="text-muted-foreground">Controle produtos e compras</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold">Gestão de Estoque</h1>
+        <p className="text-muted-foreground">Controle produtos e compras</p>
       </div>
+
+      <EstoqueKPIs
+        valorTotalEstoque={kpis.valorTotalEstoque}
+        produtosAtivos={kpis.produtosAtivos}
+        produtosCriticos={kpis.produtosCriticos}
+        totalComprasMes={kpis.totalComprasMes}
+      />
 
       <Tabs defaultValue="produtos" className="space-y-4">
         <TabsList>
           <TabsTrigger value="produtos">Produtos</TabsTrigger>
           <TabsTrigger value="compras">Compras</TabsTrigger>
+          <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="produtos" className="space-y-4">
-          <div className="flex justify-end">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Novo Produto
-            </Button>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Produtos em Estoque</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Lote</TableHead>
-                    <TableHead>Validade</TableHead>
-                    <TableHead className="text-right">Estoque Atual</TableHead>
-                    <TableHead className="text-right">Custo Médio</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
-                      Nenhum produto cadastrado
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+        <TabsContent value="produtos">
+          <ProdutosTab
+            produtos={produtos}
+            fornecedores={fornecedores}
+            onSaveProduto={(produto) => saveProdutoMutation.mutate(produto)}
+            onDeleteProduto={(id) => deleteProdutoMutation.mutate(id)}
+          />
         </TabsContent>
 
-        <TabsContent value="compras" className="space-y-4">
-          <div className="flex justify-end">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Nova Compra
-            </Button>
-          </div>
+        <TabsContent value="compras">
+          <ComprasTab
+            compras={compras}
+            fornecedores={fornecedores}
+            formasPagamento={formasPagamento}
+            contasFinanceiras={contasFinanceiras}
+            produtos={produtos}
+            onSaveCompra={(compra) => saveCompraMutation.mutate(compra)}
+          />
+        </TabsContent>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Compras</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Fornecedor</TableHead>
-                    <TableHead>NF</TableHead>
-                    <TableHead className="text-right">Valor Total</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Nenhuma compra cadastrada
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+        <TabsContent value="movimentacoes">
+          <MovimentacoesTab compras={compras} produtos={produtos} />
         </TabsContent>
       </Tabs>
     </div>

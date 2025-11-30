@@ -209,7 +209,7 @@ const Relatorios = () => {
         .from('estoque_produtos')
         .select(`
           *,
-          fornecedor:fornecedor_id(nome)
+          fornecedor:financeiro_fornecedores!fornecedor_id(nome)
         `)
         .eq('ativo', true);
 

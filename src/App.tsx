@@ -13,6 +13,7 @@ import Estoque from "./pages/Estoque";
 import Fornecedores from "./pages/Fornecedores";
 import DRE from "./pages/DRE";
 import Relatorios from "./pages/Relatorios";
+import RelatoriosEstoque from "./pages/RelatoriosEstoque";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/fornecedores" element={<Fornecedores />} />
             <Route path="/dre" element={<DRE />} />
             <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/relatorios-estoque" element={<RelatoriosEstoque />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
