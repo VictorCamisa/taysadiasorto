@@ -50,10 +50,11 @@ const Fornecedores = () => {
       if (!user) throw new Error("Usuário não autenticado");
 
       if (fornecedor.id) {
+        const { id, user_id, ...fornecedorUpdate } = fornecedor;
         const { error } = await supabase
           .from("financeiro_fornecedores")
-          .update(fornecedor)
-          .eq("id", fornecedor.id);
+          .update(fornecedorUpdate)
+          .eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase

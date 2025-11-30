@@ -96,10 +96,11 @@ export default function Tratamentos() {
       if (!user) throw new Error("Usuário não autenticado");
       
       if (selectedTratamento) {
-        // Update tratamento
+        // Update tratamento - não incluir user_id
+        const { user_id, ...tratamentoUpdate } = tratamentoData;
         const { error: updateError } = await supabase
           .from("financeiro_tratamentos")
-          .update(tratamentoData)
+          .update(tratamentoUpdate)
           .eq("id", selectedTratamento.id);
         
         if (updateError) throw updateError;
