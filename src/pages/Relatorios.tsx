@@ -210,12 +210,15 @@ const Relatorios = () => {
         .select(`
           *,
           fornecedor:financeiro_fornecedores!fornecedor_id(nome)
-        `)
-        .eq('ativo', true);
+        `);
 
       if (categoriaEstoqueFiltro !== 'todos') query = query.eq('categoria', categoriaEstoqueFiltro);
 
-      const { data } = await query.order('nome');
+      const { data, error } = await query.order('nome');
+      
+      console.log('🔍 Relatórios Estoque - Dados brutos:', data);
+      console.log('🔍 Relatórios Estoque - Erro:', error);
+      console.log('🔍 Relatórios Estoque - Filtro status:', statusEstoqueFiltro);
       
       let filteredData = data || [];
       if (statusEstoqueFiltro === 'baixo') {
@@ -223,6 +226,8 @@ const Relatorios = () => {
       } else if (statusEstoqueFiltro === 'ok') {
         filteredData = filteredData.filter(p => (p.estoque_atual || 0) > (p.estoque_minimo || 0));
       }
+      
+      console.log('🔍 Relatórios Estoque - Dados filtrados:', filteredData);
       
       return filteredData;
     }
@@ -287,6 +292,10 @@ const Relatorios = () => {
   }, []).sort((a, b) => b.valor - a.valor) || [];
 
   // Cálculos para Margens
+  console.log('🔍 Margens - Receitas totais:', receitas?.length);
+  console.log('🔍 Margens - Período:', dataInicio, 'até', dataFim);
+  console.log('🔍 Margens - Receitas com tratamento_id:', receitas?.filter(r => r.tratamento_id).length);
+  
   const margensPorTratamento = receitas?.reduce((acc: any[], r) => {
     if (!r.tratamento_id) return acc;
     
@@ -294,6 +303,8 @@ const Relatorios = () => {
     const receita = r.valor_entrada || 0;
     const custo = r.custo_tratamento || 0;
     const margem = receita - custo;
+    
+    console.log('🔍 Margem calculada para', nome, '- receita:', receita, 'custo:', custo, 'margem:', margem);
     
     const existing = acc.find(item => item.nome === nome);
     if (existing) {
@@ -313,6 +324,8 @@ const Relatorios = () => {
     }
     return acc;
   }, []) || [];
+  
+  console.log('🔍 Margens por tratamento final:', margensPorTratamento);
 
   margensPorTratamento.forEach(item => {
     item.percentual = item.receita > 0 ? (item.margem / item.receita) * 100 : 0;
