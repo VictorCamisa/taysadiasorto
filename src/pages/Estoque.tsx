@@ -7,8 +7,10 @@ import { MovimentacoesTab } from "@/components/estoque/MovimentacoesTab";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Estoque = () => {
+  const { user } = useAuth();
   const {
     produtos,
     compras,
@@ -22,7 +24,6 @@ const Estoque = () => {
 
   const saveProdutoMutation = useMutation({
     mutationFn: async (produto: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       if (produto.id) {
@@ -74,7 +75,6 @@ const Estoque = () => {
 
   const saveCompraMutation = useMutation({
     mutationFn: async (compra: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       // Insert compra
