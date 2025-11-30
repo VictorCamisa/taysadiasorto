@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 const Lancamentos = () => {
+  const { user } = useAuth();
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), "yyyy-MM-dd"));
   const [tipoFiltro, setTipoFiltro] = useState<string | "todos">("todos");
@@ -210,6 +212,11 @@ const Lancamentos = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+    
     const payload = {
       tipo: formData.tipo,
       data: formData.data,
@@ -227,7 +234,8 @@ const Lancamentos = () => {
     if (editingId) {
       updateMutation.mutate({ id: editingId, data: payload });
     } else {
-      createMutation.mutate(payload);
+      // Include user_id on insert
+      createMutation.mutate({ ...payload, user_id: user.id });
     }
   };
 
