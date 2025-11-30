@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEstoqueData } from "@/components/estoque/hooks/useEstoqueData";
 import { EstoqueKPIs } from "@/components/estoque/EstoqueKPIs";
@@ -11,6 +12,31 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Estoque = () => {
   const { user } = useAuth();
+  const [produtosSimples, setProdutosSimples] = useState<any[]>([]);
+
+  const fetchProdutos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("estoque_produtos")
+        .select("*")
+        .order("nome");
+
+      if (error) throw error;
+      setProdutosSimples(data || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar produtos de estoque:", error);
+      toast({
+        title: "Erro ao carregar produtos",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchProdutos();
+  }, []);
+
   const {
     produtos,
     compras,
@@ -21,6 +47,19 @@ const Estoque = () => {
     refetchCompras,
     kpis,
   } = useEstoqueData();
+
+  const produtosParaUI = produtosSimples.length ? produtosSimples : produtos;
+
+  const valorTotalEstoque = produtosParaUI.reduce(
+    (sum, p) => sum + Number(p.estoque_atual) * Number(p.custo_medio),
+    0
+  );
+
+  const produtosAtivos = produtosParaUI.filter((p) => p.ativo).length;
+
+  const produtosCriticos = produtosParaUI.filter(
+    (p) => Number(p.estoque_atual) < Number(p.estoque_minimo)
+  ).length;
 
   const saveProdutoMutation = useMutation({
     mutationFn: async (produto: any) => {
@@ -42,6 +81,7 @@ const Estoque = () => {
     },
     onSuccess: () => {
       refetchProdutos();
+      fetchProdutos();
       toast({ title: "Produto salvo com sucesso!" });
     },
     onError: (error) => {
@@ -63,6 +103,7 @@ const Estoque = () => {
     },
     onSuccess: () => {
       refetchProdutos();
+      fetchProdutos();
       toast({ title: "Produto excluído com sucesso!" });
     },
     onError: (error) => {
@@ -137,6 +178,7 @@ const Estoque = () => {
     onSuccess: () => {
       refetchCompras();
       refetchProdutos();
+      fetchProdutos();
       toast({ title: "Compra registrada com sucesso!" });
     },
     onError: (error) => {
@@ -156,9 +198,9 @@ const Estoque = () => {
       </div>
 
       <EstoqueKPIs
-        valorTotalEstoque={kpis.valorTotalEstoque}
-        produtosAtivos={kpis.produtosAtivos}
-        produtosCriticos={kpis.produtosCriticos}
+        valorTotalEstoque={valorTotalEstoque}
+        produtosAtivos={produtosAtivos}
+        produtosCriticos={produtosCriticos}
         totalComprasMes={kpis.totalComprasMes}
       />
 
@@ -171,7 +213,7 @@ const Estoque = () => {
 
         <TabsContent value="produtos">
           <ProdutosTab
-            produtos={produtos}
+            produtos={produtosParaUI}
             fornecedores={fornecedores}
             onSaveProduto={(produto) => saveProdutoMutation.mutate(produto)}
             onDeleteProduto={(id) => deleteProdutoMutation.mutate(id)}
