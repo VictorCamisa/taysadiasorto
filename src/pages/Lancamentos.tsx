@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import {
@@ -16,11 +16,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 const Lancamentos = () => {
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), "yyyy-MM-dd"));
   const [tipoFiltro, setTipoFiltro] = useState<string | "todos">("todos");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    tipo: "receita" as "receita" | "despesa" | "transferencia" | "ajuste",
+    data: format(new Date(), "yyyy-MM-dd"),
+    cliente: "",
+    observacoes: "",
+    valor_entrada: "",
+    valor_saida: "",
+    categoria_id: "",
+    forma_pagamento_id: "",
+    conta_financeira_id: "",
+    tratamento_id: "",
+    origem_id: "",
+  });
+
+  const queryClient = useQueryClient();
 
   const { data: lancamentos = [] } = useQuery({
     queryKey: ["lancamentos-list", startDate, endDate, tipoFiltro],
@@ -31,8 +58,9 @@ const Lancamentos = () => {
           *,
           financeiro_categorias(categoria_sintetica, categoria_analitica),
           financeiro_formas_pagamento(nome),
-          financeiro_contas(nome),
-          financeiro_tratamentos(nome)
+          conta_financeira:financeiro_contas!financeiro_lancamentos_conta_financeira_id_fkey(nome),
+          financeiro_tratamentos(nome),
+          financeiro_origens(nome)
         `)
         .gte("data", startDate)
         .lte("data", endDate)
@@ -47,6 +75,185 @@ const Lancamentos = () => {
       return data || [];
     },
   });
+
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["categorias-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financeiro_categorias")
+        .select("*")
+        .eq("ativa", true);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: formasPagamento = [] } = useQuery({
+    queryKey: ["formas-pagamento-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financeiro_formas_pagamento")
+        .select("*")
+        .eq("ativa", true);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: contas = [] } = useQuery({
+    queryKey: ["contas-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financeiro_contas")
+        .select("*")
+        .eq("ativa", true);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: tratamentos = [] } = useQuery({
+    queryKey: ["tratamentos-ativos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financeiro_tratamentos")
+        .select("*")
+        .eq("ativo", true);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: origens = [] } = useQuery({
+    queryKey: ["origens-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financeiro_origens")
+        .select("*")
+        .eq("ativa", true);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const { error } = await supabase
+        .from("financeiro_lancamentos")
+        .insert([data]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lancamentos-list"] });
+      toast.success("Lançamento criado com sucesso!");
+      setDialogOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao criar lançamento: " + error.message);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const { error } = await supabase
+        .from("financeiro_lancamentos")
+        .update(data)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lancamentos-list"] });
+      toast.success("Lançamento atualizado com sucesso!");
+      setDialogOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao atualizar lançamento: " + error.message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("financeiro_lancamentos")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lancamentos-list"] });
+      toast.success("Lançamento excluído com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao excluir lançamento: " + error.message);
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      tipo: "receita",
+      data: format(new Date(), "yyyy-MM-dd"),
+      cliente: "",
+      observacoes: "",
+      valor_entrada: "",
+      valor_saida: "",
+      categoria_id: "",
+      forma_pagamento_id: "",
+      conta_financeira_id: "",
+      tratamento_id: "",
+      origem_id: "",
+    });
+    setEditingId(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const payload = {
+      tipo: formData.tipo,
+      data: formData.data,
+      cliente: formData.cliente || null,
+      observacoes: formData.observacoes || null,
+      valor_entrada: formData.tipo === "receita" ? parseFloat(formData.valor_entrada) || 0 : 0,
+      valor_saida: formData.tipo === "despesa" ? parseFloat(formData.valor_saida) || 0 : 0,
+      categoria_id: formData.categoria_id || null,
+      forma_pagamento_id: formData.forma_pagamento_id || null,
+      conta_financeira_id: formData.conta_financeira_id || null,
+      tratamento_id: formData.tratamento_id || null,
+      origem_id: formData.origem_id || null,
+    };
+
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
+  };
+
+  const handleEdit = (lanc: any) => {
+    setEditingId(lanc.id);
+    setFormData({
+      tipo: lanc.tipo,
+      data: lanc.data,
+      cliente: lanc.cliente || "",
+      observacoes: lanc.observacoes || "",
+      valor_entrada: lanc.valor_entrada?.toString() || "",
+      valor_saida: lanc.valor_saida?.toString() || "",
+      categoria_id: lanc.categoria_id || "",
+      forma_pagamento_id: lanc.forma_pagamento_id || "",
+      conta_financeira_id: lanc.conta_financeira_id || "",
+      tratamento_id: lanc.tratamento_id || "",
+      origem_id: lanc.origem_id || "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este lançamento?")) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
@@ -64,10 +271,189 @@ const Lancamentos = () => {
           <h1 className="text-3xl font-bold">Lançamentos Financeiros</h1>
           <p className="text-muted-foreground">Gerencie todas as movimentações financeiras</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Lançamento
-        </Button>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) resetForm();
+        }}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Lançamento
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar" : "Novo"} Lançamento</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Tipo *</Label>
+                  <Select value={formData.tipo} onValueChange={(value: any) => setFormData({ ...formData, tipo: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="receita">Receita</SelectItem>
+                      <SelectItem value="despesa">Despesa</SelectItem>
+                      <SelectItem value="transferencia">Transferência</SelectItem>
+                      <SelectItem value="ajuste">Ajuste</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Data *</Label>
+                  <Input
+                    type="date"
+                    value={formData.data}
+                    onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Cliente/Descrição</Label>
+                <Input
+                  value={formData.cliente}
+                  onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
+                  placeholder="Nome do cliente ou descrição"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {formData.tipo === "receita" && (
+                  <div>
+                    <Label>Valor Entrada *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.valor_entrada}
+                      onChange={(e) => setFormData({ ...formData, valor_entrada: e.target.value })}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                )}
+                {formData.tipo === "despesa" && (
+                  <div>
+                    <Label>Valor Saída *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.valor_saida}
+                      onChange={(e) => setFormData({ ...formData, valor_saida: e.target.value })}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                )}
+                <div>
+                  <Label>Categoria</Label>
+                  <Select value={formData.categoria_id} onValueChange={(value) => setFormData({ ...formData, categoria_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categorias.map((cat: any) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.categoria_sintetica}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Forma de Pagamento</Label>
+                  <Select value={formData.forma_pagamento_id} onValueChange={(value) => setFormData({ ...formData, forma_pagamento_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formasPagamento.map((fp: any) => (
+                        <SelectItem key={fp.id} value={fp.id}>
+                          {fp.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Conta Financeira</Label>
+                  <Select value={formData.conta_financeira_id} onValueChange={(value) => setFormData({ ...formData, conta_financeira_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contas.map((conta: any) => (
+                        <SelectItem key={conta.id} value={conta.id}>
+                          {conta.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {formData.tipo === "receita" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Tratamento</Label>
+                    <Select value={formData.tratamento_id} onValueChange={(value) => setFormData({ ...formData, tratamento_id: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tratamentos.map((trat: any) => (
+                          <SelectItem key={trat.id} value={trat.id}>
+                            {trat.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Origem</Label>
+                    <Select value={formData.origem_id} onValueChange={(value) => setFormData({ ...formData, origem_id: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {origens.map((orig: any) => (
+                          <SelectItem key={orig.id} value={orig.id}>
+                            {orig.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label>Observações</Label>
+                <Textarea
+                  value={formData.observacoes}
+                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                  placeholder="Observações adicionais"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  {editingId ? "Atualizar" : "Criar"} Lançamento
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filtros */}
@@ -132,6 +518,7 @@ const Lancamentos = () => {
                 <TableHead>Forma Pgto</TableHead>
                 <TableHead>Conta</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -163,10 +550,20 @@ const Lancamentos = () => {
                       {lanc.financeiro_formas_pagamento?.nome || "-"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {lanc.financeiro_contas?.nome || "-"}
+                      {lanc.conta_financeira?.nome || "-"}
                     </TableCell>
                     <TableCell className={`text-right font-bold ${lanc.tipo === 'receita' ? 'text-green-600' : 'text-destructive'}`}>
                       {lanc.tipo === 'receita' ? '+' : '-'}R$ {Number(lanc.valor_entrada || lanc.valor_saida || 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(lanc)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(lanc.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
