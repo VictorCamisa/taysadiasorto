@@ -216,19 +216,39 @@ const Lancamentos = () => {
       toast.error("Usuário não autenticado");
       return;
     }
+
+    const valorEntrada = formData.tipo === "receita" ? parseFloat(formData.valor_entrada) || 0 : 0;
+    const valorSaida = formData.tipo === "despesa" ? parseFloat(formData.valor_saida) || 0 : 0;
+
+    // Quando houver tratamento vinculado, calcular automaticamente custo e margem
+    let quantidade = 1;
+    let custo_tratamento = 0;
+    let margem = 0;
+
+    if (formData.tipo === "receita" && formData.tratamento_id) {
+      const tratamentoSelecionado = tratamentos.find((t: any) => t.id === formData.tratamento_id);
+      if (tratamentoSelecionado) {
+        const custoUnitarioTratamento = Number(tratamentoSelecionado.custo_total || 0);
+        custo_tratamento = custoUnitarioTratamento * quantidade;
+        margem = valorEntrada - custo_tratamento;
+      }
+    }
     
     const payload = {
       tipo: formData.tipo,
       data: formData.data,
       cliente: formData.cliente || null,
       observacoes: formData.observacoes || null,
-      valor_entrada: formData.tipo === "receita" ? parseFloat(formData.valor_entrada) || 0 : 0,
-      valor_saida: formData.tipo === "despesa" ? parseFloat(formData.valor_saida) || 0 : 0,
+      valor_entrada: valorEntrada,
+      valor_saida: valorSaida,
       categoria_id: formData.categoria_id || null,
       forma_pagamento_id: formData.forma_pagamento_id || null,
       conta_financeira_id: formData.conta_financeira_id || null,
       tratamento_id: formData.tratamento_id || null,
       origem_id: formData.origem_id || null,
+      quantidade: formData.tipo === "receita" ? quantidade : null,
+      custo_tratamento: formData.tipo === "receita" ? custo_tratamento : 0,
+      margem: formData.tipo === "receita" ? margem : 0,
     };
 
     if (editingId) {
