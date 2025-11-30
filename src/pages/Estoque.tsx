@@ -27,10 +27,11 @@ const Estoque = () => {
       if (!user) throw new Error("Usuário não autenticado");
 
       if (produto.id) {
+        const { id, user_id, ...produtoUpdate } = produto;
         const { error } = await supabase
           .from("estoque_produtos")
-          .update(produto)
-          .eq("id", produto.id);
+          .update(produtoUpdate)
+          .eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase

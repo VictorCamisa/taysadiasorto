@@ -49,12 +49,15 @@ const Configuracoes = () => {
       if (!user) throw new Error("Usuário não autenticado");
 
       if (categoria.id) {
+        // No UPDATE, não incluir user_id (RLS já valida)
+        const { id, user_id, ...categoriaUpdate } = categoria;
         const { error } = await supabase
           .from("financeiro_categorias")
-          .update(categoria)
-          .eq("id", categoria.id);
+          .update(categoriaUpdate)
+          .eq("id", id);
         if (error) throw error;
       } else {
+        // No INSERT, incluir user_id
         const { error } = await supabase
           .from("financeiro_categorias")
           .insert({ ...categoria, user_id: user.id });
@@ -78,12 +81,15 @@ const Configuracoes = () => {
       if (!user) throw new Error("Usuário não autenticado");
 
       if (conta.id) {
+        // No UPDATE, não incluir user_id (RLS já valida)
+        const { id, user_id, ...contaUpdate } = conta;
         const { error } = await supabase
           .from("financeiro_contas")
-          .update(conta)
-          .eq("id", conta.id);
+          .update(contaUpdate)
+          .eq("id", id);
         if (error) throw error;
       } else {
+        // No INSERT, incluir user_id
         const { error } = await supabase
           .from("financeiro_contas")
           .insert({ ...conta, user_id: user.id });
@@ -107,10 +113,11 @@ const Configuracoes = () => {
       if (!user) throw new Error("Usuário não autenticado");
 
       if (forma.id) {
+        const { id, user_id, ...formaUpdate } = forma;
         const { error } = await supabase
           .from("financeiro_formas_pagamento")
-          .update(forma)
-          .eq("id", forma.id);
+          .update(formaUpdate)
+          .eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase
@@ -136,10 +143,11 @@ const Configuracoes = () => {
       if (!user) throw new Error("Usuário não autenticado");
 
       if (origem.id) {
+        const { id, user_id, ...origemUpdate } = origem;
         const { error } = await supabase
           .from("financeiro_origens")
-          .update(origem)
-          .eq("id", origem.id);
+          .update(origemUpdate)
+          .eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase
