@@ -254,8 +254,8 @@ const Configuracoes = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Categoria Sintética</TableHead>
-                    <TableHead>Categoria Analítica</TableHead>
+                    <TableHead>Categoria Principal</TableHead>
+                    <TableHead>Subcategoria</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -268,42 +268,62 @@ const Configuracoes = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    categorias.map((categoria) => (
-                      <TableRow key={categoria.id}>
-                        <TableCell>{tipoLabels[String(categoria.tipo)] || categoria.tipo}</TableCell>
-                        <TableCell className="font-medium">{categoria.categoria_sintetica}</TableCell>
-                        <TableCell>{categoria.categoria_analitica || "-"}</TableCell>
-                        <TableCell>
-                          <Badge variant={categoria.ativa ? "default" : "secondary"}>
-                            {categoria.ativa ? "Ativa" : "Inativa"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedCategoria(categoria);
-                                setCategoriaFormOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setItemToDelete({ id: categoria.id, table: "financeiro_categorias" });
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    categorias
+                      .sort((a, b) => {
+                        // Ordenar por Categoria Principal, depois Subcategoria
+                        const compareMain = a.categoria_sintetica.localeCompare(b.categoria_sintetica);
+                        if (compareMain !== 0) return compareMain;
+                        return (a.categoria_analitica || "").localeCompare(b.categoria_analitica || "");
+                      })
+                      .map((categoria) => (
+                        <TableRow key={categoria.id}>
+                          <TableCell>
+                            <Badge variant="outline">{tipoLabels[String(categoria.tipo)] || categoria.tipo}</Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{categoria.categoria_sintetica}</TableCell>
+                          <TableCell>
+                            {categoria.categoria_analitica ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">↳</span>
+                                <Badge variant="secondary" className="font-normal">
+                                  {categoria.categoria_analitica}
+                                </Badge>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={categoria.ativa ? "default" : "secondary"}>
+                              {categoria.ativa ? "Ativa" : "Inativa"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedCategoria(categoria);
+                                  setCategoriaFormOpen(true);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setItemToDelete({ id: categoria.id, table: "financeiro_categorias" });
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
                   )}
                 </TableBody>
               </Table>

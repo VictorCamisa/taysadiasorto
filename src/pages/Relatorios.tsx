@@ -666,7 +666,7 @@ const Relatorios = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Categoria Sintética</Label>
+                    <Label>Categoria Principal</Label>
                     <Select value={categoriaSinteticaFiltro} onValueChange={setCategoriaSinteticaFiltro}>
                       <SelectTrigger>
                         <SelectValue />
@@ -757,7 +757,7 @@ const Relatorios = () => {
           {/* Gráfico */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Despesas por Categoria Sintética</CardTitle>
+              <CardTitle className="text-lg">Despesas por Categoria Principal</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -792,8 +792,8 @@ const Relatorios = () => {
                     <TableRow>
                       <TableHead>Data</TableHead>
                       <TableHead>Fornecedor</TableHead>
-                      <TableHead>Categoria Sintética</TableHead>
-                      <TableHead>Categoria Analítica</TableHead>
+                      <TableHead>Categoria Principal</TableHead>
+                      <TableHead>Subcategoria</TableHead>
                       <TableHead>Forma Pagamento</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                     </TableRow>
