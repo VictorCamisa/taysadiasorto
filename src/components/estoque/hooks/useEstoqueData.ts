@@ -9,7 +9,7 @@ export const useEstoqueData = () => {
         .from("estoque_produtos")
         .select(`
           *,
-          fornecedor:financeiro_fornecedores!fornecedor_id(id, nome)
+          fornecedor:financeiro_fornecedores!estoque_produtos_fornecedor_id_fkey(id, nome)
         `)
         .order("nome");
       
