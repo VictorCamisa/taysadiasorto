@@ -710,42 +710,60 @@ export type Database = {
       }
       financeiro_tratamentos: {
         Row: {
-          ativo: boolean | null
-          created_at: string | null
-          custo_total: number | null
+          ativo: boolean
+          contraindicacoes: string | null
+          created_at: string
+          custo_operacional: number
+          custo_total: number
           grupo: string
           id: string
+          lucro_sessao: number | null
           margem_bruta: number | null
           margem_contribuicao: number | null
           nome: string
+          observacoes: string | null
           preco_venda: number
-          updated_at: string | null
+          profissional_executor: string | null
+          tempo_execucao_minutos: number | null
+          updated_at: string
           user_id: string
         }
         Insert: {
-          ativo?: boolean | null
-          created_at?: string | null
-          custo_total?: number | null
+          ativo?: boolean
+          contraindicacoes?: string | null
+          created_at?: string
+          custo_operacional?: number
+          custo_total?: number
           grupo: string
           id?: string
+          lucro_sessao?: number | null
           margem_bruta?: number | null
           margem_contribuicao?: number | null
           nome: string
+          observacoes?: string | null
           preco_venda?: number
-          updated_at?: string | null
+          profissional_executor?: string | null
+          tempo_execucao_minutos?: number | null
+          updated_at?: string
           user_id: string
         }
         Update: {
-          ativo?: boolean | null
-          created_at?: string | null
-          custo_total?: number | null
+          ativo?: boolean
+          contraindicacoes?: string | null
+          created_at?: string
+          custo_operacional?: number
+          custo_total?: number
           grupo?: string
           id?: string
+          lucro_sessao?: number | null
           margem_bruta?: number | null
           margem_contribuicao?: number | null
           nome?: string
+          observacoes?: string | null
           preco_venda?: number
-          updated_at?: string | null
+          profissional_executor?: string | null
+          tempo_execucao_minutos?: number | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
