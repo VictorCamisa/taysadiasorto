@@ -1401,7 +1401,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      recalcular_saldo_conta: { Args: { conta_id: string }; Returns: undefined }
     }
     Enums: {
       activity_type:
