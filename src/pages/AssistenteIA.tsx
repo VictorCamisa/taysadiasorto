@@ -65,14 +65,12 @@ const AssistenteIA = () => {
   };
 
   return (
-    <div className="relative h-full -m-6">
-      <div className="absolute inset-0">
-        <ChatInterface
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-        />
-      </div>
+    <div className="h-full flex flex-col">
+      <ChatInterface
+        messages={messages}
+        onSendMessage={handleSendMessage}
+        isLoading={isLoading}
+      />
     </div>
   );
 };
