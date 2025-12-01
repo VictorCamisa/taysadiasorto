@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { CashFlowProjection } from "@/components/relatorios/CashFlowProjection";
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -401,11 +402,12 @@ const Relatorios = () => {
       </div>
 
       <Tabs defaultValue="receitas" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="receitas">Receitas</TabsTrigger>
           <TabsTrigger value="despesas">Despesas</TabsTrigger>
           <TabsTrigger value="margens">Margens</TabsTrigger>
           <TabsTrigger value="estoque">Estoque</TabsTrigger>
+          <TabsTrigger value="projecoes">Projeções</TabsTrigger>
         </TabsList>
 
         {/* ABA RECEITAS */}
@@ -1156,6 +1158,11 @@ const Relatorios = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ABA PROJEÇÕES */}
+        <TabsContent value="projecoes" className="space-y-6">
+          <CashFlowProjection />
         </TabsContent>
       </Tabs>
     </div>
