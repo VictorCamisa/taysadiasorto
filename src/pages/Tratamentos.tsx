@@ -177,6 +177,19 @@ export default function Tratamentos() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Check if there are any lancamentos linked to this tratamento
+      const { data: lancamentos, error: checkError } = await supabase
+        .from("financeiro_lancamentos")
+        .select("id")
+        .eq("tratamento_id", id)
+        .limit(1);
+      
+      if (checkError) throw checkError;
+      
+      if (lancamentos && lancamentos.length > 0) {
+        throw new Error("Este tratamento não pode ser excluído porque possui lançamentos financeiros vinculados. Remova ou edite os lançamentos primeiro.");
+      }
+
       // Delete ficha técnica first
       await supabase
         .from("tratamentos_ficha_tecnica")
@@ -198,7 +211,7 @@ export default function Tratamentos() {
       setTratamentoToDelete(null);
     },
     onError: (error) => {
-      toast.error("Erro ao excluir tratamento: " + error.message);
+      toast.error(error.message);
     },
   });
 
