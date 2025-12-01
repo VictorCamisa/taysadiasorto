@@ -88,7 +88,7 @@ const ContasPagar = () => {
     queryKey: ["categorias-despesa"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_categorias")
+        .from("financeiro_categorias_sinteticas")
         .select("*")
         .eq("ativa", true);
       if (error) throw error;
