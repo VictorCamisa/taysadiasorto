@@ -142,15 +142,15 @@ const Auth = () => {
     }
   };
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4 animate-fade-in">
+      <div className="w-full max-w-md animate-scale-in">
         {/* Logo/Brand area */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-light tracking-tight text-foreground mb-2">
-            ClinicFlow
+          <h1 className="text-5xl font-signature text-foreground mb-2">
+            Dra. Taysa Dias
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gerencie sua clínica com elegância
+            Gestão Financeira Inteligente
           </p>
         </div>
 
@@ -350,7 +350,7 @@ const Auth = () => {
 
         {/* Footer text */}
         <p className="text-center text-xs text-muted-foreground mt-8">
-          © 2025 ClinicFlow. Todos os direitos reservados.
+          © 2025 Dra. Taysa Dias. Todos os direitos reservados.
         </p>
       </div>
     </div>
