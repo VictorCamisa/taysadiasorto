@@ -1,25 +1,86 @@
 import { ChatInterface } from "@/components/assistente/ChatInterface";
-import { Sparkles } from "lucide-react";
+import { ConversationsSidebar } from "@/components/assistente/ConversationsSidebar";
+import { useChatConversations } from "@/hooks/useChatConversations";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AssistenteIA = () => {
-  return (
-    <div className="h-screen flex flex-col p-6 bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="mb-6 text-center animate-fade-in">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <div className="p-3 bg-primary/10 rounded-full">
-            <Sparkles className="h-8 w-8 text-primary" />
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Assistente IA
-          </h1>
-        </div>
-        <p className="text-muted-foreground text-lg">
-          Seu assistente inteligente conectado ao N8N
-        </p>
-      </div>
+  const {
+    conversations,
+    currentConversationId,
+    messages,
+    isLoading,
+    setIsLoading,
+    createConversation,
+    addMessage,
+    deleteConversation,
+    selectConversation,
+    startNewConversation,
+  } = useChatConversations();
 
-      <div className="flex-1 flex flex-col min-h-0">
-        <ChatInterface />
+  const handleSendMessage = async (content: string) => {
+    setIsLoading(true);
+
+    try {
+      let conversationId = currentConversationId;
+
+      // Create new conversation if needed
+      if (!conversationId) {
+        conversationId = await createConversation(content);
+        if (!conversationId) {
+          throw new Error("Failed to create conversation");
+        }
+      }
+
+      // Add user message
+      await addMessage(conversationId, "user", content);
+
+      // Call N8N webhook
+      const conversationHistory = messages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      const { data, error } = await supabase.functions.invoke("chat-n8n", {
+        body: {
+          message: content,
+          conversationHistory,
+        },
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
+      }
+
+      const responseText = data?.response || data?.output || data?.message || "Desculpe, não consegui processar sua solicitação.";
+
+      // Add assistant message
+      await addMessage(conversationId, "assistant", responseText);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Erro ao enviar mensagem");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="h-screen flex bg-background">
+      <ConversationsSidebar
+        conversations={conversations}
+        currentConversationId={currentConversationId}
+        onSelectConversation={selectConversation}
+        onNewConversation={startNewConversation}
+        onDeleteConversation={deleteConversation}
+      />
+
+      <div className="flex-1 flex flex-col">
+        <ChatInterface
+          messages={messages}
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );
