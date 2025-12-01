@@ -3,7 +3,7 @@ import { NavLink } from "@/components/NavLink";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Diário de Caixa", url: "/diario-caixa", icon: FileText },
+  { title: "Caixa", url: "/diario-caixa", icon: FileText },
   { title: "Lançamentos", url: "/lancamentos", icon: DollarSign },
   { title: "Contas a Pagar", url: "/contas-pagar", icon: CreditCard },
   { title: "Tratamentos", url: "/tratamentos", icon: TrendingUp },
@@ -11,23 +11,23 @@ const menuItems = [
   { title: "Fornecedores", url: "/fornecedores", icon: Users },
   { title: "DRE", url: "/dre", icon: BarChart3 },
   { title: "Relatórios", url: "/relatorios", icon: FileBarChart },
-  { title: "Assistente IA", url: "/assistente-ia", icon: Sparkles },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
+  { title: "IA", url: "/assistente-ia", icon: Sparkles },
+  { title: "Config", url: "/configuracoes", icon: Settings },
 ];
 
 export function TopNav() {
   return (
-    <nav className="flex items-center gap-0.5 flex-wrap">
+    <nav className="flex items-center gap-1">
       {menuItems.map((item) => (
         <NavLink
           key={item.title}
           to={item.url}
           end
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors hover:bg-accent"
-          activeClassName="bg-accent text-accent-foreground font-medium"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all hover:bg-accent/80"
+          activeClassName="bg-accent text-accent-foreground shadow-sm"
         >
-          <item.icon className="h-3.5 w-3.5" />
-          <span>{item.title}</span>
+          <item.icon className="h-4 w-4 flex-shrink-0" />
+          <span className="hidden lg:inline">{item.title}</span>
         </NavLink>
       ))}
     </nav>

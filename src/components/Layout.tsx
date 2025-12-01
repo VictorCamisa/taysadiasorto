@@ -16,28 +16,29 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="flex items-center justify-between gap-4 px-4 py-2">
-          <div className="flex-1 min-w-0">
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <div className="flex items-center justify-between gap-6 px-6 py-3">
+          <div className="flex-1">
             <TopNav />
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0">
             {user && (
               <>
-                <span className="text-xs text-muted-foreground hidden sm:inline">
+                <span className="text-sm text-muted-foreground hidden md:inline truncate max-w-[200px]">
                   {user.email}
                 </span>
+                <div className="h-6 w-px bg-border hidden md:block" />
                 <ThemeToggle />
-                <Button variant="ghost" size="sm" onClick={signOut}>
+                <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">
                   <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-1">Sair</span>
+                  <span className="hidden sm:inline">Sair</span>
                 </Button>
               </>
             )}
           </div>
         </div>
       </header>
-      <main className={isAssistenteIA ? "flex-1 overflow-hidden" : "flex-1 p-4 overflow-auto"}>
+      <main className={isAssistenteIA ? "flex-1 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
         {children}
       </main>
     </div>
