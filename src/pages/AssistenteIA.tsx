@@ -66,7 +66,7 @@ const AssistenteIA = () => {
   };
 
   return (
-    <div className="h-screen flex bg-background">
+    <div className="h-screen flex overflow-hidden bg-background">
       <ConversationsSidebar
         conversations={conversations}
         currentConversationId={currentConversationId}
@@ -75,13 +75,13 @@ const AssistenteIA = () => {
         onDeleteConversation={deleteConversation}
       />
 
-      <div className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col min-w-0">
         <ChatInterface
           messages={messages}
           onSendMessage={handleSendMessage}
           isLoading={isLoading}
         />
-      </div>
+      </main>
     </div>
   );
 };

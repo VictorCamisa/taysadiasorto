@@ -26,53 +26,65 @@ export const ConversationsSidebar = ({
   onDeleteConversation,
 }: ConversationsSidebarProps) => {
   return (
-    <div className="w-64 border-r border-border/50 bg-background/95 backdrop-blur-sm flex flex-col">
-      <div className="p-4 border-b border-border/50">
+    <aside className="w-72 border-r border-border flex flex-col bg-muted/30">
+      {/* Header */}
+      <div className="p-6 border-b border-border">
         <Button
           onClick={onNewConversation}
-          className="w-full justify-start gap-2"
-          variant="outline"
+          className="w-full h-11 justify-start gap-3 font-medium"
+          size="lg"
         >
-          <MessageSquarePlus className="h-4 w-4" />
+          <MessageSquarePlus className="h-5 w-5" />
           Nova Conversa
         </Button>
       </div>
 
+      {/* Conversations List */}
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
-          {conversations.map((conversation) => (
-            <div
-              key={conversation.id}
-              className={cn(
-                "group flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-colors",
-                currentConversationId === conversation.id
-                  ? "bg-primary/10 text-primary"
-                  : "hover:bg-muted/50"
-              )}
-            >
-              <button
-                onClick={() => onSelectConversation(conversation.id)}
-                className="flex-1 text-left text-sm truncate"
-              >
-                {conversation.title}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteConversation(conversation.id);
-                }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Trash2 className="h-4 w-4 text-destructive hover:text-destructive/80" />
-              </button>
+        <div className="p-3 space-y-2">
+          {conversations.length === 0 ? (
+            <div className="text-center py-12 px-4">
+              <p className="text-sm text-muted-foreground">
+                Nenhuma conversa ainda
+              </p>
             </div>
-          ))}
+          ) : (
+            conversations.map((conv) => (
+              <div
+                key={conv.id}
+                className={cn(
+                  "group relative flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer transition-all duration-200",
+                  currentConversationId === conv.id
+                    ? "bg-primary/10 text-foreground shadow-sm"
+                    : "hover:bg-accent text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => onSelectConversation(conv.id)}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate leading-relaxed">
+                    {conv.title}
+                  </p>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0",
+                    "hover:bg-destructive/10 hover:text-destructive"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteConversation(conv.id);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))
+          )}
         </div>
       </ScrollArea>
-
-      <div className="p-4 border-t border-border/50 text-xs text-muted-foreground text-center">
-        Últimas 10 conversas
-      </div>
-    </div>
+    </aside>
   );
 };
