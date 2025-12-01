@@ -27,6 +27,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
 
 const Lancamentos = () => {
   const { user } = useAuth();
@@ -637,7 +638,7 @@ const Lancamentos = () => {
                       {lanc.conta_financeira?.nome || "-"}
                     </TableCell>
                     <TableCell className={`text-right font-bold ${lanc.tipo === 'receita' ? 'text-green-600' : 'text-destructive'}`}>
-                      {lanc.tipo === 'receita' ? '+' : '-'}R$ {Number(lanc.valor_entrada || lanc.valor_saida || 0).toFixed(2)}
+                      {lanc.tipo === 'receita' ? '+' : '-'}{formatCurrency(Number(lanc.valor_entrada || lanc.valor_saida || 0))}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

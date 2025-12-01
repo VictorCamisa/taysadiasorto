@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 
 interface TopTreatmentsChartProps {
   data: Array<{ nome: string; receita: number; margem?: number; margemPercentual?: number }>;
@@ -34,8 +35,8 @@ export function TopTreatmentsChart({ data, title, dataKey }: TopTreatmentsChartP
               }}
               formatter={(value: number) => 
                 dataKey === "receita" 
-                  ? `R$ ${value.toFixed(2)}` 
-                  : `${value.toFixed(1)}%`
+                  ? formatCurrency(value)
+                  : `${formatNumber(value, 1)}%`
               }
             />
             <Bar dataKey="value" radius={[0, 4, 4, 0]}>

@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useEstoqueData } from "@/components/estoque/hooks/useEstoqueData";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 
 const RelatoriosEstoque = () => {
   const { produtos, compras, kpis } = useEstoqueData();
@@ -84,8 +85,7 @@ const RelatoriosEstoque = () => {
                       <div>
                         <p className="font-medium">{produto.nome}</p>
                         <p className="text-sm text-muted-foreground">
-                          {produto.estoque_atual} {produto.unidade_medida} × R${" "}
-                          {Number(produto.custo_medio).toFixed(2)}
+                          {produto.estoque_atual} {produto.unidade_medida} × {formatCurrency(Number(produto.custo_medio))}
                         </p>
                       </div>
                       <p className="font-bold">
