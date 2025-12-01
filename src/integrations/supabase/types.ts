@@ -612,6 +612,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "financeiro_contas_pagar_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_categorias_dropdown"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "financeiro_contas_pagar_compra_id_fkey"
             columns: ["compra_id"]
             isOneToOne: false
@@ -786,6 +793,13 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "financeiro_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_lancamentos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_categorias_dropdown"
             referencedColumns: ["id"]
           },
           {
@@ -1398,7 +1412,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      financeiro_categorias_dropdown: {
+        Row: {
+          categoria_sintetica: string | null
+          id: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      financeiro_categorias_sinteticas: {
+        Row: {
+          ativa: boolean | null
+          categoria_sintetica: string | null
+          created_at: string | null
+          id: string | null
+          tipo: Database["public"]["Enums"]["categoria_tipo"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       recalcular_saldo_conta: { Args: { conta_id: string }; Returns: undefined }
