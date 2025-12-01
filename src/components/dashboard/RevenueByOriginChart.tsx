@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 
-const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "#8884d8", "#82ca9d", "#ffc658"];
+// Professional color palette - vibrant blues, purples, and teals
+const COLORS = ['#3B82F6', '#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EC4899'];
 
 export function RevenueByOriginChart() {
   const { data = [] } = useQuery({
@@ -57,7 +58,16 @@ export function RevenueByOriginChart() {
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
+            <Tooltip 
+              formatter={(value: any) => formatCurrency(Number(value))} 
+              contentStyle={{ 
+                backgroundColor: "hsl(var(--card))", 
+                border: "1px solid hsl(var(--border))",
+                borderRadius: '8px',
+                color: 'hsl(var(--card-foreground))',
+              }}
+            />
+            <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>

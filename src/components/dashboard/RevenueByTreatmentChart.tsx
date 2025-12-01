@@ -44,20 +44,26 @@ export function RevenueByTreatmentChart() {
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
             <XAxis 
               dataKey="name" 
               angle={-45} 
               textAnchor="end" 
               height={100}
-              className="text-xs"
+              stroke="hsl(var(--muted-foreground))"
+              style={{ fontSize: '11px' }}
             />
-            <YAxis className="text-xs" />
+            <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: '12px' }} />
             <Tooltip 
               formatter={(value: any) => formatCurrency(Number(value))}
-              contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+              contentStyle={{ 
+                backgroundColor: "hsl(var(--card))", 
+                border: "1px solid hsl(var(--border))",
+                borderRadius: '8px',
+                color: 'hsl(var(--card-foreground))',
+              }}
             />
-            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="value" fill="#3B82F6" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
