@@ -57,11 +57,11 @@ export function MonthlyRevenueChart() {
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
             <XAxis 
               dataKey="month" 
-              tick={{ fill: 'hsl(var(--foreground))' }}
+              tick={{ fill: '#94A3B8' }}
               style={{ fontSize: '12px' }} 
             />
             <YAxis 
-              tick={{ fill: 'hsl(var(--foreground))' }}
+              tick={{ fill: '#94A3B8' }}
               style={{ fontSize: '12px' }} 
             />
             <Tooltip 
@@ -75,7 +75,7 @@ export function MonthlyRevenueChart() {
             />
             <Legend 
               wrapperStyle={{ 
-                color: 'hsl(var(--foreground))',
+                color: '#94A3B8',
                 fontSize: '13px'
               }} 
             />

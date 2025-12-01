@@ -56,11 +56,11 @@ export function RevenueByTreatmentChart() {
               angle={-45} 
               textAnchor="end" 
               height={100}
-              tick={{ fill: 'hsl(var(--foreground))' }}
+              tick={{ fill: '#94A3B8' }}
               style={{ fontSize: '11px' }}
             />
             <YAxis 
-              tick={{ fill: 'hsl(var(--foreground))' }}
+              tick={{ fill: '#94A3B8' }}
               style={{ fontSize: '12px' }} 
             />
             <Tooltip 
