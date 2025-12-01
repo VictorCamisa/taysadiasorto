@@ -17,6 +17,7 @@ import Fornecedores from "./pages/Fornecedores";
 import DRE from "./pages/DRE";
 import Relatorios from "./pages/Relatorios";
 import RelatoriosEstoque from "./pages/RelatoriosEstoque";
+import AssistenteIA from "./pages/AssistenteIA";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
@@ -47,6 +48,7 @@ const App = () => (
                       <Route path="/dre" element={<DRE />} />
                       <Route path="/relatorios" element={<Relatorios />} />
                       <Route path="/relatorios-estoque" element={<RelatoriosEstoque />} />
+                      <Route path="/assistente-ia" element={<AssistenteIA />} />
                       <Route path="/configuracoes" element={<Configuracoes />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
