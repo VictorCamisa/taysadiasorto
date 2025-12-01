@@ -3,6 +3,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "react-router-dom";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,8 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { signOut, user } = useAuth();
+  const location = useLocation();
+  const isAssistenteIA = location.pathname === "/assistente-ia";
 
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
@@ -34,7 +37,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </header>
-      <main className="flex-1 p-4 overflow-auto">
+      <main className={isAssistenteIA ? "flex-1 overflow-hidden" : "flex-1 p-4 overflow-auto"}>
         {children}
       </main>
     </div>
