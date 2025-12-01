@@ -141,94 +141,219 @@ const Auth = () => {
       setIsLoadingSignup(false);
     }
   };
-  return <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        
-        <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
-            </TabsList>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+      <div className="w-full max-w-md">
+        {/* Logo/Brand area */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-light tracking-tight text-foreground mb-2">
+            ClinicFlow
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie sua clínica com elegância
+          </p>
+        </div>
 
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">E-mail</Label>
-                  <Input id="login-email" type="email" placeholder="seu@email.com" value={loginData.email} onChange={e => setLoginData({
-                  ...loginData,
-                  email: e.target.value
-                })} className={loginErrors.email ? "border-destructive" : ""} />
-                  {loginErrors.email && <p className="text-sm text-destructive">{loginErrors.email}</p>}
-                </div>
+        {/* Auth Card */}
+        <Card className="backdrop-blur-xl bg-card/80 border border-border/50 shadow-2xl">
+          <CardContent className="pt-6">
+            <Tabs defaultValue="login" className="w-full">
+              {/* Minimalist Tab Selector */}
+              <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/30 p-1 h-12">
+                <TabsTrigger 
+                  value="login" 
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm font-medium"
+                >
+                  Login
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="signup"
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm font-medium"
+                >
+                  Cadastrar
+                </TabsTrigger>
+              </TabsList>
 
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Senha</Label>
-                  <Input id="login-password" type="password" placeholder="••••••••" value={loginData.password} onChange={e => setLoginData({
-                  ...loginData,
-                  password: e.target.value
-                })} className={loginErrors.password ? "border-destructive" : ""} />
-                  {loginErrors.password && <p className="text-sm text-destructive">{loginErrors.password}</p>}
-                </div>
+              {/* Login Form */}
+              <TabsContent value="login" className="space-y-0">
+                <form onSubmit={handleLogin} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email" className="text-sm font-medium text-foreground">
+                      E-mail
+                    </Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={loginData.email}
+                      onChange={(e) =>
+                        setLoginData({ ...loginData, email: e.target.value })
+                      }
+                      className={`h-12 bg-background border-border/50 focus:border-primary transition-colors ${
+                        loginErrors.email ? "border-destructive" : ""
+                      }`}
+                    />
+                    {loginErrors.email && (
+                      <p className="text-xs text-destructive mt-1">{loginErrors.email}</p>
+                    )}
+                  </div>
 
-                <Button type="submit" className="w-full" disabled={isLoadingLogin}>
-                  {isLoadingLogin ? "Entrando..." : <>
-                      <LogIn className="h-4 w-4" />
-                      Entrar
-                    </>}
-                </Button>
-              </form>
-            </TabsContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password" className="text-sm font-medium text-foreground">
+                      Senha
+                    </Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={loginData.password}
+                      onChange={(e) =>
+                        setLoginData({ ...loginData, password: e.target.value })
+                      }
+                      className={`h-12 bg-background border-border/50 focus:border-primary transition-colors ${
+                        loginErrors.password ? "border-destructive" : ""
+                      }`}
+                    />
+                    {loginErrors.password && (
+                      <p className="text-xs text-destructive mt-1">{loginErrors.password}</p>
+                    )}
+                  </div>
 
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">E-mail</Label>
-                  <Input id="signup-email" type="email" placeholder="seu@email.com" value={signupData.email} onChange={e => setSignupData({
-                  ...signupData,
-                  email: e.target.value
-                })} className={signupErrors.email ? "border-destructive" : ""} />
-                  {signupErrors.email && <p className="text-sm text-destructive">{signupErrors.email}</p>}
-                </div>
+                  <Button
+                    type="submit"
+                    className="w-full h-12 mt-6 font-medium text-base shadow-lg hover:shadow-xl transition-all"
+                    disabled={isLoadingLogin}
+                  >
+                    {isLoadingLogin ? (
+                      "Entrando..."
+                    ) : (
+                      <>
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Entrar
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </TabsContent>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-username">Nome de Usuário (Opcional)</Label>
-                  <Input id="signup-username" type="text" placeholder="seu_usuario" value={signupData.username} onChange={e => setSignupData({
-                  ...signupData,
-                  username: e.target.value
-                })} className={signupErrors.username ? "border-destructive" : ""} />
-                  {signupErrors.username && <p className="text-sm text-destructive">{signupErrors.username}</p>}
-                </div>
+              {/* Signup Form */}
+              <TabsContent value="signup" className="space-y-0">
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email" className="text-sm font-medium text-foreground">
+                      E-mail
+                    </Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={signupData.email}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, email: e.target.value })
+                      }
+                      className={`h-12 bg-background border-border/50 focus:border-primary transition-colors ${
+                        signupErrors.email ? "border-destructive" : ""
+                      }`}
+                    />
+                    {signupErrors.email && (
+                      <p className="text-xs text-destructive mt-1">{signupErrors.email}</p>
+                    )}
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
-                  <Input id="signup-password" type="password" placeholder="••••••••" value={signupData.password} onChange={e => setSignupData({
-                  ...signupData,
-                  password: e.target.value
-                })} className={signupErrors.password ? "border-destructive" : ""} />
-                  {signupErrors.password && <p className="text-sm text-destructive">{signupErrors.password}</p>}
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-username" className="text-sm font-medium text-foreground">
+                      Nome de Usuário (Opcional)
+                    </Label>
+                    <Input
+                      id="signup-username"
+                      type="text"
+                      placeholder="seu_usuario"
+                      value={signupData.username}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, username: e.target.value })
+                      }
+                      className={`h-12 bg-background border-border/50 focus:border-primary transition-colors ${
+                        signupErrors.username ? "border-destructive" : ""
+                      }`}
+                    />
+                    {signupErrors.username && (
+                      <p className="text-xs text-destructive mt-1">{signupErrors.username}</p>
+                    )}
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-confirm">Confirmar Senha</Label>
-                  <Input id="signup-confirm" type="password" placeholder="••••••••" value={signupData.confirmPassword} onChange={e => setSignupData({
-                  ...signupData,
-                  confirmPassword: e.target.value
-                })} className={signupErrors.confirmPassword ? "border-destructive" : ""} />
-                  {signupErrors.confirmPassword && <p className="text-sm text-destructive">{signupErrors.confirmPassword}</p>}
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password" className="text-sm font-medium text-foreground">
+                      Senha
+                    </Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupData.password}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, password: e.target.value })
+                      }
+                      className={`h-12 bg-background border-border/50 focus:border-primary transition-colors ${
+                        signupErrors.password ? "border-destructive" : ""
+                      }`}
+                    />
+                    {signupErrors.password && (
+                      <p className="text-xs text-destructive mt-1">{signupErrors.password}</p>
+                    )}
+                  </div>
 
-                <Button type="submit" className="w-full" disabled={isLoadingSignup}>
-                  {isLoadingSignup ? "Cadastrando..." : <>
-                      <UserPlus className="h-4 w-4" />
-                      Criar Conta
-                    </>}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>;
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm" className="text-sm font-medium text-foreground">
+                      Confirmar Senha
+                    </Label>
+                    <Input
+                      id="signup-confirm"
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupData.confirmPassword}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
+                      className={`h-12 bg-background border-border/50 focus:border-primary transition-colors ${
+                        signupErrors.confirmPassword ? "border-destructive" : ""
+                      }`}
+                    />
+                    {signupErrors.confirmPassword && (
+                      <p className="text-xs text-destructive mt-1">
+                        {signupErrors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 mt-6 font-medium text-base shadow-lg hover:shadow-xl transition-all"
+                    disabled={isLoadingSignup}
+                  >
+                    {isLoadingSignup ? (
+                      "Cadastrando..."
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Criar Conta
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Footer text */}
+        <p className="text-center text-xs text-muted-foreground mt-8">
+          © 2025 ClinicFlow. Todos os direitos reservados.
+        </p>
+      </div>
+    </div>
+  );
 };
 export default Auth;
