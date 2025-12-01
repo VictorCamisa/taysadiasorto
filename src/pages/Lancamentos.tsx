@@ -430,38 +430,78 @@ const Lancamentos = () => {
               </div>
 
               {formData.tipo === "receita" && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Tratamento</Label>
-                    <Select value={formData.tratamento_id} onValueChange={(value) => setFormData({ ...formData, tratamento_id: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tratamentos.map((trat: any) => (
-                          <SelectItem key={trat.id} value={trat.id}>
-                            {trat.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Tratamento</Label>
+                      <Select value={formData.tratamento_id} onValueChange={(value) => setFormData({ ...formData, tratamento_id: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tratamentos.map((trat: any) => (
+                            <SelectItem key={trat.id} value={trat.id}>
+                              {trat.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Origem</Label>
+                      <Select value={formData.origem_id} onValueChange={(value) => setFormData({ ...formData, origem_id: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {origens.map((orig: any) => (
+                            <SelectItem key={orig.id} value={orig.id}>
+                              {orig.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div>
-                    <Label>Origem</Label>
-                    <Select value={formData.origem_id} onValueChange={(value) => setFormData({ ...formData, origem_id: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {origens.map((orig: any) => (
-                          <SelectItem key={orig.id} value={orig.id}>
-                            {orig.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+
+                  {formData.tratamento_id && formData.valor_entrada && (
+                    <Card className="bg-muted/50 border-primary/20">
+                      <CardContent className="pt-4 space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">Cálculo Automático</p>
+                        {(() => {
+                          const tratamentoSelecionado = tratamentos.find((t: any) => t.id === formData.tratamento_id);
+                          const valorEntrada = parseFloat(formData.valor_entrada) || 0;
+                          const custoTratamento = tratamentoSelecionado ? Number(tratamentoSelecionado.custo_total || 0) : 0;
+                          const margem = valorEntrada - custoTratamento;
+                          const margemPercentual = valorEntrada > 0 ? (margem / valorEntrada) * 100 : 0;
+
+                          return (
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <p className="text-muted-foreground">Custo do Tratamento</p>
+                                <p className="text-lg font-semibold text-foreground">
+                                  {custoTratamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Margem Bruta</p>
+                                <p className={`text-lg font-semibold ${margem >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                                  {margem.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Margem %</p>
+                                <p className={`text-lg font-semibold ${margemPercentual >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                                  {margemPercentual.toFixed(1)}%
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
               )}
 
               <div>
