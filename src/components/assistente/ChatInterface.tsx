@@ -58,65 +58,49 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background w-full">
       {messages.length === 0 ? (
         <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center space-y-6 max-w-2xl">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto">
-              <Bot className="h-10 w-10 text-primary" />
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-3xl font-bold tracking-tight">Assistente IA</h1>
-              <p className="text-lg text-muted-foreground">
-                Como posso ajudar você hoje?
+          <div className="text-center space-y-4 max-w-3xl">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold tracking-tight">
+                Olá, Taysa, que bom te ver
+              </h1>
+              <p className="text-xl text-muted-foreground">
+                Como posso te ajudar?
               </p>
             </div>
           </div>
         </div>
       ) : (
         <ScrollArea ref={scrollAreaRef} className="flex-1">
-          <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+          <div className="max-w-5xl mx-auto px-8 py-12 space-y-6">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
-                  "flex gap-4 animate-fade-in",
+                  "flex gap-5 animate-fade-in",
                   message.role === "user" ? "justify-end" : "justify-start"
                 )}
               >
-                {message.role === "assistant" && (
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Bot className="h-5 w-5 text-primary" />
-                  </div>
-                )}
-
                 <div
                   className={cn(
-                    "max-w-[75%] rounded-2xl px-5 py-4 shadow-sm",
+                    "max-w-[80%] rounded-2xl px-6 py-4",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground border border-border"
+                      ? "bg-primary text-primary-foreground shadow-lg"
+                      : "bg-muted/50 text-foreground"
                   )}
                 >
-                  <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
+                  <p className="text-base leading-relaxed whitespace-pre-wrap">
                     {message.content}
                   </p>
                 </div>
-
-                {message.role === "user" && (
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 mt-1">
-                    <User className="h-5 w-5 text-primary" />
-                  </div>
-                )}
               </div>
             ))}
 
             {isLoading && (
-              <div className="flex gap-4 animate-fade-in">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 mt-1">
-                  <Bot className="h-5 w-5 text-primary" />
-                </div>
-                <div className="bg-muted rounded-2xl px-5 py-4 border border-border">
+              <div className="flex gap-5 animate-fade-in justify-start">
+                <div className="bg-muted/50 rounded-2xl px-6 py-4">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               </div>
@@ -126,31 +110,29 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
       )}
 
       {/* Input Area */}
-      <div className="border-t border-border bg-background p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex gap-3 items-end">
-            <div className="flex-1 relative">
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Digite sua mensagem..."
-                disabled={isLoading}
-                rows={1}
-                className="min-h-12 max-h-32 py-3 px-4 text-base rounded-xl bg-muted/50 border-border focus-visible:ring-2 resize-none"
-              />
-            </div>
+      <div className="border-t border-border bg-background p-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex gap-4 items-end">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Digite sua mensagem..."
+              disabled={isLoading}
+              rows={1}
+              className="flex-1 min-h-14 max-h-40 py-4 px-5 text-base rounded-2xl bg-muted/30 border-border focus-visible:ring-2 resize-none"
+            />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
               size="icon"
-              className="h-12 w-12 rounded-xl shadow-sm"
+              className="h-14 w-14 rounded-2xl shadow-md"
             >
               {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
-                <Send className="h-5 w-5" />
+                <Send className="h-6 w-6" />
               )}
             </Button>
           </div>
