@@ -25,7 +25,11 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </header>
-      <main className={isAssistenteIA ? "flex-1 overflow-hidden" : "flex-1 p-6 overflow-auto"}>
+      <main className={
+        isAssistenteIA
+          ? "flex-1 flex flex-col min-h-0"
+          : "flex-1 p-6 overflow-auto"
+      }>
         {children}
       </main>
     </div>
