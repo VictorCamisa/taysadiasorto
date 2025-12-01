@@ -61,9 +61,9 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Messages Area with Scroll */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center space-y-4 max-w-3xl px-6">
