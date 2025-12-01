@@ -65,7 +65,7 @@ const AssistenteIA = () => {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-background">
+    <div className="flex flex-col h-full -m-6">
       <ChatInterface
         messages={messages}
         onSendMessage={handleSendMessage}

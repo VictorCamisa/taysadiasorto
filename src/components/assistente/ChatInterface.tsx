@@ -58,10 +58,10 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
   };
 
   return (
-    <div className="flex flex-col h-full bg-background w-full">
+    <div className="flex flex-col h-full">
       {messages.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center space-y-4 max-w-3xl">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4 max-w-3xl px-6">
             <div className="space-y-2">
               <h1 className="text-4xl font-bold tracking-tight">
                 Olá, Taysa, que bom te ver
@@ -74,7 +74,7 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
         </div>
       ) : (
         <ScrollArea ref={scrollAreaRef} className="flex-1">
-          <div className="max-w-5xl mx-auto px-8 py-12 space-y-6">
+          <div className="max-w-5xl mx-auto px-8 py-8 space-y-6">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -110,7 +110,7 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
       )}
 
       {/* Input Area */}
-      <div className="border-t border-border bg-background p-8">
+      <div className="border-t border-border bg-background p-6 shrink-0">
         <div className="max-w-5xl mx-auto">
           <div className="flex gap-4 items-end">
             <Textarea
@@ -121,18 +121,18 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
               placeholder="Digite sua mensagem..."
               disabled={isLoading}
               rows={1}
-              className="flex-1 min-h-14 max-h-40 py-4 px-5 text-base rounded-2xl bg-muted/30 border-border focus-visible:ring-2 resize-none"
+              className="flex-1 min-h-12 max-h-32 py-3 px-5 text-base rounded-2xl bg-muted/30 border-border focus-visible:ring-2 resize-none"
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
               size="icon"
-              className="h-14 w-14 rounded-2xl shadow-md"
+              className="h-12 w-12 rounded-2xl shadow-md"
             >
               {isLoading ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Send className="h-6 w-6" />
+                <Send className="h-5 w-5" />
               )}
             </Button>
           </div>
