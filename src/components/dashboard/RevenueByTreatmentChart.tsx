@@ -44,26 +44,39 @@ export function RevenueByTreatmentChart() {
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
+            <defs>
+              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3B82F6" stopOpacity={1} />
+                <stop offset="100%" stopColor="#1D4ED8" stopOpacity={1} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
             <XAxis 
               dataKey="name" 
               angle={-45} 
               textAnchor="end" 
               height={100}
-              stroke="hsl(var(--muted-foreground))"
+              tick={{ fill: 'hsl(var(--foreground))' }}
               style={{ fontSize: '11px' }}
             />
-            <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: '12px' }} />
+            <YAxis 
+              tick={{ fill: 'hsl(var(--foreground))' }}
+              style={{ fontSize: '12px' }} 
+            />
             <Tooltip 
               formatter={(value: any) => formatCurrency(Number(value))}
               contentStyle={{ 
-                backgroundColor: "hsl(var(--card))", 
+                backgroundColor: "hsl(var(--popover))", 
                 border: "1px solid hsl(var(--border))",
                 borderRadius: '8px',
-                color: 'hsl(var(--card-foreground))',
+                color: 'hsl(var(--popover-foreground))',
               }}
             />
-            <Bar dataKey="value" fill="#3B82F6" radius={[8, 8, 0, 0]} />
+            <Bar 
+              dataKey="value" 
+              fill="url(#barGradient)" 
+              radius={[8, 8, 0, 0]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
