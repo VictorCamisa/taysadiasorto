@@ -61,59 +61,62 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {messages.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-4 max-w-3xl px-6">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold tracking-tight">
-                Olá, Taysa, que bom te ver
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                Como posso te ajudar?
-              </p>
+    <div className="h-full flex flex-col">
+      {/* Messages Area with Scroll */}
+      <div className="flex-1 overflow-hidden">
+        {messages.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center space-y-4 max-w-3xl px-6">
+              <div className="space-y-2">
+                <h1 className="text-4xl font-bold tracking-tight">
+                  Olá, Taysa, que bom te ver
+                </h1>
+                <p className="text-xl text-muted-foreground">
+                  Como posso te ajudar?
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <ScrollArea ref={scrollAreaRef} className="flex-1">
-          <div className="max-w-5xl mx-auto px-8 py-8 space-y-6">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-5 animate-fade-in",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
+        ) : (
+          <ScrollArea ref={scrollAreaRef} className="h-full">
+            <div className="max-w-5xl mx-auto px-8 py-8 space-y-6">
+              {messages.map((message) => (
                 <div
+                  key={message.id}
                   className={cn(
-                    "max-w-[80%] rounded-2xl px-6 py-4",
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground shadow-lg"
-                      : "bg-muted/50 text-foreground"
+                    "flex gap-5 animate-fade-in",
+                    message.role === "user" ? "justify-end" : "justify-start"
                   )}
                 >
-                  <p className="text-base leading-relaxed whitespace-pre-wrap">
-                    {message.content}
-                  </p>
+                  <div
+                    className={cn(
+                      "max-w-[80%] rounded-2xl px-6 py-4",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground shadow-lg"
+                        : "bg-muted/50 text-foreground"
+                    )}
+                  >
+                    <p className="text-base leading-relaxed whitespace-pre-wrap">
+                      {message.content}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
-            {isLoading && (
-              <div className="flex gap-5 animate-fade-in justify-start">
-                <div className="bg-muted/50 rounded-2xl px-6 py-4">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              {isLoading && (
+                <div className="flex gap-5 animate-fade-in justify-start">
+                  <div className="bg-muted/50 rounded-2xl px-6 py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      )}
+              )}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
 
-      {/* Input Area */}
-      <div className="border-t border-border bg-background p-6 shrink-0">
+      {/* Fixed Input Area at Bottom */}
+      <div className="border-t border-border bg-background p-6 flex-shrink-0">
         <div className="max-w-5xl mx-auto">
           <div className="flex gap-4 items-end">
             <Textarea
