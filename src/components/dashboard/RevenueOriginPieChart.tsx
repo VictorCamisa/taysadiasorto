@@ -44,8 +44,22 @@ export function RevenueOriginPieChart({ data }: RevenueOriginPieChartProps) {
               data={chartData}
               cx="50%"
               cy="50%"
-              labelLine={{stroke: 'hsl(var(--foreground))'}}
-              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              labelLine={{stroke: '#94A3B8'}}
+              label={(props) => {
+                const { name, percent } = props;
+                return (
+                  <text 
+                    x={props.x} 
+                    y={props.y} 
+                    fill="#E2E8F0" 
+                    textAnchor={props.textAnchor}
+                    dominantBaseline="central"
+                    fontSize={13}
+                  >
+                    {`${name}: ${(percent * 100).toFixed(0)}%`}
+                  </text>
+                );
+              }}
               outerRadius={85}
               fill="#8884d8"
               dataKey="value"
@@ -73,7 +87,7 @@ export function RevenueOriginPieChart({ data }: RevenueOriginPieChartProps) {
             />
             <Legend 
               wrapperStyle={{ 
-                color: 'hsl(var(--foreground))',
+                color: '#94A3B8',
                 fontSize: '13px'
               }} 
             />
