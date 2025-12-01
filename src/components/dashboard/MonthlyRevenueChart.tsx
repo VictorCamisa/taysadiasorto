@@ -44,27 +44,36 @@ export function MonthlyRevenueChart() {
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="month" className="text-xs" />
-            <YAxis className="text-xs" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+            <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" style={{ fontSize: '12px' }} />
+            <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: '12px' }} />
             <Tooltip 
               formatter={(value: any) => formatCurrency(Number(value))}
-              contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+              contentStyle={{ 
+                backgroundColor: "hsl(var(--card))", 
+                border: "1px solid hsl(var(--border))",
+                borderRadius: '8px',
+                color: 'hsl(var(--card-foreground))',
+              }}
             />
-            <Legend />
+            <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
             <Line 
               type="monotone" 
               dataKey="receita" 
-              stroke="hsl(var(--primary))" 
-              strokeWidth={2}
+              stroke="#10B981" 
+              strokeWidth={3}
               name="Receita"
+              dot={{ fill: '#10B981', r: 4 }}
+              activeDot={{ r: 6 }}
             />
             <Line 
               type="monotone" 
               dataKey="despesa" 
-              stroke="hsl(var(--destructive))" 
-              strokeWidth={2}
+              stroke="#EF4444" 
+              strokeWidth={3}
               name="Despesa"
+              dot={{ fill: '#EF4444', r: 4 }}
+              activeDot={{ r: 6 }}
             />
           </LineChart>
         </ResponsiveContainer>

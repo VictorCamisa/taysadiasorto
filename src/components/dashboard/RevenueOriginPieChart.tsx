@@ -6,13 +6,8 @@ interface RevenueOriginPieChartProps {
   data: Record<string, number>;
 }
 
-const COLORS = [
-  'hsl(var(--primary))', 
-  'hsl(var(--chart-2))', 
-  'hsl(var(--chart-3))', 
-  'hsl(var(--chart-4))', 
-  'hsl(var(--chart-5))'
-];
+// Professional color palette - vibrant blues, purples, and teals
+const COLORS = ['#3B82F6', '#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EC4899'];
 
 export function RevenueOriginPieChart({ data }: RevenueOriginPieChartProps) {
   const chartData = Object.entries(data).map(([name, value]) => ({
@@ -46,16 +41,17 @@ export function RevenueOriginPieChart({ data }: RevenueOriginPieChartProps) {
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
+                backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
-                borderRadius: '6px',
+                borderRadius: '8px',
+                color: 'hsl(var(--card-foreground))',
               }}
               formatter={(value: number) => [
                 `${formatCurrency(value)} (${((value / total) * 100).toFixed(1)}%)`,
                 'Receita'
               ]}
             />
-            <Legend />
+            <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>
