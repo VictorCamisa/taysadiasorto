@@ -65,12 +65,19 @@ export const ChatInterface = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
+      }
+
+      // N8N deve retornar um objeto com a resposta
+      // Ajustar conforme a estrutura do seu workflow N8N
+      const responseText = data?.response || data?.output || data?.message || "Desculpe, não consegui processar sua solicitação.";
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.response || "Desculpe, não consegui processar sua solicitação.",
+        content: responseText,
         timestamp: new Date(),
       };
 
