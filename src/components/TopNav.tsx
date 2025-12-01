@@ -17,16 +17,16 @@ const menuItems = [
 
 export function TopNav() {
   return (
-    <nav className="flex items-center gap-1 overflow-x-auto">
+    <nav className="flex items-center gap-0.5 flex-wrap">
       {menuItems.map((item) => (
         <NavLink
           key={item.title}
           to={item.url}
           end
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors hover:bg-accent"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors hover:bg-accent"
           activeClassName="bg-accent text-accent-foreground font-medium"
         >
-          <item.icon className="h-4 w-4" />
+          <item.icon className="h-3.5 w-3.5" />
           <span>{item.title}</span>
         </NavLink>
       ))}

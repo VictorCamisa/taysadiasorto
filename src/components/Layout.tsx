@@ -14,20 +14,20 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
       <header className="border-b border-border bg-card">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="px-2">
+        <div className="flex items-center justify-between gap-4 px-4 py-2">
+          <div className="flex-1 min-w-0">
             <TopNav />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {user && (
               <>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs text-muted-foreground hidden sm:inline">
                   {user.email}
                 </span>
                 <ThemeToggle />
                 <Button variant="ghost" size="sm" onClick={signOut}>
                   <LogOut className="h-4 w-4" />
-                  Sair
+                  <span className="hidden sm:inline ml-1">Sair</span>
                 </Button>
               </>
             )}
