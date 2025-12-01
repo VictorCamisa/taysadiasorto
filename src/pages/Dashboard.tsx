@@ -1,91 +1,134 @@
-import { DollarSign, TrendingUp, TrendingDown, Package, FileText, AlertCircle, Wallet } from "lucide-react";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { RevenueByTreatmentChart } from "@/components/dashboard/RevenueByTreatmentChart";
-import { RevenueByOriginChart } from "@/components/dashboard/RevenueByOriginChart";
+import { useState } from "react";
+import { DollarSign, TrendingUp, TrendingDown, Percent, CreditCard, Target } from "lucide-react";
+import { AdvancedKPICard } from "@/components/dashboard/AdvancedKPICard";
+import { TopTreatmentsChart } from "@/components/dashboard/TopTreatmentsChart";
+import { RevenueOriginPieChart } from "@/components/dashboard/RevenueOriginPieChart";
 import { MonthlyRevenueChart } from "@/components/dashboard/MonthlyRevenueChart";
 import { LowStockAlert } from "@/components/dashboard/LowStockAlert";
 import { UpcomingPayments } from "@/components/dashboard/UpcomingPayments";
-import { useFinanceData } from "@/hooks/useFinanceData";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 const Dashboard = () => {
-  const { kpis } = useFinanceData();
+  const [filters, setFilters] = useState<{
+    startDate: Date;
+    endDate: Date;
+    compareStartDate?: Date;
+    compareEndDate?: Date;
+    tratamentoIds: string[];
+    origemIds: string[];
+  }>({
+    startDate: startOfMonth(new Date()),
+    endDate: endOfMonth(new Date()),
+    tratamentoIds: [],
+    origemIds: [],
+  });
+
+  const { kpis, charts, lists } = useDashboardData(filters);
+
+  // Meta exemplo (pode ser configurável no futuro)
+  const metaReceita = 50000;
+  const progressReceita = (kpis.receitaTotal / metaReceita) * 100;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
         <h1 className="text-4xl font-bold">Dashboard Financeiro</h1>
-        <p className="text-muted-foreground mt-1">Visão geral do sistema financeiro da clínica</p>
+        <p className="text-muted-foreground mt-1">Análise completa do desempenho da clínica</p>
       </div>
 
-      {/* KPIs principais */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Receitas do Mês"
-          value={`R$ ${kpis.receitaMes.toFixed(2)}`}
-          description="Total de receitas no mês atual"
-          icon={TrendingUp}
+      {/* Filters */}
+      <DashboardFilters
+        startDate={filters.startDate}
+        endDate={filters.endDate}
+        compareStartDate={filters.compareStartDate}
+        compareEndDate={filters.compareEndDate}
+        tratamentoIds={filters.tratamentoIds}
+        origemIds={filters.origemIds}
+        onFilterChange={setFilters}
+        tratamentos={lists.tratamentos}
+        origens={lists.origens}
+      />
+
+      {/* Main KPIs */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <AdvancedKPICard
+          title="Receita Total"
+          value={`R$ ${kpis.receitaTotal.toFixed(2)}`}
+          description="Faturamento no período"
+          icon={DollarSign}
           variant="success"
+          trend={kpis.taxaCrescimentoReceita}
+          trendLabel="vs período anterior"
+          showProgress={true}
+          progressValue={progressReceita}
+          target={metaReceita}
         />
-        <KPICard
-          title="Despesas do Mês"
-          value={`R$ ${kpis.despesaMes.toFixed(2)}`}
-          description="Total de despesas no mês atual"
+        <AdvancedKPICard
+          title="Lucro Líquido"
+          value={`R$ ${kpis.lucroLiquido.toFixed(2)}`}
+          description="Receitas - Despesas"
+          icon={TrendingUp}
+          variant={kpis.lucroLiquido >= 0 ? "success" : "danger"}
+          trend={kpis.taxaCrescimentoLucro}
+          trendLabel="vs período anterior"
+        />
+        <AdvancedKPICard
+          title="Ticket Médio"
+          value={`R$ ${kpis.ticketMedio.toFixed(2)}`}
+          description="Valor médio por atendimento"
+          icon={CreditCard}
+          variant="default"
+        />
+        <AdvancedKPICard
+          title="Margem Média"
+          value={`${kpis.margemMedia.toFixed(1)}%`}
+          description="Margem de contribuição média"
+          icon={Percent}
+          variant={kpis.margemMedia >= 50 ? "success" : kpis.margemMedia >= 30 ? "warning" : "danger"}
+        />
+        <AdvancedKPICard
+          title="Despesas Totais"
+          value={`R$ ${kpis.despesaTotal.toFixed(2)}`}
+          description="Total de despesas no período"
           icon={TrendingDown}
           variant="danger"
         />
-        <KPICard
-          title="Lucro Líquido"
-          value={`R$ ${kpis.lucroMes.toFixed(2)}`}
-          description="Resultado do mês"
-          icon={DollarSign}
-          variant={kpis.lucroMes >= 0 ? "success" : "danger"}
-        />
-        <KPICard
-          title="Saldo em Contas"
+        <AdvancedKPICard
+          title="Saldo Disponível"
           value={`R$ ${kpis.saldoTotal.toFixed(2)}`}
-          description="Saldo total disponível"
-          icon={Wallet}
+          description="Saldo total em contas"
+          icon={Target}
           variant="default"
         />
       </div>
 
-      {/* KPIs secundários */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <KPICard
-          title="Lançamentos do Mês"
-          value={kpis.totalLancamentos}
-          description="Total de movimentações"
-          icon={FileText}
-        />
-        <KPICard
-          title="Contas Vencidas"
-          value={kpis.contasVencidas}
-          description="Contas em atraso"
-          icon={AlertCircle}
-          variant={kpis.contasVencidas > 0 ? "warning" : "default"}
-        />
-        <KPICard
-          title="Estoque Baixo"
-          value={kpis.produtosBaixos}
-          description="Produtos abaixo do mínimo"
-          icon={Package}
-          variant={kpis.produtosBaixos > 0 ? "warning" : "default"}
-        />
-      </div>
-
-      {/* Gráfico de linha mensal */}
+      {/* Monthly Trend Chart */}
       <MonthlyRevenueChart />
 
-      {/* Gráficos lado a lado */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <RevenueByTreatmentChart />
-        <RevenueByOriginChart />
+      {/* Treatment Performance */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <TopTreatmentsChart
+          data={charts.topTratamentosReceita}
+          title="Top 5 Tratamentos por Receita"
+          dataKey="receita"
+        />
+        <TopTreatmentsChart
+          data={charts.topTratamentosMargem}
+          title="Top 5 Tratamentos por Margem"
+          dataKey="margemPercentual"
+        />
       </div>
 
-      {/* Alertas e avisos */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <UpcomingPayments />
-        <LowStockAlert />
+      {/* Origin Analysis */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RevenueOriginPieChart data={charts.receitaPorOrigem} />
+        <div className="grid gap-6">
+          <UpcomingPayments />
+          <LowStockAlert />
+        </div>
       </div>
     </div>
   );
