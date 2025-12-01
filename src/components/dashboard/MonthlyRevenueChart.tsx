@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { subMonths, format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 export function MonthlyRevenueChart() {
   const { data = [] } = useQuery({
@@ -47,7 +48,7 @@ export function MonthlyRevenueChart() {
             <XAxis dataKey="month" className="text-xs" />
             <YAxis className="text-xs" />
             <Tooltip 
-              formatter={(value: any) => `R$ ${Number(value).toFixed(2)}`}
+              formatter={(value: any) => formatCurrency(Number(value))}
               contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
             />
             <Legend />

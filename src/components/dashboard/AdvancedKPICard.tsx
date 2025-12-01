@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
 interface AdvancedKPICardProps {
@@ -56,7 +56,7 @@ export function AdvancedKPICard({
         {trend !== undefined && (
           <div className={cn("flex items-center gap-1 text-sm font-medium mt-2", trendColor)}>
             <TrendIcon className="h-4 w-4" />
-            <span>{Math.abs(trend).toFixed(1)}%</span>
+            <span>{formatNumber(Math.abs(trend), 1)}%</span>
             {trendLabel && <span className="text-muted-foreground ml-1">{trendLabel}</span>}
           </div>
         )}
@@ -66,8 +66,8 @@ export function AdvancedKPICard({
             <Progress value={progressValue} className="h-2" />
             {target && (
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{progressValue.toFixed(0)}%</span>
-                <span>Meta: R$ {target.toFixed(2)}</span>
+                <span>{formatNumber(progressValue, 0)}%</span>
+                <span>Meta: {formatCurrency(target)}</span>
               </div>
             )}
           </div>

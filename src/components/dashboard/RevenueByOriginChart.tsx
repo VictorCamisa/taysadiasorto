@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "#8884d8", "#82ca9d", "#ffc658"];
 
@@ -56,7 +57,7 @@ export function RevenueByOriginChart() {
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: any) => `R$ ${Number(value).toFixed(2)}`} />
+            <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>

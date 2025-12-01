@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 export function RevenueByTreatmentChart() {
   const { data = [] } = useQuery({
@@ -53,7 +54,7 @@ export function RevenueByTreatmentChart() {
             />
             <YAxis className="text-xs" />
             <Tooltip 
-              formatter={(value: any) => `R$ ${Number(value).toFixed(2)}`}
+              formatter={(value: any) => formatCurrency(Number(value))}
               contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
             />
             <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />

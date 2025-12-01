@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { formatCurrency } from "@/lib/utils";
 
 interface RevenueOriginPieChartProps {
   data: Record<string, number>;
@@ -50,7 +51,7 @@ export function RevenueOriginPieChart({ data }: RevenueOriginPieChartProps) {
                 borderRadius: '6px',
               }}
               formatter={(value: number) => [
-                `R$ ${value.toFixed(2)} (${((value / total) * 100).toFixed(1)}%)`,
+                `${formatCurrency(value)} (${((value / total) * 100).toFixed(1)}%)`,
                 'Receita'
               ]}
             />

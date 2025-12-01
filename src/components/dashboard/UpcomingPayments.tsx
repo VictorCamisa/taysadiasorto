@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useFinanceData } from "@/hooks/useFinanceData";
 import { format, addDays, isAfter, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatCurrency } from "@/lib/utils";
 
 export function UpcomingPayments() {
   const { contasPagar } = useFinanceData();
@@ -45,7 +46,7 @@ export function UpcomingPayments() {
                   </p>
                 </div>
                 <Badge variant="outline">
-                  R$ {Number(conta.valor || 0).toFixed(2)}
+                  {formatCurrency(Number(conta.valor || 0))}
                 </Badge>
               </div>
             ))}

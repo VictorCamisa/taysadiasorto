@@ -9,6 +9,7 @@ import { Calendar, Download, Plus, TrendingUp, TrendingDown, DollarSign } from "
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
 
 const DiarioCaixa = () => {
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
@@ -137,7 +138,7 @@ const DiarioCaixa = () => {
             <TrendingUp className="h-5 w-5 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">R$ {receitaTotal.toFixed(2)}</div>
+            <div className="text-3xl font-bold text-green-600">{formatCurrency(receitaTotal)}</div>
             <p className="text-xs text-muted-foreground mt-1">No período selecionado</p>
           </CardContent>
         </Card>
@@ -148,7 +149,7 @@ const DiarioCaixa = () => {
             <TrendingDown className="h-5 w-5 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-destructive">R$ {despesaTotal.toFixed(2)}</div>
+            <div className="text-3xl font-bold text-destructive">{formatCurrency(despesaTotal)}</div>
             <p className="text-xs text-muted-foreground mt-1">No período selecionado</p>
           </CardContent>
         </Card>
@@ -160,7 +161,7 @@ const DiarioCaixa = () => {
           </CardHeader>
           <CardContent>
             <div className={`text-3xl font-bold ${resultadoLiquido >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-              R$ {resultadoLiquido.toFixed(2)}
+              {formatCurrency(resultadoLiquido)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Receita - Despesa</p>
           </CardContent>
@@ -188,10 +189,10 @@ const DiarioCaixa = () => {
                     {format(new Date(data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                   </CardTitle>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-green-600 font-medium">+R$ {receitaDia.toFixed(2)}</span>
-                    <span className="text-destructive font-medium">-R$ {despesaDia.toFixed(2)}</span>
+                    <span className="text-green-600 font-medium">+{formatCurrency(receitaDia)}</span>
+                    <span className="text-destructive font-medium">-{formatCurrency(despesaDia)}</span>
                     <span className={`font-bold ${resultadoDia >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                      = R$ {resultadoDia.toFixed(2)}
+                      = {formatCurrency(resultadoDia)}
                     </span>
                   </div>
                 </div>
@@ -223,7 +224,7 @@ const DiarioCaixa = () => {
                         </div>
                       </div>
                       <div className={`text-lg font-bold ${lanc.tipo === 'receita' ? 'text-green-600' : 'text-destructive'}`}>
-                        {lanc.tipo === 'receita' ? '+' : '-'}R$ {Number(lanc.valor_entrada || lanc.valor_saida || 0).toFixed(2)}
+                        {lanc.tipo === 'receita' ? '+' : '-'}{formatCurrency(Number(lanc.valor_entrada || lanc.valor_saida || 0))}
                       </div>
                     </div>
                   ))}
