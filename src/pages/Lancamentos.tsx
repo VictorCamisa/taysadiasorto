@@ -434,7 +434,17 @@ const Lancamentos = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Tratamento</Label>
-                      <Select value={formData.tratamento_id} onValueChange={(value) => setFormData({ ...formData, tratamento_id: value })}>
+                      <Select 
+                        value={formData.tratamento_id} 
+                        onValueChange={(value) => {
+                          const tratamentoSelecionado = tratamentos.find((t: any) => t.id === value);
+                          setFormData({ 
+                            ...formData, 
+                            tratamento_id: value,
+                            valor_entrada: tratamentoSelecionado?.preco_venda?.toString() || formData.valor_entrada
+                          });
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
