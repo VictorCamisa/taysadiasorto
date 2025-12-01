@@ -1,5 +1,4 @@
 import { ChatInterface } from "@/components/assistente/ChatInterface";
-import { ConversationsSidebar } from "@/components/assistente/ConversationsSidebar";
 import { useChatConversations } from "@/hooks/useChatConversations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -67,21 +66,11 @@ const AssistenteIA = () => {
 
   return (
     <div className="h-screen flex overflow-hidden bg-background">
-      <ConversationsSidebar
-        conversations={conversations}
-        currentConversationId={currentConversationId}
-        onSelectConversation={selectConversation}
-        onNewConversation={startNewConversation}
-        onDeleteConversation={deleteConversation}
+      <ChatInterface
+        messages={messages}
+        onSendMessage={handleSendMessage}
+        isLoading={isLoading}
       />
-
-      <main className="flex-1 flex flex-col min-w-0">
-        <ChatInterface
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-        />
-      </main>
     </div>
   );
 };
