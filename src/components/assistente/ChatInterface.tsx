@@ -29,7 +29,10 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        });
       }
     }
   }, [messages]);
@@ -58,7 +61,7 @@ export const ChatInterface = ({ messages, onSendMessage, isLoading }: ChatInterf
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {messages.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4 max-w-3xl px-6">
