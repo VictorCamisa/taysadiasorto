@@ -232,7 +232,7 @@ const Estoque = () => {
         </TabsContent>
 
         <TabsContent value="movimentacoes">
-          <MovimentacoesTab compras={compras} produtos={produtos} />
+          <MovimentacoesTab produtos={produtos} />
         </TabsContent>
       </Tabs>
     </div>

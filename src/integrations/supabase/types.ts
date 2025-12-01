@@ -293,6 +293,73 @@ export type Database = {
           },
         ]
       }
+      estoque_movimentacoes: {
+        Row: {
+          compra_id: string | null
+          created_at: string
+          data: string
+          id: string
+          lancamento_id: string | null
+          observacoes: string | null
+          origem: string
+          produto_id: string
+          quantidade: number
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          compra_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          lancamento_id?: string | null
+          observacoes?: string | null
+          origem: string
+          produto_id: string
+          quantidade: number
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          compra_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          lancamento_id?: string | null
+          observacoes?: string | null
+          origem?: string
+          produto_id?: string
+          quantidade?: number
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_movimentacoes_compra_id_fkey"
+            columns: ["compra_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_compras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentacoes_lancamento_id_fkey"
+            columns: ["lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_lancamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_movimentacoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque_produtos: {
         Row: {
           ativo: boolean
