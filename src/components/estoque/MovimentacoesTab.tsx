@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -7,40 +9,36 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MovimentacoesTabProps {
-  compras: any[];
   produtos: any[];
 }
 
-export const MovimentacoesTab = ({ compras, produtos }: MovimentacoesTabProps) => {
+export const MovimentacoesTab = ({ produtos }: MovimentacoesTabProps) => {
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [produtoId, setProdutoId] = useState("todos");
   const [tipo, setTipo] = useState("todos");
 
-  const movimentacoes = useMemo(() => {
-    const movs: any[] = [];
-
-    compras.forEach((compra) => {
-      if (compra.itens) {
-        compra.itens.forEach((item: any) => {
-          movs.push({
-            data: compra.data_compra,
-            produto_nome: item.produto?.nome || "-",
-            produto_id: item.produto_id,
-            tipo: "entrada",
-            quantidade: item.quantidade,
-            origem: `Compra NF ${compra.numero_nf || "S/N"}`,
-            observacoes: compra.observacoes,
-          });
-        });
-      }
-    });
-
-    return movs.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
-  }, [compras]);
+  const { data: movimentacoes = [] } = useQuery({
+    queryKey: ["estoque-movimentacoes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("estoque_movimentacoes")
+        .select(`
+          *,
+          estoque_produtos(nome),
+          financeiro_lancamentos(cliente, financeiro_tratamentos(nome)),
+          estoque_compras(numero_nf)
+        `)
+        .order("data", { ascending: false })
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const filteredMovimentacoes = useMemo(() => {
-    return movimentacoes.filter((mov) => {
+    return movimentacoes.filter((mov: any) => {
       if (dataInicial && new Date(mov.data) < new Date(dataInicial)) return false;
       if (dataFinal && new Date(mov.data) > new Date(dataFinal)) return false;
       if (produtoId !== "todos" && mov.produto_id !== produtoId) return false;
@@ -48,6 +46,18 @@ export const MovimentacoesTab = ({ compras, produtos }: MovimentacoesTabProps) =
       return true;
     });
   }, [movimentacoes, dataInicial, dataFinal, produtoId, tipo]);
+
+  const getOrigemDisplay = (mov: any) => {
+    if (mov.origem === "compra" && mov.estoque_compras) {
+      return `Compra NF ${mov.estoque_compras.numero_nf || "S/N"}`;
+    }
+    if (mov.origem === "venda" && mov.financeiro_lancamentos) {
+      const tratamento = mov.financeiro_lancamentos.financeiro_tratamentos;
+      const cliente = mov.financeiro_lancamentos.cliente;
+      return `Venda: ${tratamento?.nome || "Tratamento"} - ${cliente || "Cliente"}`;
+    }
+    return mov.origem;
+  };
 
   return (
     <div className="space-y-4">
@@ -123,19 +133,19 @@ export const MovimentacoesTab = ({ compras, produtos }: MovimentacoesTabProps) =
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMovimentacoes.map((mov, index) => (
-                  <TableRow key={index}>
+                filteredMovimentacoes.map((mov: any) => (
+                  <TableRow key={mov.id}>
                     <TableCell>
                       {new Date(mov.data).toLocaleDateString("pt-BR")}
                     </TableCell>
-                    <TableCell>{mov.produto_nome}</TableCell>
+                    <TableCell>{mov.estoque_produtos?.nome || "-"}</TableCell>
                     <TableCell>
                       <Badge variant={mov.tipo === "entrada" ? "default" : "destructive"}>
                         {mov.tipo === "entrada" ? "Entrada" : "Saída"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{mov.quantidade}</TableCell>
-                    <TableCell>{mov.origem}</TableCell>
+                    <TableCell>{Number(mov.quantidade).toFixed(2)}</TableCell>
+                    <TableCell>{getOrigemDisplay(mov)}</TableCell>
                     <TableCell>{mov.observacoes || "-"}</TableCell>
                   </TableRow>
                 ))
