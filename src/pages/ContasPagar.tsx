@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,6 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 
 const ContasPagar = () => {
-  const { user } = useAuth();
   const [statusFiltro, setStatusFiltro] = useState<string | "todos">("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -212,11 +211,6 @@ const ContasPagar = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast.error("Usuário não autenticado");
-      return;
-    }
-    
     const payload = {
       descricao: formData.descricao,
       fornecedor_id: formData.fornecedor_id || null,
@@ -232,8 +226,7 @@ const ContasPagar = () => {
     if (editingId) {
       updateMutation.mutate({ id: editingId, data: payload });
     } else {
-      // Include user_id on insert
-      createMutation.mutate({ ...payload, user_id: user.id });
+      createMutation.mutate(payload);
     }
   };
 
