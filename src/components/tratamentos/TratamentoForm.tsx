@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { FichaTecnicaEditor } from "./FichaTecnicaEditor";
@@ -22,13 +21,10 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
   const { calcularCustos, getMargemColor } = useTratamentoCalculations();
   
   const [formData, setFormData] = useState({
-    grupo: "",
     nome: "",
-    preco: 0,
+    preco_padrao: 0,
     custo_estimado: 0,
-    duracao_minutos: 60,
     descricao: "",
-    ativo: true,
   });
 
   const [fichaTecnicaItems, setFichaTecnicaItems] = useState<any[]>([]);
@@ -36,41 +32,34 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
   useEffect(() => {
     if (tratamento) {
       setFormData({
-        grupo: tratamento.grupo || "",
         nome: tratamento.nome || "",
-        preco: tratamento.preco || 0,
+        preco_padrao: tratamento.preco_padrao || tratamento.preco || 0,
         custo_estimado: tratamento.custo_estimado || 0,
-        duracao_minutos: tratamento.duracao_minutos || 60,
         descricao: tratamento.descricao || "",
-        ativo: tratamento.ativo ?? true,
       });
       setFichaTecnicaItems(tratamento.fichaTecnica || []);
     } else {
       setFormData({
-        grupo: "",
         nome: "",
-        preco: 0,
+        preco_padrao: 0,
         custo_estimado: 0,
-        duracao_minutos: 60,
         descricao: "",
-        ativo: true,
       });
       setFichaTecnicaItems([]);
     }
   }, [tratamento, open]);
 
   const calculations = calcularCustos(
-    formData.preco,
+    formData.preco_padrao,
     formData.custo_estimado,
     fichaTecnicaItems
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Passar os campos com nomes corretos do banco
     onSave({
       ...formData,
-      custo_estimado: calculations.custo_total, // Atualizar custo_estimado com o custo total calculado
+      custo_estimado: calculations.custo_total,
       fichaTecnica: fichaTecnicaItems,
     });
   };
@@ -95,26 +84,14 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
 
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="basico" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basico">Básico</TabsTrigger>
               <TabsTrigger value="custos">Custos</TabsTrigger>
-              <TabsTrigger value="tecnico">Técnico</TabsTrigger>
               <TabsTrigger value="ficha">Ficha Técnica</TabsTrigger>
             </TabsList>
 
             <TabsContent value="basico" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="grupo">Grupo *</Label>
-                  <Input
-                    id="grupo"
-                    value={formData.grupo}
-                    onChange={(e) => setFormData({ ...formData, grupo: e.target.value })}
-                    placeholder="Ex: Facial, Corporal"
-                    required
-                  />
-                </div>
-
+              <div className="grid gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="nome">Nome do Tratamento *</Label>
                   <Input
@@ -127,24 +104,26 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="preco">Preço de Venda *</Label>
+                  <Label htmlFor="preco_padrao">Preço de Venda *</Label>
                   <Input
-                    id="preco"
+                    id="preco_padrao"
                     type="number"
                     step="0.01"
-                    value={formData.preco || ""}
-                    onChange={(e) => setFormData({ ...formData, preco: Number(e.target.value) })}
+                    value={formData.preco_padrao || ""}
+                    onChange={(e) => setFormData({ ...formData, preco_padrao: Number(e.target.value) })}
                     placeholder="0.00"
                     required
                   />
                 </div>
 
-                <div className="flex items-center justify-between space-x-2 pt-8">
-                  <Label htmlFor="ativo">Tratamento Ativo</Label>
-                  <Switch
-                    id="ativo"
-                    checked={formData.ativo}
-                    onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })}
+                <div className="space-y-2">
+                  <Label htmlFor="descricao">Descrição</Label>
+                  <Textarea
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                    placeholder="Descrição do tratamento..."
+                    rows={4}
                   />
                 </div>
               </div>
@@ -222,32 +201,6 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="tecnico" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="duracao_minutos">Tempo de Execução (minutos)</Label>
-                  <Input
-                    id="duracao_minutos"
-                    type="number"
-                    value={formData.duracao_minutos || ""}
-                    onChange={(e) => setFormData({ ...formData, duracao_minutos: Number(e.target.value) })}
-                    placeholder="60"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  placeholder="Descrição do tratamento, contraindicações, observações..."
-                  rows={6}
-                />
               </div>
             </TabsContent>
 
