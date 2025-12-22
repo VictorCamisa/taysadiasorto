@@ -13,7 +13,7 @@ const DRE = () => {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(currentDate, "yyyy-MM"));
 
-  // Dados da DRE do mês selecionado
+  // Dados da DRE do mês selecionado - usando td_fluxo_de_caixa
   const { data: dreData } = useQuery({
     queryKey: ["dre", selectedMonth],
     queryFn: async () => {
@@ -22,16 +22,16 @@ const DRE = () => {
       const startDate = startOfMonth(date);
       const endDate = endOfMonth(date);
 
-      // Buscar todos os lançamentos do período com joins
+      // Buscar todos os lançamentos do período com joins para as novas tabelas
       const { data: lancamentos, error } = await supabase
-        .from("financeiro_lancamentos")
+        .from("td_fluxo_de_caixa")
         .select(`
           *,
-          financeiro_tratamentos(nome),
-          financeiro_categorias(categoria_sintetica, categoria_analitica)
+          tratamentos(nome),
+          categorias(nome_sintetico, nome_analitico)
         `)
-        .gte("data", format(startDate, "yyyy-MM-dd"))
-        .lte("data", format(endDate, "yyyy-MM-dd"));
+        .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
+        .lte("data_lancamento", format(endDate, "yyyy-MM-dd"));
 
       if (error) throw error;
 
@@ -42,27 +42,27 @@ const DRE = () => {
 
       lancamentos?.forEach(l => {
         if (l.tipo === "receita") {
-          const tratamento = l.financeiro_tratamentos?.nome || "Outros";
+          const tratamento = l.tratamentos?.nome || "Outros";
           const atual = receitaPorTratamento.get(tratamento) || { quantidade: 0, total: 0 };
           receitaPorTratamento.set(tratamento, {
             quantidade: atual.quantidade + 1,
-            total: atual.total + Number(l.valor_entrada || 0),
+            total: atual.total + Number(l.valor || 0),
           });
 
           const custoAtual = custoPorTratamento.get(tratamento) || 0;
-          custoPorTratamento.set(tratamento, custoAtual + Number(l.custo_tratamento || 0));
+          custoPorTratamento.set(tratamento, custoAtual + Number(l.custo_material || 0));
         }
 
         if (l.tipo === "despesa") {
-          const catSintetica = l.financeiro_categorias?.categoria_sintetica || "Sem categoria";
-          const catAnalitica = l.financeiro_categorias?.categoria_analitica || "Não especificado";
+          const catSintetica = l.categorias?.nome_sintetico || "Sem categoria";
+          const catAnalitica = l.categorias?.nome_analitico || "Não especificado";
           
           if (!despesaPorCategoria.has(catSintetica)) {
             despesaPorCategoria.set(catSintetica, new Map());
           }
           const analiticas = despesaPorCategoria.get(catSintetica)!;
           const valorAtual = analiticas.get(catAnalitica) || 0;
-          analiticas.set(catAnalitica, valorAtual + Number(l.valor_saida || 0));
+          analiticas.set(catAnalitica, valorAtual + Number(l.valor || 0));
         }
       });
 
@@ -104,7 +104,7 @@ const DRE = () => {
     },
   });
 
-  // DRE Anual (últimos 12 meses)
+  // DRE Anual (últimos 12 meses) - usando td_fluxo_de_caixa
   const { data: dreAnual } = useQuery({
     queryKey: ["dre-anual", selectedMonth],
     queryFn: async () => {
@@ -117,17 +117,17 @@ const DRE = () => {
         const endDate = endOfMonth(date);
 
         const { data: lancamentos } = await supabase
-          .from("financeiro_lancamentos")
-          .select("tipo, valor_entrada, valor_saida, custo_tratamento")
-          .gte("data", format(startDate, "yyyy-MM-dd"))
-          .lte("data", format(endDate, "yyyy-MM-dd"));
+          .from("td_fluxo_de_caixa")
+          .select("tipo, valor, custo_material")
+          .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
+          .lte("data_lancamento", format(endDate, "yyyy-MM-dd"));
 
         const receita = lancamentos?.filter(l => l.tipo === "receita")
-          .reduce((sum, l) => sum + Number(l.valor_entrada || 0), 0) || 0;
+          .reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
         const custo = lancamentos?.filter(l => l.tipo === "receita")
-          .reduce((sum, l) => sum + Number(l.custo_tratamento || 0), 0) || 0;
+          .reduce((sum, l) => sum + Number(l.custo_material || 0), 0) || 0;
         const despesas = lancamentos?.filter(l => l.tipo === "despesa")
-          .reduce((sum, l) => sum + Number(l.valor_saida || 0), 0) || 0;
+          .reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
         const margemBruta = receita - custo;
         const lucro = margemBruta - despesas;
 
@@ -145,7 +145,7 @@ const DRE = () => {
     },
   });
 
-  // Gráfico de evolução (últimos 12 meses)
+  // Gráfico de evolução (últimos 12 meses) - usando td_fluxo_de_caixa
   const { data: evolucaoMensal } = useQuery({
     queryKey: ["dre-evolucao"],
     queryFn: async () => {
@@ -156,17 +156,17 @@ const DRE = () => {
         const endDate = endOfMonth(date);
 
         const { data: lancamentos } = await supabase
-          .from("financeiro_lancamentos")
-          .select("tipo, valor_entrada, valor_saida, custo_tratamento")
-          .gte("data", format(startDate, "yyyy-MM-dd"))
-          .lte("data", format(endDate, "yyyy-MM-dd"));
+          .from("td_fluxo_de_caixa")
+          .select("tipo, valor, custo_material")
+          .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
+          .lte("data_lancamento", format(endDate, "yyyy-MM-dd"));
 
         const receita = lancamentos?.filter(l => l.tipo === "receita")
-          .reduce((sum, l) => sum + Number(l.valor_entrada || 0), 0) || 0;
+          .reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
         const custo = lancamentos?.filter(l => l.tipo === "receita")
-          .reduce((sum, l) => sum + Number(l.custo_tratamento || 0), 0) || 0;
+          .reduce((sum, l) => sum + Number(l.custo_material || 0), 0) || 0;
         const despesas = lancamentos?.filter(l => l.tipo === "despesa")
-          .reduce((sum, l) => sum + Number(l.valor_saida || 0), 0) || 0;
+          .reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
         const margemBruta = receita - custo;
         const lucro = margemBruta - despesas;
 
@@ -413,20 +413,20 @@ const DRE = () => {
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-semibold">Custo dos Tratamentos</TableCell>
+                  <TableCell className="font-semibold">(-) Custos</TableCell>
                   {dreAnual?.map((m, idx) => (
-                    <TableCell key={idx} className="text-right text-muted-foreground">
+                    <TableCell key={idx} className="text-right text-destructive">
                       {m.custo.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-bold text-muted-foreground">
+                  <TableCell className="text-right font-bold text-destructive">
                     {dreAnual?.reduce((sum, m) => sum + m.custo, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                   </TableCell>
                 </TableRow>
-                <TableRow className="bg-muted/30">
-                  <TableCell className="font-bold">Margem Bruta</TableCell>
+                <TableRow className="bg-muted/50">
+                  <TableCell className="font-bold">(=) Margem Bruta</TableCell>
                   {dreAnual?.map((m, idx) => (
-                    <TableCell key={idx} className="text-right font-semibold text-green-600">
+                    <TableCell key={idx} className="text-right font-medium text-green-600">
                       {m.margemBruta.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                     </TableCell>
                   ))}
@@ -435,7 +435,7 @@ const DRE = () => {
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-semibold">Despesas Operacionais</TableCell>
+                  <TableCell className="font-semibold">(-) Despesas</TableCell>
                   {dreAnual?.map((m, idx) => (
                     <TableCell key={idx} className="text-right text-destructive">
                       {m.despesas.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
@@ -445,14 +445,14 @@ const DRE = () => {
                     {dreAnual?.reduce((sum, m) => sum + m.despesas, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                   </TableCell>
                 </TableRow>
-                <TableRow className="bg-muted/50">
-                  <TableCell className="font-bold text-lg">Lucro Líquido</TableCell>
+                <TableRow className="bg-primary/10">
+                  <TableCell className="font-bold">(=) Lucro Líquido</TableCell>
                   {dreAnual?.map((m, idx) => (
-                    <TableCell key={idx} className={`text-right font-bold ${m.lucro >= 0 ? "text-green-600" : "text-destructive"}`}>
+                    <TableCell key={idx} className={`text-right font-bold ${m.lucro >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                       {m.lucro.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                     </TableCell>
                   ))}
-                  <TableCell className={`text-right font-bold text-lg ${(dreAnual?.reduce((sum, m) => sum + m.lucro, 0) || 0) >= 0 ? "text-green-600" : "text-destructive"}`}>
+                  <TableCell className="text-right font-bold text-primary">
                     {dreAnual?.reduce((sum, m) => sum + m.lucro, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                   </TableCell>
                 </TableRow>
@@ -462,52 +462,30 @@ const DRE = () => {
         </CardContent>
       </Card>
 
-      {/* Gráficos de Evolução */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle>Evolução do Lucro Líquido (12 meses)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+      {/* Gráfico de Evolução */}
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle>Evolução Financeira - Últimos 12 Meses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart data={evolucaoMensal}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="mes" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip
-                  formatter={(value: any) => `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                 />
                 <Legend />
-                <Line type="monotone" dataKey="lucro" stroke="#10b981" strokeWidth={2} name="Lucro Líquido" />
+                <Line type="monotone" dataKey="receita" name="Receita" stroke="hsl(var(--primary))" strokeWidth={2} />
+                <Line type="monotone" dataKey="margemBruta" name="Margem Bruta" stroke="#22c55e" strokeWidth={2} />
+                <Line type="monotone" dataKey="lucro" name="Lucro Líquido" stroke="#3b82f6" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle>Comparativo: Receita x Margem x Lucro</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={evolucaoMensal}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="mes" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip
-                  formatter={(value: any) => `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-                />
-                <Legend />
-                <Bar dataKey="receita" fill="hsl(var(--primary))" name="Receita" />
-                <Bar dataKey="margemBruta" fill="#f59e0b" name="Margem Bruta" />
-                <Bar dataKey="lucro" fill="#10b981" name="Lucro Líquido" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

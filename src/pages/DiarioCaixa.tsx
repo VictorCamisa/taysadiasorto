@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Download, Plus, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Calendar, Download, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -16,25 +16,27 @@ const DiarioCaixa = () => {
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), "yyyy-MM-dd"));
   const [tipoFiltro, setTipoFiltro] = useState<string | "todos">("todos");
 
+  // Query usando td_fluxo_de_caixa com as novas tabelas de lookup
   const { data: lancamentos = [] } = useQuery({
     queryKey: ["diario-caixa", startDate, endDate, tipoFiltro],
     queryFn: async () => {
       let query = supabase
-        .from("financeiro_lancamentos")
+        .from("td_fluxo_de_caixa")
         .select(`
           *,
-          financeiro_categorias(categoria_sintetica, categoria_analitica),
-          financeiro_formas_pagamento(nome),
-          conta_financeira:financeiro_contas!financeiro_lancamentos_conta_financeira_id_fkey(nome),
-          financeiro_tratamentos(nome),
-          financeiro_origens(nome)
+          categorias(nome_sintetico, nome_analitico),
+          formas_pagamento(nome),
+          contas_financeiras(nome),
+          tratamentos(nome),
+          origens(nome),
+          clientes_fornecedores(nome)
         `)
-        .gte("data", startDate)
-        .lte("data", endDate)
-        .order("data", { ascending: false });
+        .gte("data_lancamento", startDate)
+        .lte("data_lancamento", endDate)
+        .order("data_lancamento", { ascending: false });
 
       if (tipoFiltro !== "todos") {
-        query = query.eq("tipo", tipoFiltro as "receita" | "despesa" | "transferencia" | "ajuste");
+        query = query.eq("tipo", tipoFiltro);
       }
 
       const { data, error } = await query;
@@ -46,17 +48,17 @@ const DiarioCaixa = () => {
   // Calcular totais do período
   const receitaTotal = lancamentos
     .filter(l => l.tipo === "receita")
-    .reduce((sum, l) => sum + Number(l.valor_entrada || 0), 0);
+    .reduce((sum, l) => sum + Number(l.valor || 0), 0);
 
   const despesaTotal = lancamentos
     .filter(l => l.tipo === "despesa")
-    .reduce((sum, l) => sum + Number(l.valor_saida || 0), 0);
+    .reduce((sum, l) => sum + Number(l.valor || 0), 0);
 
   const resultadoLiquido = receitaTotal - despesaTotal;
 
   // Agrupar por data
   const lancamentosPorData = lancamentos.reduce((acc: any, lanc) => {
-    const data = lanc.data;
+    const data = lanc.data_lancamento;
     if (!acc[data]) {
       acc[data] = [];
     }
@@ -173,11 +175,11 @@ const DiarioCaixa = () => {
         {Object.entries(lancamentosPorData).map(([data, lancamentosData]: [string, any]) => {
           const receitaDia = lancamentosData
             .filter((l: any) => l.tipo === "receita")
-            .reduce((sum: number, l: any) => sum + Number(l.valor_entrada || 0), 0);
+            .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
           
           const despesaDia = lancamentosData
             .filter((l: any) => l.tipo === "despesa")
-            .reduce((sum: number, l: any) => sum + Number(l.valor_saida || 0), 0);
+            .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
 
           const resultadoDia = receitaDia - despesaDia;
 
@@ -206,25 +208,27 @@ const DiarioCaixa = () => {
                           {lanc.tipo}
                         </Badge>
                         <div className="flex-1">
-                          <p className="font-medium">{lanc.cliente || lanc.observacoes || "Sem descrição"}</p>
+                          <p className="font-medium">
+                            {lanc.clientes_fornecedores?.nome || lanc.descricao || "Sem descrição"}
+                          </p>
                           <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                            {lanc.financeiro_tratamentos && (
-                              <span>Tratamento: {lanc.financeiro_tratamentos.nome}</span>
+                            {lanc.tratamentos && (
+                              <span>Tratamento: {lanc.tratamentos.nome}</span>
                             )}
-                            {lanc.financeiro_categorias && (
-                              <span>Cat: {lanc.financeiro_categorias.categoria_sintetica}</span>
+                            {lanc.categorias && (
+                              <span>Cat: {lanc.categorias.nome_sintetico}</span>
                             )}
-                            {lanc.financeiro_formas_pagamento && (
-                              <span>Pgto: {lanc.financeiro_formas_pagamento.nome}</span>
+                            {lanc.formas_pagamento && (
+                              <span>Pgto: {lanc.formas_pagamento.nome}</span>
                             )}
-                            {lanc.conta_financeira && (
-                              <span>Conta: {lanc.conta_financeira.nome}</span>
+                            {lanc.contas_financeiras && (
+                              <span>Conta: {lanc.contas_financeiras.nome}</span>
                             )}
                           </div>
                         </div>
                       </div>
                       <div className={`text-lg font-bold ${lanc.tipo === 'receita' ? 'text-green-600' : 'text-destructive'}`}>
-                        {lanc.tipo === 'receita' ? '+' : '-'}{formatCurrency(Number(lanc.valor_entrada || lanc.valor_saida || 0))}
+                        {lanc.tipo === 'receita' ? '+' : '-'}{formatCurrency(Number(lanc.valor || 0))}
                       </div>
                     </div>
                   ))}

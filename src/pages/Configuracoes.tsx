@@ -41,19 +41,19 @@ const Configuracoes = () => {
   const [origemFormOpen, setOrigemFormOpen] = useState(false);
   const [selectedOrigem, setSelectedOrigem] = useState<any>(null);
 
-  // Categoria mutations
+  // Categoria mutations - usando tabela 'categorias'
   const saveCategoriaMutation = useMutation({
     mutationFn: async (categoria: any) => {
       if (categoria.id) {
-        const { id, user_id, ...categoriaUpdate } = categoria;
+        const { id, ...categoriaUpdate } = categoria;
         const { error } = await supabase
-          .from("financeiro_categorias")
+          .from("categorias")
           .update(categoriaUpdate)
           .eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("financeiro_categorias")
+          .from("categorias")
           .insert(categoria);
         if (error) throw error;
       }
@@ -69,19 +69,19 @@ const Configuracoes = () => {
     },
   });
 
-  // Conta mutations
+  // Conta mutations - usando tabela 'contas_financeiras'
   const saveContaMutation = useMutation({
     mutationFn: async (conta: any) => {
       if (conta.id) {
-        const { id, user_id, ...contaUpdate } = conta;
+        const { id, ...contaUpdate } = conta;
         const { error } = await supabase
-          .from("financeiro_contas")
+          .from("contas_financeiras")
           .update(contaUpdate)
           .eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("financeiro_contas")
+          .from("contas_financeiras")
           .insert(conta);
         if (error) throw error;
       }
@@ -97,19 +97,19 @@ const Configuracoes = () => {
     },
   });
 
-  // Forma pagamento mutations
+  // Forma pagamento mutations - usando tabela 'formas_pagamento'
   const saveFormaMutation = useMutation({
     mutationFn: async (forma: any) => {
       if (forma.id) {
-        const { id, user_id, ...formaUpdate } = forma;
+        const { id, ...formaUpdate } = forma;
         const { error } = await supabase
-          .from("financeiro_formas_pagamento")
+          .from("formas_pagamento")
           .update(formaUpdate)
           .eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("financeiro_formas_pagamento")
+          .from("formas_pagamento")
           .insert(forma);
         if (error) throw error;
       }
@@ -125,19 +125,19 @@ const Configuracoes = () => {
     },
   });
 
-  // Origem mutations
+  // Origem mutations - usando tabela 'origens'
   const saveOrigemMutation = useMutation({
     mutationFn: async (origem: any) => {
       if (origem.id) {
-        const { id, user_id, ...origemUpdate } = origem;
+        const { id, ...origemUpdate } = origem;
         const { error } = await supabase
-          .from("financeiro_origens")
+          .from("origens")
           .update(origemUpdate)
           .eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("financeiro_origens")
+          .from("origens")
           .insert(origem);
         if (error) throw error;
       }
@@ -153,30 +153,30 @@ const Configuracoes = () => {
     },
   });
 
-  // Delete mutation
+  // Delete mutation - usando novas tabelas
   const deleteMutation = useMutation({
     mutationFn: async ({ id, table }: { id: string; table: string }) => {
       let error;
-      if (table === "financeiro_categorias") {
-        const result = await supabase.from("financeiro_categorias").delete().eq("id", id);
+      if (table === "categorias") {
+        const result = await supabase.from("categorias").delete().eq("id", id);
         error = result.error;
-      } else if (table === "financeiro_contas") {
-        const result = await supabase.from("financeiro_contas").delete().eq("id", id);
+      } else if (table === "contas_financeiras") {
+        const result = await supabase.from("contas_financeiras").delete().eq("id", id);
         error = result.error;
-      } else if (table === "financeiro_formas_pagamento") {
-        const result = await supabase.from("financeiro_formas_pagamento").delete().eq("id", id);
+      } else if (table === "formas_pagamento") {
+        const result = await supabase.from("formas_pagamento").delete().eq("id", id);
         error = result.error;
-      } else if (table === "financeiro_origens") {
-        const result = await supabase.from("financeiro_origens").delete().eq("id", id);
+      } else if (table === "origens") {
+        const result = await supabase.from("origens").delete().eq("id", id);
         error = result.error;
       }
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      if (variables.table === "financeiro_categorias") refetchCategorias();
-      if (variables.table === "financeiro_contas") refetchContas();
-      if (variables.table === "financeiro_formas_pagamento") refetchFormas();
-      if (variables.table === "financeiro_origens") refetchOrigens();
+      if (variables.table === "categorias") refetchCategorias();
+      if (variables.table === "contas_financeiras") refetchContas();
+      if (variables.table === "formas_pagamento") refetchFormas();
+      if (variables.table === "origens") refetchOrigens();
       setDeleteDialogOpen(false);
       setItemToDelete(null);
       toast({ title: "Item excluído com sucesso!" });
@@ -193,17 +193,11 @@ const Configuracoes = () => {
   };
 
   const tipoLabels: Record<string, string> = {
-    fixa: "Fixa",
-    variavel: "Variável",
-    impostos: "Impostos",
-    estruturais: "Estruturais",
-    comissoes: "Comissões",
-    marketing: "Marketing",
-    servicos: "Serviços",
-    caixa_fisico: "Caixa Físico",
-    conta_bancaria: "Conta Bancária",
-    cartao: "Cartão",
-    conta_socio: "Conta Sócio",
+    receita: "Receita",
+    despesa: "Despesa",
+    corrente: "Corrente",
+    poupanca: "Poupança",
+    caixa: "Caixa",
   };
 
   return (
@@ -248,47 +242,40 @@ const Configuracoes = () => {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Categoria Principal</TableHead>
                     <TableHead>Subcategoria</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {categorias.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={4} className="text-center text-muted-foreground">
                         Nenhuma categoria cadastrada
                       </TableCell>
                     </TableRow>
                   ) : (
                     categorias
                       .sort((a, b) => {
-                        // Ordenar por Categoria Principal, depois Subcategoria
-                        const compareMain = a.categoria_sintetica.localeCompare(b.categoria_sintetica);
+                        const compareMain = a.nome_sintetico.localeCompare(b.nome_sintetico);
                         if (compareMain !== 0) return compareMain;
-                        return (a.categoria_analitica || "").localeCompare(b.categoria_analitica || "");
+                        return (a.nome_analitico || "").localeCompare(b.nome_analitico || "");
                       })
                       .map((categoria) => (
                         <TableRow key={categoria.id}>
                           <TableCell>
                             <Badge variant="outline">{tipoLabels[String(categoria.tipo)] || categoria.tipo}</Badge>
                           </TableCell>
-                          <TableCell className="font-medium">{categoria.categoria_sintetica}</TableCell>
+                          <TableCell className="font-medium">{categoria.nome_sintetico}</TableCell>
                           <TableCell>
-                            {categoria.categoria_analitica ? (
+                            {categoria.nome_analitico ? (
                               <div className="flex items-center gap-2">
                                 <span className="text-muted-foreground">↳</span>
                                 <Badge variant="secondary" className="font-normal">
-                                  {categoria.categoria_analitica}
+                                  {categoria.nome_analitico}
                                 </Badge>
                               </div>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={categoria.ativa ? "default" : "secondary"}>
-                              {categoria.ativa ? "Ativa" : "Inativa"}
-                            </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -306,7 +293,7 @@ const Configuracoes = () => {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => {
-                                  setItemToDelete({ id: categoria.id, table: "financeiro_categorias" });
+                                  setItemToDelete({ id: categoria.id, table: "categorias" });
                                   setDeleteDialogOpen(true);
                                 }}
                               >
@@ -349,14 +336,13 @@ const Configuracoes = () => {
                     <TableHead>Tipo</TableHead>
                     <TableHead className="text-right">Saldo Inicial</TableHead>
                     <TableHead className="text-right">Saldo Atual</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {contas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
                         Nenhuma conta cadastrada
                       </TableCell>
                     </TableRow>
@@ -366,21 +352,16 @@ const Configuracoes = () => {
                         <TableCell className="font-medium">{conta.nome}</TableCell>
                         <TableCell>{tipoLabels[String(conta.tipo)] || conta.tipo}</TableCell>
                         <TableCell className="text-right">
-                          {Number(conta.saldo_inicial).toLocaleString("pt-BR", {
+                          {Number(conta.saldo_inicial || 0).toLocaleString("pt-BR", {
                             style: "currency",
                             currency: "BRL",
                           })}
                         </TableCell>
                         <TableCell className="text-right">
-                          {Number(conta.saldo_atual).toLocaleString("pt-BR", {
+                          {Number(conta.saldo_atual || 0).toLocaleString("pt-BR", {
                             style: "currency",
                             currency: "BRL",
                           })}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={conta.ativa ? "default" : "secondary"}>
-                            {conta.ativa ? "Ativa" : "Inativa"}
-                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -398,7 +379,7 @@ const Configuracoes = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                setItemToDelete({ id: conta.id, table: "financeiro_contas" });
+                                setItemToDelete({ id: conta.id, table: "contas_financeiras" });
                                 setDeleteDialogOpen(true);
                               }}
                             >
@@ -438,8 +419,8 @@ const Configuracoes = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Permite Parcelamento</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Taxa (%)</TableHead>
+                    <TableHead>Dias Recebimento</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -454,16 +435,8 @@ const Configuracoes = () => {
                     formasPagamento.map((forma) => (
                       <TableRow key={forma.id}>
                         <TableCell className="font-medium">{forma.nome}</TableCell>
-                        <TableCell>
-                          <Badge variant={forma.tipo === "credito" ? "default" : "secondary"}>
-                            {forma.tipo === "credito" ? "Sim" : "Não"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={forma.ativa ? "default" : "secondary"}>
-                            {forma.ativa ? "Ativa" : "Inativa"}
-                          </Badge>
-                        </TableCell>
+                        <TableCell>{Number(forma.taxa_percentual || 0).toFixed(2)}%</TableCell>
+                        <TableCell>{forma.dias_recebimento || 0} dias</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
@@ -480,10 +453,7 @@ const Configuracoes = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                setItemToDelete({
-                                  id: forma.id,
-                                  table: "financeiro_formas_pagamento",
-                                });
+                                setItemToDelete({ id: forma.id, table: "formas_pagamento" });
                                 setDeleteDialogOpen(true);
                               }}
                             >
@@ -516,14 +486,14 @@ const Configuracoes = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Origens de Receita</CardTitle>
+              <CardTitle>Origens de Clientes</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Descrição</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -538,11 +508,7 @@ const Configuracoes = () => {
                     origens.map((origem) => (
                       <TableRow key={origem.id}>
                         <TableCell className="font-medium">{origem.nome}</TableCell>
-                        <TableCell>
-                          <Badge variant={origem.ativa ? "default" : "secondary"}>
-                            {origem.ativa ? "Ativa" : "Inativa"}
-                          </Badge>
-                        </TableCell>
+                        <TableCell className="text-muted-foreground">{origem.descricao || "-"}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
@@ -559,7 +525,7 @@ const Configuracoes = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                setItemToDelete({ id: origem.id, table: "financeiro_origens" });
+                                setItemToDelete({ id: origem.id, table: "origens" });
                                 setDeleteDialogOpen(true);
                               }}
                             >
@@ -577,75 +543,40 @@ const Configuracoes = () => {
         </TabsContent>
       </Tabs>
 
-      {/* MODALS */}
+      {/* Forms */}
       <CategoriaForm
         open={categoriaFormOpen}
-        onClose={() => {
-          setCategoriaFormOpen(false);
-          setSelectedCategoria(null);
-        }}
-        onSave={(categoria) => {
-          if (selectedCategoria) {
-            saveCategoriaMutation.mutate({ ...categoria, id: selectedCategoria.id });
-          } else {
-            saveCategoriaMutation.mutate(categoria);
-          }
-        }}
+        onOpenChange={setCategoriaFormOpen}
         categoria={selectedCategoria}
+        onSave={(data) => saveCategoriaMutation.mutate(data)}
       />
 
       <ContaForm
         open={contaFormOpen}
-        onClose={() => {
-          setContaFormOpen(false);
-          setSelectedConta(null);
-        }}
-        onSave={(conta) => {
-          if (selectedConta) {
-            saveContaMutation.mutate({ ...conta, id: selectedConta.id });
-          } else {
-            saveContaMutation.mutate(conta);
-          }
-        }}
+        onOpenChange={setContaFormOpen}
         conta={selectedConta}
+        onSave={(data) => saveContaMutation.mutate(data)}
       />
 
       <FormaPagamentoForm
         open={formaFormOpen}
-        onClose={() => {
-          setFormaFormOpen(false);
-          setSelectedForma(null);
-        }}
-        onSave={(forma) => {
-          if (selectedForma) {
-            saveFormaMutation.mutate({ ...forma, id: selectedForma.id });
-          } else {
-            saveFormaMutation.mutate(forma);
-          }
-        }}
-        formaPagamento={selectedForma}
+        onOpenChange={setFormaFormOpen}
+        forma={selectedForma}
+        onSave={(data) => saveFormaMutation.mutate(data)}
       />
 
       <OrigemForm
         open={origemFormOpen}
-        onClose={() => {
-          setOrigemFormOpen(false);
-          setSelectedOrigem(null);
-        }}
-        onSave={(origem) => {
-          if (selectedOrigem) {
-            saveOrigemMutation.mutate({ ...origem, id: selectedOrigem.id });
-          } else {
-            saveOrigemMutation.mutate(origem);
-          }
-        }}
+        onOpenChange={setOrigemFormOpen}
         origem={selectedOrigem}
+        onSave={(data) => saveOrigemMutation.mutate(data)}
       />
 
+      {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
