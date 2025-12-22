@@ -16,8 +16,8 @@ export interface TratamentoCalculations {
 
 export const useTratamentoCalculations = () => {
   const calcularCustos = useCallback((
-    preco_venda: number,
-    custo_operacional: number,
+    preco: number,
+    custo_base: number,
     fichaTecnicaItems: FichaTecnicaItem[]
   ): TratamentoCalculations => {
     const custoFichaTecnica = fichaTecnicaItems.reduce(
@@ -25,10 +25,10 @@ export const useTratamentoCalculations = () => {
       0
     );
 
-    const custo_total = Number(custo_operacional || 0) + custoFichaTecnica;
-    const margem_bruta = Number(preco_venda || 0) - custo_total;
+    const custo_total = Number(custo_base || 0) + custoFichaTecnica;
+    const margem_bruta = Number(preco || 0) - custo_total;
     const lucro_sessao = margem_bruta;
-    const margem_contribuicao = preco_venda > 0 ? (margem_bruta / preco_venda) * 100 : 0;
+    const margem_contribuicao = preco > 0 ? (margem_bruta / preco) * 100 : 0;
 
     return {
       custo_total,
