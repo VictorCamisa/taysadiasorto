@@ -10,8 +10,6 @@ export const useEstoqueData = () => {
         .select('*')
         .order("nome");
       
-      console.log("[Estoque] Resultado estoque_produtos:", { data, error });
-
       if (error) throw error;
       return data || [];
     },
@@ -24,9 +22,9 @@ export const useEstoqueData = () => {
         .from("estoque_compras")
         .select(`
           *,
-          fornecedor:financeiro_fornecedores!fornecedor_id(id, nome),
-          forma_pagamento:financeiro_formas_pagamento!forma_pagamento_id(id, nome),
-          conta_financeira:financeiro_contas!conta_financeira_id(id, nome),
+          fornecedor:financeiro_fornecedores_old!fornecedor_id(id, nome),
+          forma_pagamento:financeiro_formas_pagamento_old!forma_pagamento_id(id, nome),
+          conta_financeira:financeiro_contas_old!conta_financeira_id(id, nome),
           itens:estoque_compras_itens(
             *,
             produto:estoque_produtos!produto_id(id, nome, unidade_medida)
@@ -39,13 +37,14 @@ export const useEstoqueData = () => {
     },
   });
 
+  // NOVA TABELA: clientes_fornecedores (filtrando tipo = 'fornecedor')
   const { data: fornecedores = [], isLoading: loadingFornecedores } = useQuery({
     queryKey: ["fornecedores"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_fornecedores")
+        .from("clientes_fornecedores")
         .select("*")
-        .eq("ativo", true)
+        .eq("tipo", "fornecedor")
         .order("nome");
       
       if (error) throw error;
@@ -53,13 +52,13 @@ export const useEstoqueData = () => {
     },
   });
 
+  // NOVA TABELA: formas_pagamento
   const { data: formasPagamento = [], isLoading: loadingFormasPagamento } = useQuery({
     queryKey: ["formas_pagamento"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_formas_pagamento")
+        .from("formas_pagamento")
         .select("*")
-        .eq("ativa", true)
         .order("nome");
       
       if (error) throw error;
@@ -67,13 +66,13 @@ export const useEstoqueData = () => {
     },
   });
 
+  // NOVA TABELA: contas_financeiras
   const { data: contasFinanceiras = [], isLoading: loadingContasFinanceiras } = useQuery({
     queryKey: ["contas_financeiras"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_contas")
+        .from("contas_financeiras")
         .select("*")
-        .eq("ativa", true)
         .order("nome");
       
       if (error) throw error;

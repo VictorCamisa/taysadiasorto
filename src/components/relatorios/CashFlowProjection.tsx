@@ -18,28 +18,27 @@ export function CashFlowProjection() {
   const dataFinal = addDays(hoje, Number(periodo));
   const dataInicioHistorico = subDays(hoje, 90); // 90 dias de histórico
 
-  // Buscar histórico de receitas e despesas
+  // Buscar histórico de receitas e despesas - NOVA TABELA: td_fluxo_de_caixa
   const { data: historicoLancamentos } = useQuery({
     queryKey: ['historico-lancamentos', format(dataInicioHistorico, 'yyyy-MM-dd')],
     queryFn: async () => {
       const { data } = await supabase
-        .from('financeiro_lancamentos')
+        .from('td_fluxo_de_caixa')
         .select('*')
-        .gte('data', format(dataInicioHistorico, 'yyyy-MM-dd'))
-        .lt('data', format(hoje, 'yyyy-MM-dd'))
-        .order('data', { ascending: true });
+        .gte('data_lancamento', format(dataInicioHistorico, 'yyyy-MM-dd'))
+        .lt('data_lancamento', format(hoje, 'yyyy-MM-dd'))
+        .order('data_lancamento', { ascending: true });
       return data || [];
     }
   });
 
-  // Buscar saldo atual das contas
+  // Buscar saldo atual das contas - NOVA TABELA: contas_financeiras
   const { data: contas } = useQuery({
     queryKey: ['contas-ativas'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('financeiro_contas')
-        .select('*')
-        .eq('ativa', true);
+        .from('contas_financeiras')
+        .select('*');
       return data || [];
     }
   });
@@ -77,11 +76,11 @@ export function CashFlowProjection() {
     const despesasPorDia: Record<string, number> = {};
 
     historicoLancamentos.forEach((lanc: any) => {
-      const dia = lanc.data;
+      const dia = lanc.data_lancamento;
       if (lanc.tipo === 'receita') {
-        receitasPorDia[dia] = (receitasPorDia[dia] || 0) + Number(lanc.valor_entrada || 0);
+        receitasPorDia[dia] = (receitasPorDia[dia] || 0) + Number(lanc.valor || 0);
       } else if (lanc.tipo === 'despesa') {
-        despesasPorDia[dia] = (despesasPorDia[dia] || 0) + Number(lanc.valor_saida || 0);
+        despesasPorDia[dia] = (despesasPorDia[dia] || 0) + Number(lanc.valor || 0);
       }
     });
 

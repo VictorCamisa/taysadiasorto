@@ -6,28 +6,29 @@ import { subMonths, format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 
 export function MonthlyRevenueChart() {
+  // NOVA TABELA: td_fluxo_de_caixa
   const { data = [] } = useQuery({
     queryKey: ["monthly-revenue"],
     queryFn: async () => {
       const sixMonthsAgo = subMonths(new Date(), 6);
 
       const { data: lancamentos, error } = await supabase
-        .from("financeiro_lancamentos")
-        .select("data, tipo, valor_entrada, valor_saida")
-        .gte("data", format(sixMonthsAgo, "yyyy-MM-dd"))
-        .order("data");
+        .from("td_fluxo_de_caixa")
+        .select("data_lancamento, tipo, valor")
+        .gte("data_lancamento", format(sixMonthsAgo, "yyyy-MM-dd"))
+        .order("data_lancamento");
 
       if (error) throw error;
 
-      const monthlyData = (lancamentos || []).reduce((acc: any, item) => {
-        const month = format(new Date(item.data), "MMM/yy");
+      const monthlyData = (lancamentos || []).reduce((acc: any, item: any) => {
+        const month = format(new Date(item.data_lancamento), "MMM/yy");
         if (!acc[month]) {
           acc[month] = { month, receita: 0, despesa: 0 };
         }
         if (item.tipo === "receita") {
-          acc[month].receita += Number(item.valor_entrada || 0);
+          acc[month].receita += Number(item.valor || 0);
         } else if (item.tipo === "despesa") {
-          acc[month].despesa += Number(item.valor_saida || 0);
+          acc[month].despesa += Number(item.valor || 0);
         }
         return acc;
       }, {});

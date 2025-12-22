@@ -2,24 +2,26 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useConfiguracoesData = () => {
+  // NOVA TABELA: categorias
   const { data: categorias = [], isLoading: loadingCategorias, refetch: refetchCategorias } = useQuery({
     queryKey: ["configuracoes_categorias"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_categorias")
+        .from("categorias")
         .select("*")
-        .order("categoria_sintetica");
+        .order("nome_sintetico");
       
       if (error) throw error;
       return data || [];
     },
   });
 
+  // NOVA TABELA: contas_financeiras
   const { data: contas = [], isLoading: loadingContas, refetch: refetchContas } = useQuery({
     queryKey: ["configuracoes_contas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_contas")
+        .from("contas_financeiras")
         .select("*")
         .order("nome");
       
@@ -28,11 +30,12 @@ export const useConfiguracoesData = () => {
     },
   });
 
+  // NOVA TABELA: formas_pagamento
   const { data: formasPagamento = [], isLoading: loadingFormas, refetch: refetchFormas } = useQuery({
     queryKey: ["configuracoes_formas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_formas_pagamento")
+        .from("formas_pagamento")
         .select("*")
         .order("nome");
       
@@ -41,11 +44,12 @@ export const useConfiguracoesData = () => {
     },
   });
 
+  // NOVA TABELA: origens
   const { data: origens = [], isLoading: loadingOrigens, refetch: refetchOrigens } = useQuery({
     queryKey: ["configuracoes_origens"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_origens")
+        .from("origens")
         .select("*")
         .order("nome");
       

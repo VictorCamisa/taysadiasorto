@@ -6,6 +6,7 @@ import { startOfMonth, endOfMonth, format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 
 export function RevenueByTreatmentChart() {
+  // NOVA TABELA: td_fluxo_de_caixa com join em tratamentos
   const { data = [] } = useQuery({
     queryKey: ["revenue-by-treatment"],
     queryFn: async () => {
@@ -13,19 +14,19 @@ export function RevenueByTreatmentChart() {
       const endDate = endOfMonth(new Date());
 
       const { data: lancamentos, error } = await supabase
-        .from("financeiro_lancamentos")
-        .select("tratamento_id, valor_entrada, financeiro_tratamentos(nome)")
+        .from("td_fluxo_de_caixa")
+        .select("tratamento_id, valor, tratamentos(nome)")
         .eq("tipo", "receita")
-        .gte("data", format(startDate, "yyyy-MM-dd"))
-        .lte("data", format(endDate, "yyyy-MM-dd"))
+        .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
+        .lte("data_lancamento", format(endDate, "yyyy-MM-dd"))
         .not("tratamento_id", "is", null);
 
       if (error) throw error;
 
       const grouped = (lancamentos || []).reduce((acc: any, item: any) => {
-        const nome = item.financeiro_tratamentos?.nome || "Outros";
+        const nome = item.tratamentos?.nome || "Outros";
         if (!acc[nome]) acc[nome] = 0;
-        acc[nome] += Number(item.valor_entrada || 0);
+        acc[nome] += Number(item.valor || 0);
         return acc;
       }, {});
 

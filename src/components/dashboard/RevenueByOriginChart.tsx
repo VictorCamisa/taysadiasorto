@@ -16,6 +16,7 @@ const GRADIENTS = [
 ];
 
 export function RevenueByOriginChart() {
+  // NOVA TABELA: td_fluxo_de_caixa com join em origens
   const { data = [] } = useQuery({
     queryKey: ["revenue-by-origin"],
     queryFn: async () => {
@@ -23,19 +24,19 @@ export function RevenueByOriginChart() {
       const endDate = endOfMonth(new Date());
 
       const { data: lancamentos, error } = await supabase
-        .from("financeiro_lancamentos")
-        .select("origem_id, valor_entrada, financeiro_origens(nome)")
+        .from("td_fluxo_de_caixa")
+        .select("origem_id, valor, origens(nome)")
         .eq("tipo", "receita")
-        .gte("data", format(startDate, "yyyy-MM-dd"))
-        .lte("data", format(endDate, "yyyy-MM-dd"))
+        .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
+        .lte("data_lancamento", format(endDate, "yyyy-MM-dd"))
         .not("origem_id", "is", null);
 
       if (error) throw error;
 
       const grouped = (lancamentos || []).reduce((acc: any, item: any) => {
-        const nome = item.financeiro_origens?.nome || "Outros";
+        const nome = item.origens?.nome || "Outros";
         if (!acc[nome]) acc[nome] = 0;
-        acc[nome] += Number(item.valor_entrada || 0);
+        acc[nome] += Number(item.valor || 0);
         return acc;
       }, {});
 
