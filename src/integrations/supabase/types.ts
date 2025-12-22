@@ -751,8 +751,11 @@ export type Database = {
       financeiro_lancamentos: {
         Row: {
           categoria_id: string | null
+          cliente: string | null
+          conta_financeira_id: string | null
           conta_id: string | null
           created_at: string | null
+          custo_tratamento: number | null
           data: string
           data_pagamento: string | null
           data_vencimento: string | null
@@ -761,9 +764,11 @@ export type Database = {
           fornecedor_id: string | null
           id: string
           lancamento_pai_id: string | null
+          margem: number | null
           observacoes: string | null
           origem_id: string | null
           parcela_atual: number | null
+          quantidade: number | null
           status: string | null
           tipo: string
           total_parcelas: number | null
@@ -771,11 +776,16 @@ export type Database = {
           updated_at: string | null
           user_id: string
           valor: number
+          valor_entrada: number | null
+          valor_saida: number | null
         }
         Insert: {
           categoria_id?: string | null
+          cliente?: string | null
+          conta_financeira_id?: string | null
           conta_id?: string | null
           created_at?: string | null
+          custo_tratamento?: number | null
           data?: string
           data_pagamento?: string | null
           data_vencimento?: string | null
@@ -784,9 +794,11 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           lancamento_pai_id?: string | null
+          margem?: number | null
           observacoes?: string | null
           origem_id?: string | null
           parcela_atual?: number | null
+          quantidade?: number | null
           status?: string | null
           tipo: string
           total_parcelas?: number | null
@@ -794,11 +806,16 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           valor?: number
+          valor_entrada?: number | null
+          valor_saida?: number | null
         }
         Update: {
           categoria_id?: string | null
+          cliente?: string | null
+          conta_financeira_id?: string | null
           conta_id?: string | null
           created_at?: string | null
+          custo_tratamento?: number | null
           data?: string
           data_pagamento?: string | null
           data_vencimento?: string | null
@@ -807,9 +824,11 @@ export type Database = {
           fornecedor_id?: string | null
           id?: string
           lancamento_pai_id?: string | null
+          margem?: number | null
           observacoes?: string | null
           origem_id?: string | null
           parcela_atual?: number | null
+          quantidade?: number | null
           status?: string | null
           tipo?: string
           total_parcelas?: number | null
@@ -817,6 +836,8 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           valor?: number
+          valor_entrada?: number | null
+          valor_saida?: number | null
         }
         Relationships: [
           {
@@ -831,6 +852,13 @@ export type Database = {
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "financeiro_categorias_dropdown"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financeiro_lancamentos_conta_financeira_id_fkey"
+            columns: ["conta_financeira_id"]
+            isOneToOne: false
+            referencedRelation: "financeiro_contas"
             referencedColumns: ["id"]
           },
           {

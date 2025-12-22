@@ -94,7 +94,7 @@ export const useFinanceData = () => {
   const saldoTotal = contas.reduce((sum, c) => sum + Number(c.saldo_atual || 0), 0);
 
   const contasVencidas = contasPagar.filter(
-    c => c.status === "aberto" && new Date(c.vencimento) < new Date()
+    c => (c.status === "aberto" || c.status === "pendente") && new Date(c.data_vencimento) < new Date()
   ).length;
 
   const produtosBaixos = produtos.filter(

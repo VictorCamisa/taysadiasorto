@@ -316,22 +316,24 @@ export default function Tratamentos() {
                       <TableCell className="font-medium">{tratamento.nome}</TableCell>
                       <TableCell>{tratamento.grupo}</TableCell>
                       <TableCell className="text-right">
-                        {Number(tratamento.preco_venda || 0).toLocaleString("pt-BR", {
+                        {Number(tratamento.preco || 0).toLocaleString("pt-BR", {
                           style: "currency",
                           currency: "BRL",
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        {Number(tratamento.custo_total || 0).toLocaleString("pt-BR", {
+                        {Number(tratamento.custo_estimado || 0).toLocaleString("pt-BR", {
                           style: "currency",
                           currency: "BRL",
                         })}
                       </TableCell>
-                      <TableCell className={`text-right font-medium ${getMargemColor(tratamento.margem_contribuicao || 0)}`}>
-                        {(tratamento.margem_contribuicao || 0).toFixed(1)}%
+                      <TableCell className={`text-right font-medium ${getMargemColor(
+                        tratamento.preco > 0 ? ((tratamento.preco - (tratamento.custo_estimado || 0)) / tratamento.preco) * 100 : 0
+                      )}`}>
+                        {(tratamento.preco > 0 ? ((tratamento.preco - (tratamento.custo_estimado || 0)) / tratamento.preco) * 100 : 0).toFixed(1)}%
                       </TableCell>
                       <TableCell className="text-center">
-                        {tratamento.tempo_execucao_minutos || "-"}
+                        {tratamento.duracao_minutos || "-"}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant={tratamento.ativo ? "default" : "secondary"}>
