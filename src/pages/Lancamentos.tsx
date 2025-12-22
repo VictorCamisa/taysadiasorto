@@ -223,7 +223,7 @@ const Lancamentos = () => {
     if (formData.tipo === "receita" && formData.tratamento_id) {
       const tratamentoSelecionado = tratamentos.find((t: any) => t.id === formData.tratamento_id);
       if (tratamentoSelecionado) {
-        const custoUnitarioTratamento = Number(tratamentoSelecionado.custo_total || 0);
+        const custoUnitarioTratamento = Number(tratamentoSelecionado.custo_estimado || 0);
         custo_tratamento = custoUnitarioTratamento * quantidade;
         margem = valorEntrada - custo_tratamento;
       }
@@ -435,7 +435,7 @@ const Lancamentos = () => {
                           setFormData({ 
                             ...formData, 
                             tratamento_id: value,
-                            valor_entrada: tratamentoSelecionado?.preco_venda?.toString() || formData.valor_entrada
+                            valor_entrada: tratamentoSelecionado?.preco?.toString() || formData.valor_entrada
                           });
                         }}
                       >
@@ -475,7 +475,7 @@ const Lancamentos = () => {
                         {(() => {
                           const tratamentoSelecionado = tratamentos.find((t: any) => t.id === formData.tratamento_id);
                           const valorEntrada = parseFloat(formData.valor_entrada) || 0;
-                          const custoTratamento = tratamentoSelecionado ? Number(tratamentoSelecionado.custo_total || 0) : 0;
+                          const custoTratamento = tratamentoSelecionado ? Number(tratamentoSelecionado.custo_estimado || 0) : 0;
                           const margem = valorEntrada - custoTratamento;
                           const margemPercentual = valorEntrada > 0 ? (margem / valorEntrada) * 100 : 0;
 

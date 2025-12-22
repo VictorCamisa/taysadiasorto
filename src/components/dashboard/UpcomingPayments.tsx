@@ -10,10 +10,10 @@ export function UpcomingPayments() {
   const { contasPagar } = useFinanceData();
 
   const proximas = contasPagar.filter((conta) => {
-    const vencimento = new Date(conta.vencimento);
+    const vencimento = new Date(conta.data_vencimento);
     const seteDias = addDays(new Date(), 7);
     return (
-      conta.status === "aberto" &&
+      (conta.status === "aberto" || conta.status === "pendente") &&
       isAfter(vencimento, new Date()) &&
       isBefore(vencimento, seteDias)
     );
@@ -42,7 +42,7 @@ export function UpcomingPayments() {
                     {conta.financeiro_fornecedores?.nome || "Sem fornecedor"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Vence em {format(new Date(conta.vencimento), "dd/MM/yyyy", { locale: ptBR })}
+                    Vence em {format(new Date(conta.data_vencimento), "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
                 <Badge variant="outline">

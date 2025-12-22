@@ -34,7 +34,7 @@ const Fornecedores = () => {
       if (search) {
         const searchLower = search.toLowerCase();
         const matchesNome = f.nome.toLowerCase().includes(searchLower);
-        const matchesCnpj = f.cnpj_cpf?.toLowerCase().includes(searchLower);
+        const matchesCnpj = f.cnpj?.toLowerCase().includes(searchLower);
         if (!matchesNome && !matchesCnpj) return false;
       }
       if (status === "ativo" && !f.ativo) return false;
@@ -192,7 +192,7 @@ const Fornecedores = () => {
                   return (
                     <TableRow key={fornecedor.id}>
                       <TableCell className="font-medium">{fornecedor.nome}</TableCell>
-                      <TableCell>{fornecedor.cnpj_cpf || "-"}</TableCell>
+                      <TableCell>{fornecedor.cnpj || "-"}</TableCell>
                       <TableCell>{fornecedor.telefone || "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">

@@ -455,8 +455,8 @@ const Configuracoes = () => {
                       <TableRow key={forma.id}>
                         <TableCell className="font-medium">{forma.nome}</TableCell>
                         <TableCell>
-                          <Badge variant={forma.permite_parcelamento ? "default" : "secondary"}>
-                            {forma.permite_parcelamento ? "Sim" : "Não"}
+                          <Badge variant={forma.tipo === "credito" ? "default" : "secondary"}>
+                            {forma.tipo === "credito" ? "Sim" : "Não"}
                           </Badge>
                         </TableCell>
                         <TableCell>

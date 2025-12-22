@@ -74,7 +74,7 @@ export const useDashboardData = (filters: DashboardFilters) => {
       const { data, error } = await supabase
         .from("financeiro_contas_pagar")
         .select("*")
-        .order("vencimento");
+        .order("data_vencimento");
       if (error) throw error;
       return data || [];
     },
@@ -185,10 +185,10 @@ export const useDashboardData = (filters: DashboardFilters) => {
   // Other KPIs
   const saldoTotal = contas.reduce((sum, c) => sum + (c.saldo_atual || 0), 0);
   const contasVencidas = contasPagar.filter(
-    c => c.status !== "pago" && new Date(c.vencimento) < new Date()
+    c => c.status !== "pago" && new Date(c.data_vencimento) < new Date()
   ).length;
   const produtosBaixos = produtos.filter(
-    p => p.estoque_atual < p.estoque_minimo
+    p => (p.estoque_atual || 0) <= (p.estoque_minimo || 0)
   ).length;
 
   return {
