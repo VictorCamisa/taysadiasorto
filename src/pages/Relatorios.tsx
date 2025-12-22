@@ -45,71 +45,68 @@ const Relatorios = () => {
   const [categoriaEstoqueFiltro, setCategoriaEstoqueFiltro] = useState<string>("todos");
   const [statusEstoqueFiltro, setStatusEstoqueFiltro] = useState<string>("todos");
 
-  // Queries para dados básicos
+  // Queries para dados básicos - usando novas tabelas
   const { data: tratamentos } = useQuery({
-    queryKey: ['tratamentos'],
+    queryKey: ['tratamentos-relatorios'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('financeiro_tratamentos')
-        .select('*')
-        .eq('ativo', true);
+        .from('tratamentos')
+        .select('*');
       return data || [];
     }
   });
 
   const { data: origens } = useQuery({
-    queryKey: ['origens'],
+    queryKey: ['origens-relatorios'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('financeiro_origens')
-        .select('*')
-        .eq('ativa', true);
+        .from('origens')
+        .select('*');
       return data || [];
     }
   });
 
   const { data: categorias } = useQuery({
-    queryKey: ['categorias'],
+    queryKey: ['categorias-relatorios'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('financeiro_categorias')
-        .select('*')
-        .eq('ativa', true);
+        .from('categorias')
+        .select('*');
       return data || [];
     }
   });
 
   const { data: fornecedores } = useQuery({
-    queryKey: ['fornecedores'],
+    queryKey: ['fornecedores-relatorios'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('financeiro_fornecedores')
+        .from('clientes_fornecedores')
         .select('*')
-        .eq('ativo', true);
+        .eq('tipo', 'fornecedor');
       return data || [];
     }
   });
 
-  // Query para receitas - Período Principal
+  // Query para receitas - Período Principal - usando td_fluxo_de_caixa
   const { data: receitas, isLoading: loadingReceitas } = useQuery({
     queryKey: ['relatorio-receitas', dataInicio, dataFim, tratamentoFiltro, origemFiltro],
     queryFn: async () => {
       let query = supabase
-        .from('financeiro_lancamentos')
+        .from('td_fluxo_de_caixa')
         .select(`
           *,
-          tratamento:tratamento_id(nome, grupo),
+          tratamento:tratamento_id(nome, descricao),
           origem:origem_id(nome),
           forma_pagamento:forma_pagamento_id(nome)
         `)
         .eq('tipo', 'receita')
-        .gte('data', dataInicio)
-        .lte('data', dataFim);
+        .gte('data_lancamento', dataInicio)
+        .lte('data_lancamento', dataFim);
 
       if (tratamentoFiltro !== 'todos') query = query.eq('tratamento_id', tratamentoFiltro);
       if (origemFiltro !== 'todos') query = query.eq('origem_id', origemFiltro);
 
-      const { data } = await query.order('data', { ascending: false });
+      const { data } = await query.order('data_lancamento', { ascending: false });
       return data || [];
     }
   });
@@ -121,21 +118,21 @@ const Relatorios = () => {
       if (!compararPeriodos) return [];
       
       let query = supabase
-        .from('financeiro_lancamentos')
+        .from('td_fluxo_de_caixa')
         .select(`
           *,
-          tratamento:tratamento_id(nome, grupo),
+          tratamento:tratamento_id(nome, descricao),
           origem:origem_id(nome),
           forma_pagamento:forma_pagamento_id(nome)
         `)
         .eq('tipo', 'receita')
-        .gte('data', dataInicioComp)
-        .lte('data', dataFimComp);
+        .gte('data_lancamento', dataInicioComp)
+        .lte('data_lancamento', dataFimComp);
 
       if (tratamentoFiltro !== 'todos') query = query.eq('tratamento_id', tratamentoFiltro);
       if (origemFiltro !== 'todos') query = query.eq('origem_id', origemFiltro);
 
-      const { data } = await query.order('data', { ascending: false });
+      const { data } = await query.order('data_lancamento', { ascending: false });
       return data || [];
     },
     enabled: compararPeriodos
@@ -146,24 +143,24 @@ const Relatorios = () => {
     queryKey: ['relatorio-despesas', dataInicio, dataFim, categoriaSinteticaFiltro, fornecedorFiltro],
     queryFn: async () => {
       let query = supabase
-        .from('financeiro_lancamentos')
+        .from('td_fluxo_de_caixa')
         .select(`
           *,
-          categoria:categoria_id(categoria_sintetica, categoria_analitica),
-          fornecedor:fornecedor_id(nome),
+          categoria:categoria_id(nome_sintetico, nome_analitico),
+          cliente_fornecedor:cliente_fornecedor_id(nome),
           forma_pagamento:forma_pagamento_id(nome)
         `)
         .eq('tipo', 'despesa')
-        .gte('data', dataInicio)
-        .lte('data', dataFim);
+        .gte('data_lancamento', dataInicio)
+        .lte('data_lancamento', dataFim);
 
-      if (fornecedorFiltro !== 'todos') query = query.eq('fornecedor_id', fornecedorFiltro);
+      if (fornecedorFiltro !== 'todos') query = query.eq('cliente_fornecedor_id', fornecedorFiltro);
 
-      const { data } = await query.order('data', { ascending: false });
+      const { data } = await query.order('data_lancamento', { ascending: false });
       
       let filteredData = data || [];
       if (categoriaSinteticaFiltro !== 'todos') {
-        filteredData = filteredData.filter(d => d.categoria?.categoria_sintetica === categoriaSinteticaFiltro);
+        filteredData = filteredData.filter((d: any) => d.categoria?.nome_sintetico === categoriaSinteticaFiltro);
       }
       
       return filteredData;
@@ -177,24 +174,24 @@ const Relatorios = () => {
       if (!compararPeriodos) return [];
       
       let query = supabase
-        .from('financeiro_lancamentos')
+        .from('td_fluxo_de_caixa')
         .select(`
           *,
-          categoria:categoria_id(categoria_sintetica, categoria_analitica),
-          fornecedor:fornecedor_id(nome),
+          categoria:categoria_id(nome_sintetico, nome_analitico),
+          cliente_fornecedor:cliente_fornecedor_id(nome),
           forma_pagamento:forma_pagamento_id(nome)
         `)
         .eq('tipo', 'despesa')
-        .gte('data', dataInicioComp)
-        .lte('data', dataFimComp);
+        .gte('data_lancamento', dataInicioComp)
+        .lte('data_lancamento', dataFimComp);
 
-      if (fornecedorFiltro !== 'todos') query = query.eq('fornecedor_id', fornecedorFiltro);
+      if (fornecedorFiltro !== 'todos') query = query.eq('cliente_fornecedor_id', fornecedorFiltro);
 
-      const { data } = await query.order('data', { ascending: false });
+      const { data } = await query.order('data_lancamento', { ascending: false });
       
       let filteredData = data || [];
       if (categoriaSinteticaFiltro !== 'todos') {
-        filteredData = filteredData.filter(d => d.categoria?.categoria_sintetica === categoriaSinteticaFiltro);
+        filteredData = filteredData.filter((d: any) => d.categoria?.nome_sintetico === categoriaSinteticaFiltro);
       }
       
       return filteredData;
@@ -229,12 +226,12 @@ const Relatorios = () => {
     }
   });
 
-  // Cálculos para Receitas
-  const receitaTotal = receitas?.reduce((sum, r) => sum + (r.valor_entrada || 0), 0) || 0;
+  // Cálculos para Receitas - usando valor ao invés de valor_entrada
+  const receitaTotal = receitas?.reduce((sum, r: any) => sum + Number(r.valor || 0), 0) || 0;
   const quantidadeVendas = receitas?.length || 0;
   const ticketMedio = quantidadeVendas > 0 ? receitaTotal / quantidadeVendas : 0;
   
-  const receitaTotalComp = receitasComp?.reduce((sum, r) => sum + (r.valor_entrada || 0), 0) || 0;
+  const receitaTotalComp = receitasComp?.reduce((sum, r: any) => sum + Number(r.valor || 0), 0) || 0;
   const quantidadeVendasComp = receitasComp?.length || 0;
   const ticketMedioComp = quantidadeVendasComp > 0 ? receitaTotalComp / quantidadeVendasComp : 0;
   
@@ -242,58 +239,58 @@ const Relatorios = () => {
   const variacaoQuantidade = quantidadeVendasComp > 0 ? ((quantidadeVendas - quantidadeVendasComp) / quantidadeVendasComp) * 100 : 0;
   const variacaoTicket = ticketMedioComp > 0 ? ((ticketMedio - ticketMedioComp) / ticketMedioComp) * 100 : 0;
 
-  const receitasPorTratamento = receitas?.reduce((acc: any[], r) => {
+  const receitasPorTratamento = receitas?.reduce((acc: any[], r: any) => {
     const nome = r.tratamento?.nome || 'Sem tratamento';
     const existing = acc.find(item => item.nome === nome);
     if (existing) {
-      existing.valor += r.valor_entrada || 0;
+      existing.valor += Number(r.valor || 0);
       existing.quantidade += 1;
     } else {
-      acc.push({ nome, valor: r.valor_entrada || 0, quantidade: 1 });
+      acc.push({ nome, valor: Number(r.valor || 0), quantidade: 1 });
     }
     return acc;
   }, []).sort((a, b) => b.valor - a.valor).slice(0, 10) || [];
 
-  const receitasPorOrigem = receitas?.reduce((acc: any[], r) => {
+  const receitasPorOrigem = receitas?.reduce((acc: any[], r: any) => {
     const nome = r.origem?.nome || 'Sem origem';
     const existing = acc.find(item => item.name === nome);
     if (existing) {
-      existing.value += r.valor_entrada || 0;
+      existing.value += Number(r.valor || 0);
     } else {
-      acc.push({ name: nome, value: r.valor_entrada || 0 });
+      acc.push({ name: nome, value: Number(r.valor || 0) });
     }
     return acc;
   }, []) || [];
 
   // Cálculos para Despesas
-  const despesaTotal = despesas?.reduce((sum, d) => sum + (d.valor_saida || 0), 0) || 0;
+  const despesaTotal = despesas?.reduce((sum, d: any) => sum + Number(d.valor || 0), 0) || 0;
   const despesaMedia = despesas && despesas.length > 0 ? despesaTotal / despesas.length : 0;
-  const maiorDespesa = despesas?.reduce((max, d) => Math.max(max, d.valor_saida || 0), 0) || 0;
+  const maiorDespesa = despesas?.reduce((max, d: any) => Math.max(max, Number(d.valor || 0)), 0) || 0;
   
-  const despesaTotalComp = despesasComp?.reduce((sum, d) => sum + (d.valor_saida || 0), 0) || 0;
+  const despesaTotalComp = despesasComp?.reduce((sum, d: any) => sum + Number(d.valor || 0), 0) || 0;
   const despesaMediaComp = despesasComp && despesasComp.length > 0 ? despesaTotalComp / despesasComp.length : 0;
   
   const variacaoDespesa = despesaTotalComp > 0 ? ((despesaTotal - despesaTotalComp) / despesaTotalComp) * 100 : 0;
   const variacaoDespesaMedia = despesaMediaComp > 0 ? ((despesaMedia - despesaMediaComp) / despesaMediaComp) * 100 : 0;
 
-  const despesasPorCategoria = despesas?.reduce((acc: any[], d) => {
-    const nome = d.categoria?.categoria_sintetica || 'Sem categoria';
+  const despesasPorCategoria = despesas?.reduce((acc: any[], d: any) => {
+    const nome = d.categoria?.nome_sintetico || 'Sem categoria';
     const existing = acc.find(item => item.nome === nome);
     if (existing) {
-      existing.valor += d.valor_saida || 0;
+      existing.valor += Number(d.valor || 0);
     } else {
-      acc.push({ nome, valor: d.valor_saida || 0 });
+      acc.push({ nome, valor: Number(d.valor || 0) });
     }
     return acc;
   }, []).sort((a, b) => b.valor - a.valor) || [];
 
   // Cálculos para Margens
-  let margensPorTratamento = receitas?.reduce((acc: any[], r) => {
+  let margensPorTratamento = receitas?.reduce((acc: any[], r: any) => {
     if (!r.tratamento_id) return acc;
     
     const nome = r.tratamento?.nome || 'Sem nome';
-    const receita = r.valor_entrada || 0;
-    const custo = r.custo_tratamento || 0;
+    const receita = Number(r.valor || 0);
+    const custo = Number(r.custo_material || 0);
     const margem = receita - custo;
     
     const existing = acc.find(item => item.nome === nome);
@@ -301,14 +298,14 @@ const Relatorios = () => {
       existing.receita += receita;
       existing.custo += custo;
       existing.margem += margem;
-      existing.quantidade += r.quantidade || 1;
+      existing.quantidade += 1;
     } else {
       acc.push({
         nome,
         receita,
         custo,
         margem,
-        quantidade: r.quantidade || 1,
+        quantidade: 1,
         percentual: 0
       });
     }
@@ -326,8 +323,8 @@ const Relatorios = () => {
   // Fallback: se não houver receitas no período, usar cadastro de tratamentos
   if ((!receitas || receitas.length === 0) && tratamentos && tratamentos.length > 0) {
     margensPorTratamento = tratamentos.map((t: any) => {
-      const receita = Number(t.preco_venda || 0);
-      const custo = Number(t.custo_total || 0);
+      const receita = Number(t.preco_padrao || 0);
+      const custo = Number(t.custo_estimado || 0);
       const margem = receita - custo;
 
       return {
@@ -347,12 +344,12 @@ const Relatorios = () => {
     tratamentoMaisRentavel = margensPorTratamento.slice().sort((a, b) => b.margem - a.margem)[0];
   }
 
-  const margensPorTratamentoComp = receitasComp?.reduce((acc: any[], r) => {
+  const margensPorTratamentoComp = receitasComp?.reduce((acc: any[], r: any) => {
     if (!r.tratamento_id) return acc;
     
     const nome = r.tratamento?.nome || 'Sem nome';
-    const receita = r.valor_entrada || 0;
-    const custo = r.custo_tratamento || 0;
+    const receita = Number(r.valor || 0);
+    const custo = Number(r.custo_material || 0);
     const margem = receita - custo;
     
     const existing = acc.find(item => item.nome === nome);
@@ -360,14 +357,14 @@ const Relatorios = () => {
       existing.receita += receita;
       existing.custo += custo;
       existing.margem += margem;
-      existing.quantidade += r.quantidade || 1;
+      existing.quantidade += 1;
     } else {
       acc.push({
         nome,
         receita,
         custo,
         margem,
-        quantidade: r.quantidade || 1,
+        quantidade: 1,
         percentual: 0
       });
     }
@@ -389,7 +386,7 @@ const Relatorios = () => {
   const valorTotalEstoque = estoque?.reduce((sum, p) => sum + ((p.estoque_atual || 0) * (p.custo_medio || 0)), 0) || 0;
   const produtosCriticos = estoque?.filter(p => (p.estoque_atual || 0) <= (p.estoque_minimo || 0)).length || 0;
 
-  const categoriasSinteticasUnicas = Array.from(new Set(categorias?.map(c => c.categoria_sintetica)));
+  const categoriasSinteticasUnicas = Array.from(new Set(categorias?.map(c => c.nome_sintetico)));
   const categoriasEstoqueUnicas = Array.from(new Set(estoque?.map(p => p.categoria)));
 
   return (
@@ -444,27 +441,27 @@ const Relatorios = () => {
                   {compararPeriodos && (
                     <>
                       <div className="space-y-2">
-                        <Label className="text-accent-foreground">Data Início (Comparação)</Label>
-                        <Input type="date" value={dataInicioComp} onChange={(e) => setDataInicioComp(e.target.value)} className="border-accent" />
+                        <Label>Data Início (Comparação)</Label>
+                        <Input type="date" value={dataInicioComp} onChange={(e) => setDataInicioComp(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-accent-foreground">Data Fim (Comparação)</Label>
-                        <Input type="date" value={dataFimComp} onChange={(e) => setDataFimComp(e.target.value)} className="border-accent" />
+                        <Label>Data Fim (Comparação)</Label>
+                        <Input type="date" value={dataFimComp} onChange={(e) => setDataFimComp(e.target.value)} />
                       </div>
                     </>
                   )}
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div className="space-y-2">
                     <Label>Tratamento</Label>
                     <Select value={tratamentoFiltro} onValueChange={setTratamentoFiltro}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Todos os tratamentos" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="todos">Todos</SelectItem>
-                        {tratamentos?.map(t => (
+                        <SelectItem value="todos">Todos os tratamentos</SelectItem>
+                        {tratamentos?.map((t: any) => (
                           <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                         ))}
                       </SelectContent>
@@ -474,11 +471,11 @@ const Relatorios = () => {
                     <Label>Origem</Label>
                     <Select value={origemFiltro} onValueChange={setOrigemFiltro}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Todas as origens" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="todos">Todas</SelectItem>
-                        {origens?.map(o => (
+                        <SelectItem value="todos">Todas as origens</SelectItem>
+                        {origens?.map((o: any) => (
                           <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
                         ))}
                       </SelectContent>
@@ -489,81 +486,87 @@ const Relatorios = () => {
             </CardContent>
           </Card>
 
-          {/* Cards de Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* KPIs de Receitas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Receita Total
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-2xl font-bold text-primary">
-                    {receitaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
+                <div className="flex items-center">
+                  <p className="text-2xl font-bold">
+                    {receitaTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
                   {compararPeriodos && <VariacaoBadge valor={variacaoReceita} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {compararPeriodos && receitaTotalComp > 0 
-                    ? `Comparado a ${receitaTotalComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` 
-                    : 'Período selecionado'}
-                </p>
+                {compararPeriodos && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Período anterior: {receitaTotalComp.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Quantidade de Vendas
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-2xl font-bold">
-                    {ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
-                  {compararPeriodos && <VariacaoBadge valor={variacaoTicket} />}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {compararPeriodos && ticketMedioComp > 0
-                    ? `Comparado a ${ticketMedioComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
-                    : 'Valor médio por venda'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Quantidade de Vendas</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-2xl font-bold">{quantidadeVendas}</div>
+                <div className="flex items-center">
+                  <p className="text-2xl font-bold">{quantidadeVendas}</p>
                   {compararPeriodos && <VariacaoBadge valor={variacaoQuantidade} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {compararPeriodos && quantidadeVendasComp > 0
-                    ? `Comparado a ${quantidadeVendasComp} vendas`
-                    : 'Total de transações'}
-                </p>
+                {compararPeriodos && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Período anterior: {quantidadeVendasComp}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Ticket Médio
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center">
+                  <p className="text-2xl font-bold">
+                    {ticketMedio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                  {compararPeriodos && <VariacaoBadge valor={variacaoTicket} />}
+                </div>
+                {compararPeriodos && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Período anterior: {ticketMedioComp.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Gráficos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Gráficos de Receitas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Receita por Tratamento (Top 10)</CardTitle>
+                <CardTitle>Top 10 Tratamentos por Receita</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={receitasPorTratamento}>
+                  <BarChart data={receitasPorTratamento} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="nome" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR')}`} />
-                    <Bar dataKey="valor" fill="var(--primary)" />
+                    <XAxis type="number" tickFormatter={(v) => `R$ ${(v/1000).toFixed(0)}k`} />
+                    <YAxis dataKey="nome" type="category" width={120} tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+                    <Bar dataKey="valor" fill="hsl(var(--primary))" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -571,7 +574,7 @@ const Relatorios = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Receita por Origem</CardTitle>
+                <CardTitle>Receitas por Origem</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -581,68 +584,21 @@ const Relatorios = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
+                      outerRadius={100}
                       dataKey="value"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     >
-                      {receitasPorOrigem.map((entry, index) => (
+                      {receitasPorOrigem.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR')}`} />
+                    <Tooltip formatter={(v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
           </div>
-
-          {/* Tabela Detalhada */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Receitas Detalhadas</CardTitle>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingReceitas ? (
-                <p className="text-center text-muted-foreground">Carregando...</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Tratamento</TableHead>
-                      <TableHead>Origem</TableHead>
-                      <TableHead>Forma Pagamento</TableHead>
-                      <TableHead className="text-right">Qtd</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {receitas?.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>{format(new Date(r.data), 'dd/MM/yyyy')}</TableCell>
-                        <TableCell>{r.cliente || '-'}</TableCell>
-                        <TableCell>{r.tratamento?.nome || '-'}</TableCell>
-                        <TableCell>{r.origem?.nome || '-'}</TableCell>
-                        <TableCell>{r.forma_pagamento?.nome || '-'}</TableCell>
-                        <TableCell className="text-right">{r.quantidade || 1}</TableCell>
-                        <TableCell className="text-right font-medium text-primary">
-                          {(r.valor_entrada || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* ABA DESPESAS */}
@@ -651,368 +607,201 @@ const Relatorios = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Filter className="h-5 w-5" />
-                Filtros e Comparação
+                Filtros
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2 pb-2 border-b">
-                  <Switch
-                    id="comparar-periodos-despesas"
-                    checked={compararPeriodos}
-                    onCheckedChange={setCompararPeriodos}
-                  />
-                  <Label htmlFor="comparar-periodos-despesas" className="cursor-pointer font-medium">
-                    Comparar com período anterior
-                  </Label>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Data Início</Label>
+                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Data Início (Período Atual)</Label>
-                    <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data Fim (Período Atual)</Label>
-                    <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
-                  </div>
-                  {compararPeriodos && (
-                    <>
-                      <div className="space-y-2">
-                        <Label className="text-accent-foreground">Data Início (Comparação)</Label>
-                        <Input type="date" value={dataInicioComp} onChange={(e) => setDataInicioComp(e.target.value)} className="border-accent" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-accent-foreground">Data Fim (Comparação)</Label>
-                        <Input type="date" value={dataFimComp} onChange={(e) => setDataFimComp(e.target.value)} className="border-accent" />
-                      </div>
-                    </>
-                  )}
+                <div className="space-y-2">
+                  <Label>Data Fim</Label>
+                  <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Categoria Principal</Label>
-                    <Select value={categoriaSinteticaFiltro} onValueChange={setCategoriaSinteticaFiltro}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todas</SelectItem>
-                        {categoriasSinteticasUnicas.map(cat => (
-                          <SelectItem key={cat} value={cat || ''}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Fornecedor</Label>
-                    <Select value={fornecedorFiltro} onValueChange={setFornecedorFiltro}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todos</SelectItem>
-                        {fornecedores?.map(f => (
-                          <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Categoria</Label>
+                  <Select value={categoriaSinteticaFiltro} onValueChange={setCategoriaSinteticaFiltro}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas as categorias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todas as categorias</SelectItem>
+                      {categoriasSinteticasUnicas.map((cat) => (
+                        <SelectItem key={cat} value={cat || ''}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Fornecedor</Label>
+                  <Select value={fornecedorFiltro} onValueChange={setFornecedorFiltro}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os fornecedores" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos os fornecedores</SelectItem>
+                      {fornecedores?.map((f: any) => (
+                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Cards de Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* KPIs de Despesas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Despesa Total</CardTitle>
-                <DollarSign className="h-4 w-4 text-destructive" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground">Despesa Total</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-2xl font-bold text-destructive">
-                    {despesaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
+                <div className="flex items-center">
+                  <p className="text-2xl font-bold text-destructive">
+                    {despesaTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
                   {compararPeriodos && <VariacaoBadge valor={-variacaoDespesa} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {compararPeriodos && despesaTotalComp > 0
-                    ? `Comparado a ${despesaTotalComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
-                    : 'Período selecionado'}
-                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Despesa Média</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground">Despesa Média</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-2xl font-bold">
-                    {despesaMedia.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
+                <div className="flex items-center">
+                  <p className="text-2xl font-bold">
+                    {despesaMedia.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
                   {compararPeriodos && <VariacaoBadge valor={-variacaoDespesaMedia} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {compararPeriodos && despesaMediaComp > 0
-                    ? `Comparado a ${despesaMediaComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
-                    : 'Média por transação'}
-                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Maior Despesa</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground">Maior Despesa</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {maiorDespesa.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Maior transação</p>
+                <p className="text-2xl font-bold">
+                  {maiorDespesa.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Gráfico */}
+          {/* Gráfico de Despesas por Categoria */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Despesas por Categoria Principal</CardTitle>
+              <CardTitle>Despesas por Categoria</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={despesasPorCategoria}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nome" angle={-45} textAnchor="end" height={100} />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR')}`} />
-                  <Bar dataKey="valor" fill="var(--destructive)" />
+                  <XAxis dataKey="nome" tick={{ fontSize: 12 }} />
+                  <YAxis tickFormatter={(v) => `R$ ${(v/1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+                  <Bar dataKey="valor" fill="hsl(var(--destructive))" />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Tabela Detalhada */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Despesas Detalhadas</CardTitle>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingDespesas ? (
-                <p className="text-center text-muted-foreground">Carregando...</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Fornecedor</TableHead>
-                      <TableHead>Categoria Principal</TableHead>
-                      <TableHead>Subcategoria</TableHead>
-                      <TableHead>Forma Pagamento</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {despesas?.map((d) => (
-                      <TableRow key={d.id}>
-                        <TableCell>{format(new Date(d.data), 'dd/MM/yyyy')}</TableCell>
-                        <TableCell>{d.fornecedor?.nome || '-'}</TableCell>
-                        <TableCell>{d.categoria?.categoria_sintetica || '-'}</TableCell>
-                        <TableCell>{d.categoria?.categoria_analitica || '-'}</TableCell>
-                        <TableCell>{d.forma_pagamento?.nome || '-'}</TableCell>
-                        <TableCell className="text-right font-medium text-destructive">
-                          {(d.valor_saida || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* ABA MARGENS */}
         <TabsContent value="margens" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Filter className="h-5 w-5" />
-                Filtros e Comparação
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2 pb-2 border-b">
-                  <Switch
-                    id="comparar-periodos-margens"
-                    checked={compararPeriodos}
-                    onCheckedChange={setCompararPeriodos}
-                  />
-                  <Label htmlFor="comparar-periodos-margens" className="cursor-pointer font-medium">
-                    Comparar com período anterior
-                  </Label>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Data Início (Período Atual)</Label>
-                    <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data Fim (Período Atual)</Label>
-                    <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
-                  </div>
-                  {compararPeriodos && (
-                    <>
-                      <div className="space-y-2">
-                        <Label className="text-accent-foreground">Data Início (Comparação)</Label>
-                        <Input type="date" value={dataInicioComp} onChange={(e) => setDataInicioComp(e.target.value)} className="border-accent" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-accent-foreground">Data Fim (Comparação)</Label>
-                        <Input type="date" value={dataFimComp} onChange={(e) => setDataFimComp(e.target.value)} className="border-accent" />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Cards de Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* KPIs de Margens */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Margem Bruta Total</CardTitle>
-                <TrendingUp className="h-4 w-4 text-primary" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground">Margem Bruta Total</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-2xl font-bold text-primary">
-                    {margemBrutaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </div>
+                <div className="flex items-center">
+                  <p className="text-2xl font-bold text-green-600">
+                    {margemBrutaTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
                   {compararPeriodos && <VariacaoBadge valor={variacaoMargemBruta} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {compararPeriodos && margemBrutaTotalComp > 0
-                    ? `Comparado a ${margemBrutaTotalComp.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
-                    : 'Período selecionado'}
-                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Margem %</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground">Margem Percentual</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-2xl font-bold">
-                    {margemPercentualTotal.toFixed(1)}%
-                  </div>
+                <div className="flex items-center">
+                  <p className="text-2xl font-bold">{margemPercentualTotal.toFixed(1)}%</p>
                   {compararPeriodos && <VariacaoBadge valor={variacaoMargemPercentual} />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {compararPeriodos && margemPercentualTotalComp > 0
-                    ? `Comparado a ${margemPercentualTotalComp.toFixed(1)}%`
-                    : 'Sobre a receita total'}
-                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Mais Rentável</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground">Tratamento Mais Rentável</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-lg font-bold">{tratamentoMaisRentavel?.nome || '-'}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {tratamentoMaisRentavel ? `${tratamentoMaisRentavel.percentual.toFixed(1)}% de margem` : 'Nenhum dado'}
+                <p className="text-lg font-bold">{tratamentoMaisRentavel?.nome || '-'}</p>
+                <p className="text-sm text-muted-foreground">
+                  Margem: {tratamentoMaisRentavel?.margem?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) || '-'}
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Gráfico */}
+          {/* Tabela de Margens por Tratamento */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Margem por Tratamento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={margensPorTratamento}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nome" angle={-45} textAnchor="end" height={100} />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR')}`} />
-                  <Legend />
-                  <Bar dataKey="receita" fill="#10b981" name="Receita" />
-                  <Bar dataKey="custo" fill="#ef4444" name="Custo" />
-                  <Bar dataKey="margem" fill="var(--primary)" name="Margem" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Tabela Detalhada */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Análise de Margem por Tratamento</CardTitle>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
-              </div>
+              <CardTitle>Análise de Margem por Tratamento</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tratamento</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
+                    <TableHead className="text-right">Qtd</TableHead>
                     <TableHead className="text-right">Receita</TableHead>
                     <TableHead className="text-right">Custo</TableHead>
-                    <TableHead className="text-right">Margem Bruta</TableHead>
-                    <TableHead className="text-right">% Margem</TableHead>
+                    <TableHead className="text-right">Margem R$</TableHead>
+                    <TableHead className="text-right">Margem %</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {margensPorTratamento.map((m, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{m.nome}</TableCell>
-                      <TableCell className="text-right">{m.quantidade}</TableCell>
-                      <TableCell className="text-right">
-                        {m.receita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </TableCell>
-                      <TableCell className="text-right text-destructive">
-                        {m.custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </TableCell>
-                      <TableCell className="text-right font-medium text-primary">
-                        {m.margem.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={m.percentual >= 50 ? "default" : m.percentual >= 30 ? "secondary" : "destructive"}>
-                          {m.percentual.toFixed(1)}%
-                        </Badge>
+                  {margensPorTratamento.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        Nenhum dado disponível
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    margensPorTratamento.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{item.nome}</TableCell>
+                        <TableCell className="text-right">{item.quantidade}</TableCell>
+                        <TableCell className="text-right">
+                          {item.receita.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {item.custo.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </TableCell>
+                        <TableCell className="text-right text-green-600">
+                          {item.margem.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={item.percentual >= 50 ? "default" : item.percentual >= 30 ? "secondary" : "destructive"}>
+                            {item.percentual.toFixed(1)}%
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -1034,21 +823,21 @@ const Relatorios = () => {
                   <Label>Categoria</Label>
                   <Select value={categoriaEstoqueFiltro} onValueChange={setCategoriaEstoqueFiltro}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Todas as categorias" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todos">Todas</SelectItem>
-                      {categoriasEstoqueUnicas.map(cat => (
+                      <SelectItem value="todos">Todas as categorias</SelectItem>
+                      {categoriasEstoqueUnicas.map((cat) => (
                         <SelectItem key={cat} value={cat || ''}>{cat}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>Status do Estoque</Label>
                   <Select value={statusEstoqueFiltro} onValueChange={setStatusEstoqueFiltro}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Todos os status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todos">Todos</SelectItem>
@@ -1061,101 +850,95 @@ const Relatorios = () => {
             </CardContent>
           </Card>
 
-          {/* Cards de Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* KPIs de Estoque */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total de Produtos</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Total de Produtos
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalProdutos}</div>
-                <p className="text-xs text-muted-foreground mt-1">Produtos ativos</p>
+                <p className="text-2xl font-bold">{totalProdutos}</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Valor Total em Estoque</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground">Valor Total em Estoque</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">
-                  {valorTotalEstoque.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Valor estimado</p>
+                <p className="text-2xl font-bold">
+                  {valorTotalEstoque.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Produtos Críticos</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-destructive" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  Produtos em Nível Crítico
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">{produtosCriticos}</div>
-                <p className="text-xs text-muted-foreground mt-1">Abaixo do mínimo</p>
+                <p className="text-2xl font-bold text-destructive">{produtosCriticos}</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Tabela Detalhada */}
+          {/* Tabela de Estoque */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Produtos em Estoque</CardTitle>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
-              </div>
+              <CardTitle>Posição de Estoque</CardTitle>
             </CardHeader>
             <CardContent>
-              {loadingEstoque ? (
-                <p className="text-center text-muted-foreground">Carregando...</p>
-              ) : (
-                <Table>
-                  <TableHeader>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produto</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead className="text-right">Estoque Atual</TableHead>
+                    <TableHead className="text-right">Estoque Mínimo</TableHead>
+                    <TableHead className="text-right">Custo Médio</TableHead>
+                    <TableHead className="text-right">Valor Total</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {estoque?.length === 0 ? (
                     <TableRow>
-                      <TableHead>Produto</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Fornecedor</TableHead>
-                      <TableHead className="text-right">Estoque Atual</TableHead>
-                      <TableHead className="text-right">Estoque Mínimo</TableHead>
-                      <TableHead className="text-right">Custo Médio</TableHead>
-                      <TableHead className="text-right">Valor Total</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        Nenhum produto encontrado
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {estoque?.map((p) => {
-                      const isBaixo = (p.estoque_atual || 0) <= (p.estoque_minimo || 0);
-                      const valorTotal = (p.estoque_atual || 0) * (p.custo_medio || 0);
-                      
+                  ) : (
+                    estoque?.map((produto) => {
+                      const isCritico = (produto.estoque_atual || 0) <= (produto.estoque_minimo || 0);
                       return (
-                        <TableRow key={p.id} className={isBaixo ? 'bg-destructive/5' : ''}>
-                          <TableCell className="font-medium">{p.nome}</TableCell>
-                          <TableCell>{p.categoria}</TableCell>
-                          <TableCell>{(p as any).fornecedor?.nome || '-'}</TableCell>
-                          <TableCell className="text-right">{p.estoque_atual || 0} {p.unidade_medida}</TableCell>
-                          <TableCell className="text-right">{p.estoque_minimo || 0} {p.unidade_medida}</TableCell>
+                        <TableRow key={produto.id}>
+                          <TableCell className="font-medium">{produto.nome}</TableCell>
+                          <TableCell>{produto.categoria}</TableCell>
+                          <TableCell className="text-right">{produto.estoque_atual} {produto.unidade_medida}</TableCell>
+                          <TableCell className="text-right">{produto.estoque_minimo} {produto.unidade_medida}</TableCell>
                           <TableCell className="text-right">
-                            {(p.custo_medio || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            {(produto.custo_medio || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          <TableCell className="text-right">
+                            {((produto.estoque_atual || 0) * (produto.custo_medio || 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={isBaixo ? "destructive" : "default"}>
-                              {isBaixo ? 'Crítico' : 'OK'}
+                            <Badge variant={isCritico ? "destructive" : "default"}>
+                              {isCritico ? "Crítico" : "OK"}
                             </Badge>
                           </TableCell>
                         </TableRow>
                       );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
+                    })
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>

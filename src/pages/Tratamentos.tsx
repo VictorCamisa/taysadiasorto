@@ -38,14 +38,13 @@ export default function Tratamentos() {
     status: "all",
   });
 
-  // Fetch tratamentos
+  // Fetch tratamentos - usando nova tabela 'tratamentos'
   const { data: tratamentos = [], isLoading } = useQuery({
     queryKey: ["tratamentos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_tratamentos")
+        .from("tratamentos")
         .select("*")
-        .order("grupo", { ascending: true })
         .order("nome", { ascending: true });
       
       if (error) throw error;
@@ -91,11 +90,17 @@ export default function Tratamentos() {
     mutationFn: async (data: any) => {
       const { fichaTecnica, lucro_sessao, margem_bruta, margem_contribuicao, custo_total, ...tratamentoData } = data;
       
+      const payload = {
+        nome: tratamentoData.nome,
+        descricao: tratamentoData.descricao || null,
+        preco_padrao: tratamentoData.preco_padrao || tratamentoData.preco || 0,
+        custo_estimado: tratamentoData.custo_estimado || 0,
+      };
+      
       if (selectedTratamento) {
-        const { user_id, ...tratamentoUpdate } = tratamentoData;
         const { error: updateError } = await supabase
-          .from("financeiro_tratamentos")
-          .update(tratamentoUpdate)
+          .from("tratamentos")
+          .update(payload)
           .eq("id", selectedTratamento.id);
         
         if (updateError) throw updateError;
@@ -109,7 +114,7 @@ export default function Tratamentos() {
           const items = fichaTecnica.map((item: any) => ({
             tratamento_id: selectedTratamento.id,
             produto_id: item.produto_id,
-            quantidade: item.quantidade,
+            quantidade_utilizada: item.quantidade || item.quantidade_utilizada,
             custo_unitario: item.custo_unitario,
             custo_total: item.custo_total,
           }));
@@ -124,11 +129,8 @@ export default function Tratamentos() {
         return selectedTratamento.id;
       } else {
         const { data: newTratamento, error: createError } = await supabase
-          .from("financeiro_tratamentos")
-          .insert([{
-            ...tratamentoData,
-            user_id: "00000000-0000-0000-0000-000000000000",
-          }])
+          .from("tratamentos")
+          .insert([payload])
           .select()
           .single();
         
@@ -138,7 +140,7 @@ export default function Tratamentos() {
           const items = fichaTecnica.map((item: any) => ({
             tratamento_id: newTratamento.id,
             produto_id: item.produto_id,
-            quantidade: item.quantidade,
+            quantidade_utilizada: item.quantidade || item.quantidade_utilizada,
             custo_unitario: item.custo_unitario,
             custo_total: item.custo_total,
           }));
@@ -170,7 +172,7 @@ export default function Tratamentos() {
     mutationFn: async (id: string) => {
       // Check if there are any lancamentos linked to this tratamento
       const { data: lancamentos, error: checkError } = await supabase
-        .from("financeiro_lancamentos")
+        .from("td_fluxo_de_caixa")
         .select("id")
         .eq("tratamento_id", id)
         .limit(1);
@@ -178,7 +180,7 @@ export default function Tratamentos() {
       if (checkError) throw checkError;
       
       if (lancamentos && lancamentos.length > 0) {
-        throw new Error("Este tratamento não pode ser excluído porque possui lançamentos financeiros vinculados. Remova ou edite os lançamentos primeiro.");
+        throw new Error("Este tratamento não pode ser excluído porque possui lançamentos financeiros vinculados.");
       }
 
       // Delete ficha técnica first
@@ -189,7 +191,7 @@ export default function Tratamentos() {
 
       // Delete tratamento
       const { error } = await supabase
-        .from("financeiro_tratamentos")
+        .from("tratamentos")
         .delete()
         .eq("id", id);
       
@@ -208,7 +210,6 @@ export default function Tratamentos() {
 
   const handleEdit = (tratamento: any) => {
     setSelectedTratamento(tratamento);
-    // Fetch ficha técnica will be triggered by the query
     setTimeout(() => {
       setDialogOpen(true);
     }, 100);
@@ -228,30 +229,18 @@ export default function Tratamentos() {
     setFilters({ ...filters, [key]: value });
   };
 
-  // Apply filters
-  const filteredTratamentos = tratamentos.filter((t) => {
-    if (filters.search && !t.nome.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !t.grupo.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-    if (filters.grupo !== "all" && t.grupo !== filters.grupo) {
-      return false;
-    }
-    if (filters.status === "active" && !t.ativo) {
-      return false;
-    }
-    if (filters.status === "inactive" && t.ativo) {
+  // Apply filters - adaptado para nova estrutura sem campo 'grupo' e 'ativo'
+  const filteredTratamentos = tratamentos.filter((t: any) => {
+    if (filters.search && !t.nome.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
     return true;
   });
 
-  // Get unique grupos for filter
-  const grupos = Array.from(new Set(tratamentos.map((t) => t.grupo))).filter(Boolean);
-
   // Prepare tratamento with ficha técnica for form
   const tratamentoComFicha = selectedTratamento ? {
     ...selectedTratamento,
+    preco: selectedTratamento.preco_padrao,
     fichaTecnica: fichaTecnica,
   } : null;
 
@@ -279,7 +268,7 @@ export default function Tratamentos() {
         <CardContent>
           <TratamentosFilters
             filters={filters}
-            grupos={grupos}
+            grupos={[]}
             onFilterChange={handleFilterChange}
           />
         </CardContent>
@@ -304,65 +293,59 @@ export default function Tratamentos() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Grupo</TableHead>
+                    <TableHead>Descrição</TableHead>
                     <TableHead className="text-right">Preço Venda</TableHead>
-                    <TableHead className="text-right">Custo Total</TableHead>
+                    <TableHead className="text-right">Custo Estimado</TableHead>
                     <TableHead className="text-right">Margem %</TableHead>
-                    <TableHead className="text-center">Tempo (min)</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTratamentos.map((tratamento) => (
-                    <TableRow key={tratamento.id}>
-                      <TableCell className="font-medium">{tratamento.nome}</TableCell>
-                      <TableCell>{tratamento.grupo}</TableCell>
-                      <TableCell className="text-right">
-                        {Number(tratamento.preco || 0).toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {Number(tratamento.custo_estimado || 0).toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </TableCell>
-                      <TableCell className={`text-right font-medium ${getMargemColor(
-                        tratamento.preco > 0 ? ((tratamento.preco - (tratamento.custo_estimado || 0)) / tratamento.preco) * 100 : 0
-                      )}`}>
-                        {(tratamento.preco > 0 ? ((tratamento.preco - (tratamento.custo_estimado || 0)) / tratamento.preco) * 100 : 0).toFixed(1)}%
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {tratamento.duracao_minutos || "-"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={tratamento.ativo ? "default" : "secondary"}>
-                          {tratamento.ativo ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(tratamento)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(tratamento)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredTratamentos.map((tratamento: any) => {
+                    const preco = Number(tratamento.preco_padrao || 0);
+                    const custo = Number(tratamento.custo_estimado || 0);
+                    const margem = preco > 0 ? ((preco - custo) / preco) * 100 : 0;
+                    
+                    return (
+                      <TableRow key={tratamento.id}>
+                        <TableCell className="font-medium">{tratamento.nome}</TableCell>
+                        <TableCell className="text-muted-foreground">{tratamento.descricao || "-"}</TableCell>
+                        <TableCell className="text-right">
+                          {preco.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {custo.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </TableCell>
+                        <TableCell className={`text-right font-medium ${getMargemColor(margem)}`}>
+                          {margem.toFixed(1)}%
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(tratamento)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(tratamento)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -384,7 +367,7 @@ export default function Tratamentos() {
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o tratamento "{tratamentoToDelete?.nome}"?
-              Esta ação não pode ser desfeita e todos os itens da ficha técnica também serão removidos.
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

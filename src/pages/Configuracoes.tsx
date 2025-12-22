@@ -546,28 +546,40 @@ const Configuracoes = () => {
       {/* Forms */}
       <CategoriaForm
         open={categoriaFormOpen}
-        onOpenChange={setCategoriaFormOpen}
+        onClose={() => {
+          setCategoriaFormOpen(false);
+          setSelectedCategoria(null);
+        }}
         categoria={selectedCategoria}
         onSave={(data) => saveCategoriaMutation.mutate(data)}
       />
 
       <ContaForm
         open={contaFormOpen}
-        onOpenChange={setContaFormOpen}
+        onClose={() => {
+          setContaFormOpen(false);
+          setSelectedConta(null);
+        }}
         conta={selectedConta}
         onSave={(data) => saveContaMutation.mutate(data)}
       />
 
       <FormaPagamentoForm
         open={formaFormOpen}
-        onOpenChange={setFormaFormOpen}
-        forma={selectedForma}
+        onClose={() => {
+          setFormaFormOpen(false);
+          setSelectedForma(null);
+        }}
+        formaPagamento={selectedForma}
         onSave={(data) => saveFormaMutation.mutate(data)}
       />
 
       <OrigemForm
         open={origemFormOpen}
-        onOpenChange={setOrigemFormOpen}
+        onClose={() => {
+          setOrigemFormOpen(false);
+          setSelectedOrigem(null);
+        }}
         origem={selectedOrigem}
         onSave={(data) => saveOrigemMutation.mutate(data)}
       />

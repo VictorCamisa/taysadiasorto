@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pencil, XCircle, Package, ShoppingCart } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,28 +33,32 @@ const Fornecedores = () => {
       if (search) {
         const searchLower = search.toLowerCase();
         const matchesNome = f.nome.toLowerCase().includes(searchLower);
-        const matchesCnpj = f.cnpj?.toLowerCase().includes(searchLower);
-        if (!matchesNome && !matchesCnpj) return false;
+        const matchesCpfCnpj = f.cpf_cnpj?.toLowerCase().includes(searchLower);
+        if (!matchesNome && !matchesCpfCnpj) return false;
       }
-      if (status === "ativo" && !f.ativo) return false;
-      if (status === "inativo" && f.ativo) return false;
+      // A nova tabela clientes_fornecedores não tem campo 'ativo', então removemos esse filtro
       return true;
     });
   }, [fornecedores, search, status]);
 
   const saveFornecedorMutation = useMutation({
     mutationFn: async (fornecedor: any) => {
+      const payload = {
+        nome: fornecedor.nome,
+        cpf_cnpj: fornecedor.cpf_cnpj || null,
+        tipo: 'fornecedor',
+      };
+      
       if (fornecedor.id) {
-        const { id, user_id, ...fornecedorUpdate } = fornecedor;
         const { error } = await supabase
-          .from("financeiro_fornecedores")
-          .update(fornecedorUpdate)
-          .eq("id", id);
+          .from("clientes_fornecedores")
+          .update(payload)
+          .eq("id", fornecedor.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("financeiro_fornecedores")
-          .insert(fornecedor);
+          .from("clientes_fornecedores")
+          .insert(payload);
         if (error) throw error;
       }
     },
@@ -77,7 +80,7 @@ const Fornecedores = () => {
   const deleteFornecedorMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("financeiro_fornecedores")
+        .from("clientes_fornecedores")
         .delete()
         .eq("id", id);
       if (error) throw error;
@@ -167,19 +170,17 @@ const Fornecedores = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>CNPJ/CPF</TableHead>
-                <TableHead>Telefone</TableHead>
+                <TableHead>CPF/CNPJ</TableHead>
                 <TableHead>Produtos</TableHead>
                 <TableHead>Compras</TableHead>
                 <TableHead>Total Comprado</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredFornecedores.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Nenhum fornecedor encontrado
                   </TableCell>
                 </TableRow>
@@ -192,8 +193,7 @@ const Fornecedores = () => {
                   return (
                     <TableRow key={fornecedor.id}>
                       <TableCell className="font-medium">{fornecedor.nome}</TableCell>
-                      <TableCell>{fornecedor.cnpj || "-"}</TableCell>
-                      <TableCell>{fornecedor.telefone || "-"}</TableCell>
+                      <TableCell>{fornecedor.cpf_cnpj || "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Package className="h-4 w-4 text-muted-foreground" />
@@ -211,11 +211,6 @@ const Fornecedores = () => {
                           style: "currency",
                           currency: "BRL",
                         })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={fornecedor.ativo ? "default" : "secondary"}>
-                          {fornecedor.ativo ? "Ativo" : "Inativo"}
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
