@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search } from "lucide-react";
 
 interface FornecedoresFiltersProps {
   search: string;
@@ -11,27 +11,16 @@ interface FornecedoresFiltersProps {
 export const FornecedoresFilters = ({
   search,
   setSearch,
-  status,
-  setStatus,
 }: FornecedoresFiltersProps) => {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="relative max-w-md">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
-        placeholder="Buscar por nome ou CNPJ/CPF..."
+        placeholder="Buscar por nome ou CPF/CNPJ..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        className="pl-9"
       />
-      
-      <Select value={status} onValueChange={setStatus}>
-        <SelectTrigger>
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="todos">Todos</SelectItem>
-          <SelectItem value="ativo">Ativo</SelectItem>
-          <SelectItem value="inativo">Inativo</SelectItem>
-        </SelectContent>
-      </Select>
     </div>
   );
 };
