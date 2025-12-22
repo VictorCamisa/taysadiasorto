@@ -230,10 +230,12 @@ const Lancamentos = () => {
     }
     
     const payload = {
+      user_id: "00000000-0000-0000-0000-000000000000",
       tipo: formData.tipo,
       data: formData.data,
       cliente: formData.cliente || null,
       observacoes: formData.observacoes || null,
+      valor: formData.tipo === "receita" ? valorEntrada : valorSaida,
       valor_entrada: valorEntrada,
       valor_saida: valorSaida,
       categoria_id: formData.categoria_id || null,

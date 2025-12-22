@@ -89,7 +89,7 @@ export default function Tratamentos() {
   // Create/Update mutation
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      const { fichaTecnica, lucro_sessao, margem_bruta, margem_contribuicao, ...tratamentoData } = data;
+      const { fichaTecnica, lucro_sessao, margem_bruta, margem_contribuicao, custo_total, ...tratamentoData } = data;
       
       if (selectedTratamento) {
         const { user_id, ...tratamentoUpdate } = tratamentoData;
@@ -125,7 +125,10 @@ export default function Tratamentos() {
       } else {
         const { data: newTratamento, error: createError } = await supabase
           .from("financeiro_tratamentos")
-          .insert([tratamentoData])
+          .insert([{
+            ...tratamentoData,
+            user_id: "00000000-0000-0000-0000-000000000000",
+          }])
           .select()
           .single();
         

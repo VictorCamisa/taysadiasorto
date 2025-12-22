@@ -24,12 +24,10 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
   const [formData, setFormData] = useState({
     grupo: "",
     nome: "",
-    preco_venda: 0,
-    custo_operacional: 0,
-    tempo_execucao_minutos: 0,
-    profissional_executor: "",
-    contraindicacoes: "",
-    observacoes: "",
+    preco: 0,
+    custo_estimado: 0,
+    duracao_minutos: 60,
+    descricao: "",
     ativo: true,
   });
 
@@ -40,12 +38,10 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
       setFormData({
         grupo: tratamento.grupo || "",
         nome: tratamento.nome || "",
-        preco_venda: tratamento.preco_venda || 0,
-        custo_operacional: tratamento.custo_operacional || 0,
-        tempo_execucao_minutos: tratamento.tempo_execucao_minutos || 0,
-        profissional_executor: tratamento.profissional_executor || "",
-        contraindicacoes: tratamento.contraindicacoes || "",
-        observacoes: tratamento.observacoes || "",
+        preco: tratamento.preco || 0,
+        custo_estimado: tratamento.custo_estimado || 0,
+        duracao_minutos: tratamento.duracao_minutos || 60,
+        descricao: tratamento.descricao || "",
         ativo: tratamento.ativo ?? true,
       });
       setFichaTecnicaItems(tratamento.fichaTecnica || []);
@@ -53,12 +49,10 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
       setFormData({
         grupo: "",
         nome: "",
-        preco_venda: 0,
-        custo_operacional: 0,
-        tempo_execucao_minutos: 0,
-        profissional_executor: "",
-        contraindicacoes: "",
-        observacoes: "",
+        preco: 0,
+        custo_estimado: 0,
+        duracao_minutos: 60,
+        descricao: "",
         ativo: true,
       });
       setFichaTecnicaItems([]);
@@ -66,16 +60,17 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
   }, [tratamento, open]);
 
   const calculations = calcularCustos(
-    formData.preco_venda,
-    formData.custo_operacional,
+    formData.preco,
+    formData.custo_estimado,
     fichaTecnicaItems
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Passar os campos com nomes corretos do banco
     onSave({
       ...formData,
-      ...calculations,
+      custo_estimado: calculations.custo_total, // Atualizar custo_estimado com o custo total calculado
       fichaTecnica: fichaTecnicaItems,
     });
   };
@@ -132,13 +127,13 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="preco_venda">Preço de Venda *</Label>
+                  <Label htmlFor="preco">Preço de Venda *</Label>
                   <Input
-                    id="preco_venda"
+                    id="preco"
                     type="number"
                     step="0.01"
-                    value={formData.preco_venda || ""}
-                    onChange={(e) => setFormData({ ...formData, preco_venda: Number(e.target.value) })}
+                    value={formData.preco || ""}
+                    onChange={(e) => setFormData({ ...formData, preco: Number(e.target.value) })}
                     placeholder="0.00"
                     required
                   />
@@ -157,13 +152,13 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
 
             <TabsContent value="custos" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="custo_operacional">Custo Operacional</Label>
+                <Label htmlFor="custo_estimado">Custo Operacional</Label>
                 <Input
-                  id="custo_operacional"
+                  id="custo_estimado"
                   type="number"
                   step="0.01"
-                  value={formData.custo_operacional || ""}
-                  onChange={(e) => setFormData({ ...formData, custo_operacional: Number(e.target.value) })}
+                  value={formData.custo_estimado || ""}
+                  onChange={(e) => setFormData({ ...formData, custo_estimado: Number(e.target.value) })}
                   placeholder="0.00"
                 />
               </div>
@@ -233,46 +228,25 @@ export const TratamentoForm = ({ open, onOpenChange, tratamento, produtos, onSav
             <TabsContent value="tecnico" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="tempo_execucao_minutos">Tempo de Execução (minutos)</Label>
+                  <Label htmlFor="duracao_minutos">Tempo de Execução (minutos)</Label>
                   <Input
-                    id="tempo_execucao_minutos"
+                    id="duracao_minutos"
                     type="number"
-                    value={formData.tempo_execucao_minutos || ""}
-                    onChange={(e) => setFormData({ ...formData, tempo_execucao_minutos: Number(e.target.value) })}
-                    placeholder="0"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="profissional_executor">Profissional Executor</Label>
-                  <Input
-                    id="profissional_executor"
-                    value={formData.profissional_executor}
-                    onChange={(e) => setFormData({ ...formData, profissional_executor: e.target.value })}
-                    placeholder="Nome do profissional"
+                    value={formData.duracao_minutos || ""}
+                    onChange={(e) => setFormData({ ...formData, duracao_minutos: Number(e.target.value) })}
+                    placeholder="60"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="contraindicacoes">Contraindicações</Label>
+                <Label htmlFor="descricao">Descrição</Label>
                 <Textarea
-                  id="contraindicacoes"
-                  value={formData.contraindicacoes}
-                  onChange={(e) => setFormData({ ...formData, contraindicacoes: e.target.value })}
-                  placeholder="Liste as contraindicações do tratamento..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea
-                  id="observacoes"
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Observações adicionais..."
-                  rows={4}
+                  id="descricao"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                  placeholder="Descrição do tratamento, contraindicações, observações..."
+                  rows={6}
                 />
               </div>
             </TabsContent>

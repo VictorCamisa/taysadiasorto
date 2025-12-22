@@ -42,7 +42,7 @@ const ContasPagar = () => {
     forma_pagamento_id: "",
     conta_financeira_id: "",
     observacoes: "",
-    status: "aberto" as "aberto" | "pago" | "vencido",
+    status: "pendente" as "pendente" | "pago" | "atrasado" | "cancelado",
   });
 
   const queryClient = useQueryClient();
@@ -57,12 +57,12 @@ const ContasPagar = () => {
           financeiro_fornecedores(nome),
           financeiro_categorias(categoria_sintetica),
           financeiro_formas_pagamento(nome),
-          conta_financeira:financeiro_contas!financeiro_contas_pagar_conta_financeira_id_fkey(nome)
+          financeiro_contas(nome)
         `)
-        .order("vencimento", { ascending: true });
+        .order("data_vencimento", { ascending: true });
 
       if (statusFiltro !== "todos") {
-        query = query.eq("status", statusFiltro as "aberto" | "pago" | "atrasado" | "cancelado");
+        query = query.eq("status", statusFiltro as "pendente" | "pago" | "atrasado" | "cancelado");
       }
 
       const { data, error } = await query;
@@ -204,7 +204,7 @@ const ContasPagar = () => {
       forma_pagamento_id: "",
       conta_financeira_id: "",
       observacoes: "",
-      status: "aberto",
+      status: "pendente",
     });
     setEditingId(null);
   };
@@ -213,13 +213,14 @@ const ContasPagar = () => {
     e.preventDefault();
     
     const payload = {
+      user_id: "00000000-0000-0000-0000-000000000000",
       descricao: formData.descricao,
       fornecedor_id: formData.fornecedor_id || null,
       categoria_id: formData.categoria_id || null,
       valor: parseFloat(formData.valor),
-      vencimento: formData.vencimento,
+      data_vencimento: formData.vencimento,
       forma_pagamento_id: formData.forma_pagamento_id || null,
-      conta_financeira_id: formData.conta_financeira_id || null,
+      conta_id: formData.conta_financeira_id || null,
       observacoes: formData.observacoes || null,
       status: formData.status,
     };
@@ -238,11 +239,11 @@ const ContasPagar = () => {
       fornecedor_id: conta.fornecedor_id || "",
       categoria_id: conta.categoria_id || "",
       valor: conta.valor?.toString() || "",
-      vencimento: conta.vencimento || format(new Date(), "yyyy-MM-dd"),
+      vencimento: conta.data_vencimento || format(new Date(), "yyyy-MM-dd"),
       forma_pagamento_id: conta.forma_pagamento_id || "",
-      conta_financeira_id: conta.conta_financeira_id || "",
+      conta_financeira_id: conta.conta_id || "",
       observacoes: conta.observacoes || "",
-      status: conta.status || "aberto",
+      status: conta.status || "pendente",
     });
     setDialogOpen(true);
   };
@@ -270,9 +271,9 @@ const ContasPagar = () => {
 
   const getStatusLabel = (status: string, vencimento: string) => {
     if (status === "pago") return "Pago";
-    if (status === "atrasado" || new Date(vencimento) < new Date()) return "Atrasado";
+    if (status === "atrasado" || (status !== "pago" && new Date(vencimento) < new Date())) return "Atrasado";
     if (status === "cancelado") return "Cancelado";
-    return "Aberto";
+    return "Pendente";
   };
 
   return (
@@ -449,7 +450,7 @@ const ContasPagar = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="aberto">Aberto</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
               <SelectItem value="pago">Pago</SelectItem>
               <SelectItem value="atrasado">Atrasado</SelectItem>
               <SelectItem value="cancelado">Cancelado</SelectItem>
@@ -493,10 +494,10 @@ const ContasPagar = () => {
                     <TableCell className="text-sm text-muted-foreground">
                       {conta.financeiro_categorias?.categoria_sintetica || "-"}
                     </TableCell>
-                    <TableCell>{format(new Date(conta.vencimento), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{format(new Date(conta.data_vencimento), "dd/MM/yyyy")}</TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(conta.status, conta.vencimento)}>
-                        {getStatusLabel(conta.status, conta.vencimento)}
+                      <Badge className={getStatusColor(conta.status, conta.data_vencimento)}>
+                        {getStatusLabel(conta.status, conta.data_vencimento)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-bold text-destructive">
