@@ -2,12 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useFornecedoresData = () => {
+  // NOVA TABELA: clientes_fornecedores (filtrando tipo = 'fornecedor')
   const { data: fornecedores = [], isLoading, refetch } = useQuery({
     queryKey: ["fornecedores_list"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_fornecedores")
+        .from("clientes_fornecedores")
         .select("*")
+        .eq("tipo", "fornecedor")
         .order("nome");
       
       if (error) throw error;
@@ -17,8 +19,6 @@ export const useFornecedoresData = () => {
 
   // KPIs
   const totalFornecedores = fornecedores.length;
-  const fornecedoresAtivos = fornecedores.filter(f => f.ativo).length;
-  const fornecedoresInativos = fornecedores.filter(f => !f.ativo).length;
 
   // Contagem de produtos por fornecedor
   const { data: produtosPorFornecedor = [] } = useQuery({
@@ -52,8 +52,8 @@ export const useFornecedoresData = () => {
     refetch,
     kpis: {
       totalFornecedores,
-      fornecedoresAtivos,
-      fornecedoresInativos,
+      fornecedoresAtivos: totalFornecedores,
+      fornecedoresInativos: 0,
     },
     produtosPorFornecedor,
     comprasPorFornecedor,
