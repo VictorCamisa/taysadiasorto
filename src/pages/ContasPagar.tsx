@@ -47,6 +47,7 @@ const ContasPagar = () => {
 
   const queryClient = useQueryClient();
 
+  // Query principal - usando td_fluxo_de_caixa para despesas ou financeiro_contas_pagar
   const { data: contasPagar = [] } = useQuery({
     queryKey: ["contas-pagar-list", statusFiltro],
     queryFn: async () => {
@@ -54,10 +55,10 @@ const ContasPagar = () => {
         .from("financeiro_contas_pagar")
         .select(`
           *,
-          financeiro_fornecedores(nome),
-          financeiro_categorias(categoria_sintetica),
-          financeiro_formas_pagamento(nome),
-          financeiro_contas(nome)
+          clientes_fornecedores(nome),
+          categorias(nome_sintetico),
+          formas_pagamento(nome),
+          contas_financeiras(nome)
         `)
         .order("data_vencimento", { ascending: true });
 
@@ -71,50 +72,51 @@ const ContasPagar = () => {
     },
   });
 
+  // Fornecedores - usando clientes_fornecedores com tipo = 'fornecedor'
   const { data: fornecedores = [] } = useQuery({
     queryKey: ["fornecedores-ativos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_fornecedores")
+        .from("clientes_fornecedores")
         .select("*")
-        .eq("ativo", true);
+        .eq("tipo", "fornecedor");
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Categorias - usando tabela 'categorias' com tipo = 'despesa'
   const { data: categorias = [] } = useQuery({
     queryKey: ["categorias-despesa"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_categorias")
+        .from("categorias")
         .select("*")
-        .eq("tipo", "despesa")
-        .eq("ativa", true);
+        .eq("tipo", "despesa");
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Formas de pagamento - usando tabela 'formas_pagamento'
   const { data: formasPagamento = [] } = useQuery({
     queryKey: ["formas-pagamento-ativas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_formas_pagamento")
-        .select("*")
-        .eq("ativa", true);
+        .from("formas_pagamento")
+        .select("*");
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Contas financeiras - usando tabela 'contas_financeiras'
   const { data: contas = [] } = useQuery({
     queryKey: ["contas-ativas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_contas")
-        .select("*")
-        .eq("ativa", true);
+        .from("contas_financeiras")
+        .select("*");
       if (error) throw error;
       return data || [];
     },
@@ -333,7 +335,7 @@ const ContasPagar = () => {
                     <SelectContent>
                       {categorias.map((cat: any) => (
                         <SelectItem key={cat.id} value={cat.id}>
-                          {cat.categoria_sintetica}
+                          {cat.nome_sintetico}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -404,7 +406,7 @@ const ContasPagar = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="aberto">Aberto</SelectItem>
+                    <SelectItem value="pendente">Pendente</SelectItem>
                     <SelectItem value="pago">Pago</SelectItem>
                     <SelectItem value="atrasado">Atrasado</SelectItem>
                     <SelectItem value="cancelado">Cancelado</SelectItem>
@@ -489,25 +491,27 @@ const ContasPagar = () => {
                   <TableRow key={conta.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">{conta.descricao}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {conta.financeiro_fornecedores?.nome || "-"}
+                      {conta.clientes_fornecedores?.nome || "-"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {conta.financeiro_categorias?.categoria_sintetica || "-"}
+                      {conta.categorias?.nome_sintetico || "-"}
                     </TableCell>
-                    <TableCell>{format(new Date(conta.data_vencimento), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>
+                      {conta.data_vencimento ? format(new Date(conta.data_vencimento), "dd/MM/yyyy") : "-"}
+                    </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(conta.status, conta.data_vencimento)}>
                         {getStatusLabel(conta.status, conta.data_vencimento)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-bold text-destructive">
+                    <TableCell className="text-right font-medium text-destructive">
                       {formatCurrency(Number(conta.valor || 0))}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
                         {conta.status !== "pago" && (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
                             onClick={() => handleMarcarPago(conta.id)}
                             title="Marcar como pago"
@@ -515,11 +519,19 @@ const ContasPagar = () => {
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(conta)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(conta)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(conta.id)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(conta.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>

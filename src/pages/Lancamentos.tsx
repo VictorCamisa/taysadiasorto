@@ -37,39 +37,41 @@ const Lancamentos = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     tipo: "receita" as "receita" | "despesa" | "transferencia" | "ajuste",
-    data: format(new Date(), "yyyy-MM-dd"),
-    cliente: "",
-    observacoes: "",
-    valor_entrada: "",
-    valor_saida: "",
+    data_lancamento: format(new Date(), "yyyy-MM-dd"),
+    descricao: "",
+    cliente_fornecedor_id: "",
+    valor: "",
     categoria_id: "",
     forma_pagamento_id: "",
     conta_financeira_id: "",
     tratamento_id: "",
     origem_id: "",
+    status: "pago" as string,
   });
 
   const queryClient = useQueryClient();
 
+  // Query principal - usando td_fluxo_de_caixa
   const { data: lancamentos = [] } = useQuery({
     queryKey: ["lancamentos-list", startDate, endDate, tipoFiltro],
     queryFn: async () => {
       let query = supabase
-        .from("financeiro_lancamentos")
+        .from("td_fluxo_de_caixa")
         .select(`
           *,
-          financeiro_categorias(categoria_sintetica, categoria_analitica),
-          financeiro_formas_pagamento(nome),
-          conta_financeira:financeiro_contas!financeiro_lancamentos_conta_financeira_id_fkey(nome),
-          financeiro_tratamentos(nome),
-          financeiro_origens(nome)
+          categorias(nome_sintetico, nome_analitico),
+          formas_pagamento(nome),
+          contas_financeiras(nome),
+          tratamentos(nome, custo_estimado),
+          origens(nome),
+          clientes_fornecedores(nome, tipo)
         `)
-        .gte("data", startDate)
-        .lte("data", endDate)
-        .order("data", { ascending: false });
+        .gte("data_lancamento", startDate)
+        .lte("data_lancamento", endDate)
+        .order("data_lancamento", { ascending: false });
 
       if (tipoFiltro !== "todos") {
-        query = query.eq("tipo", tipoFiltro as "receita" | "despesa" | "transferencia" | "ajuste");
+        query = query.eq("tipo", tipoFiltro);
       }
 
       const { data, error } = await query;
@@ -78,70 +80,83 @@ const Lancamentos = () => {
     },
   });
 
+  // Categorias - usando tabela 'categorias'
   const { data: categorias = [] } = useQuery({
     queryKey: ["categorias-ativas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_categorias")
-        .select("*")
-        .eq("ativa", true);
+        .from("categorias")
+        .select("*");
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Formas de pagamento - usando tabela 'formas_pagamento'
   const { data: formasPagamento = [] } = useQuery({
     queryKey: ["formas-pagamento-ativas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_formas_pagamento")
-        .select("*")
-        .eq("ativa", true);
+        .from("formas_pagamento")
+        .select("*");
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Contas financeiras - usando tabela 'contas_financeiras'
   const { data: contas = [] } = useQuery({
     queryKey: ["contas-ativas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_contas")
-        .select("*")
-        .eq("ativa", true);
+        .from("contas_financeiras")
+        .select("*");
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Tratamentos - usando tabela 'tratamentos'
   const { data: tratamentos = [] } = useQuery({
     queryKey: ["tratamentos-ativos"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_tratamentos")
-        .select("*")
-        .eq("ativo", true);
+        .from("tratamentos")
+        .select("*");
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Origens - usando tabela 'origens'
   const { data: origens = [] } = useQuery({
     queryKey: ["origens-ativas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financeiro_origens")
-        .select("*")
-        .eq("ativa", true);
+        .from("origens")
+        .select("*");
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Clientes/Fornecedores - usando tabela 'clientes_fornecedores'
+  const { data: clientesFornecedores = [] } = useQuery({
+    queryKey: ["clientes-fornecedores"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clientes_fornecedores")
+        .select("*");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Mutations para td_fluxo_de_caixa
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       const { error } = await supabase
-        .from("financeiro_lancamentos")
+        .from("td_fluxo_de_caixa")
         .insert([data]);
       if (error) throw error;
     },
@@ -159,7 +174,7 @@ const Lancamentos = () => {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const { error } = await supabase
-        .from("financeiro_lancamentos")
+        .from("td_fluxo_de_caixa")
         .update(data)
         .eq("id", id);
       if (error) throw error;
@@ -178,7 +193,7 @@ const Lancamentos = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("financeiro_lancamentos")
+        .from("td_fluxo_de_caixa")
         .delete()
         .eq("id", id);
       if (error) throw error;
@@ -195,16 +210,16 @@ const Lancamentos = () => {
   const resetForm = () => {
     setFormData({
       tipo: "receita",
-      data: format(new Date(), "yyyy-MM-dd"),
-      cliente: "",
-      observacoes: "",
-      valor_entrada: "",
-      valor_saida: "",
+      data_lancamento: format(new Date(), "yyyy-MM-dd"),
+      descricao: "",
+      cliente_fornecedor_id: "",
+      valor: "",
       categoria_id: "",
       forma_pagamento_id: "",
       conta_financeira_id: "",
       tratamento_id: "",
       origem_id: "",
+      status: "pago",
     });
     setEditingId(null);
   };
@@ -212,40 +227,30 @@ const Lancamentos = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const valorEntrada = formData.tipo === "receita" ? parseFloat(formData.valor_entrada) || 0 : 0;
-    const valorSaida = formData.tipo === "despesa" ? parseFloat(formData.valor_saida) || 0 : 0;
+    const valor = parseFloat(formData.valor) || 0;
 
-    // Quando houver tratamento vinculado, calcular automaticamente custo e margem
-    let quantidade = 1;
-    let custo_tratamento = 0;
-    let margem = 0;
-
+    // Calcular custo do material se for receita com tratamento
+    let custo_material = 0;
     if (formData.tipo === "receita" && formData.tratamento_id) {
       const tratamentoSelecionado = tratamentos.find((t: any) => t.id === formData.tratamento_id);
       if (tratamentoSelecionado) {
-        const custoUnitarioTratamento = Number(tratamentoSelecionado.custo_estimado || 0);
-        custo_tratamento = custoUnitarioTratamento * quantidade;
-        margem = valorEntrada - custo_tratamento;
+        custo_material = Number(tratamentoSelecionado.custo_estimado || 0);
       }
     }
     
     const payload = {
-      user_id: "00000000-0000-0000-0000-000000000000",
       tipo: formData.tipo,
-      data: formData.data,
-      cliente: formData.cliente || null,
-      observacoes: formData.observacoes || null,
-      valor: formData.tipo === "receita" ? valorEntrada : valorSaida,
-      valor_entrada: valorEntrada,
-      valor_saida: valorSaida,
+      data_lancamento: formData.data_lancamento,
+      descricao: formData.descricao || null,
+      cliente_fornecedor_id: formData.cliente_fornecedor_id || null,
+      valor: valor,
       categoria_id: formData.categoria_id || null,
       forma_pagamento_id: formData.forma_pagamento_id || null,
       conta_financeira_id: formData.conta_financeira_id || null,
       tratamento_id: formData.tratamento_id || null,
       origem_id: formData.origem_id || null,
-      quantidade: formData.tipo === "receita" ? quantidade : null,
-      custo_tratamento: formData.tipo === "receita" ? custo_tratamento : 0,
-      margem: formData.tipo === "receita" ? margem : 0,
+      custo_material: custo_material,
+      status: formData.status,
     };
 
     if (editingId) {
@@ -259,16 +264,16 @@ const Lancamentos = () => {
     setEditingId(lanc.id);
     setFormData({
       tipo: lanc.tipo,
-      data: lanc.data,
-      cliente: lanc.cliente || "",
-      observacoes: lanc.observacoes || "",
-      valor_entrada: lanc.valor_entrada?.toString() || "",
-      valor_saida: lanc.valor_saida?.toString() || "",
+      data_lancamento: lanc.data_lancamento,
+      descricao: lanc.descricao || "",
+      cliente_fornecedor_id: lanc.cliente_fornecedor_id || "",
+      valor: lanc.valor?.toString() || "",
       categoria_id: lanc.categoria_id || "",
       forma_pagamento_id: lanc.forma_pagamento_id || "",
       conta_financeira_id: lanc.conta_financeira_id || "",
       tratamento_id: lanc.tratamento_id || "",
       origem_id: lanc.origem_id || "",
+      status: lanc.status || "pago",
     });
     setDialogOpen(true);
   };
@@ -287,6 +292,20 @@ const Lancamentos = () => {
       default: return "bg-muted text-muted-foreground";
     }
   };
+
+  // Filtrar categorias por tipo
+  const categoriasFiltradas = categorias.filter((cat: any) => {
+    if (formData.tipo === "receita") return cat.tipo === "receita";
+    if (formData.tipo === "despesa") return cat.tipo === "despesa";
+    return true;
+  });
+
+  // Filtrar clientes/fornecedores por tipo
+  const clientesFornecedoresFiltrados = clientesFornecedores.filter((cf: any) => {
+    if (formData.tipo === "receita") return cf.tipo === "cliente";
+    if (formData.tipo === "despesa") return cf.tipo === "fornecedor";
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -329,49 +348,52 @@ const Lancamentos = () => {
                   <Label>Data *</Label>
                   <Input
                     type="date"
-                    value={formData.data}
-                    onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                    value={formData.data_lancamento}
+                    onChange={(e) => setFormData({ ...formData, data_lancamento: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>{formData.tipo === "receita" ? "Cliente" : "Fornecedor"}</Label>
+                  <Select value={formData.cliente_fornecedor_id} onValueChange={(value) => setFormData({ ...formData, cliente_fornecedor_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientesFornecedoresFiltrados.map((cf: any) => (
+                        <SelectItem key={cf.id} value={cf.id}>
+                          {cf.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Valor *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.valor}
+                    onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                    placeholder="0.00"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <Label>Cliente/Descrição</Label>
+                <Label>Descrição</Label>
                 <Input
-                  value={formData.cliente}
-                  onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
-                  placeholder="Nome do cliente ou descrição"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                  placeholder="Descrição do lançamento"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                {formData.tipo === "receita" && (
-                  <div>
-                    <Label>Valor Entrada *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.valor_entrada}
-                      onChange={(e) => setFormData({ ...formData, valor_entrada: e.target.value })}
-                      placeholder="0.00"
-                      required
-                    />
-                  </div>
-                )}
-                {formData.tipo === "despesa" && (
-                  <div>
-                    <Label>Valor Saída *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.valor_saida}
-                      onChange={(e) => setFormData({ ...formData, valor_saida: e.target.value })}
-                      placeholder="0.00"
-                      required
-                    />
-                  </div>
-                )}
                 <div>
                   <Label>Categoria</Label>
                   <Select value={formData.categoria_id} onValueChange={(value) => setFormData({ ...formData, categoria_id: value })}>
@@ -379,20 +401,17 @@ const Lancamentos = () => {
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categorias.map((cat: any) => (
+                      {categoriasFiltradas.map((cat: any) => (
                         <SelectItem key={cat.id} value={cat.id}>
-                          {cat.categoria_sintetica}
-                          {cat.categoria_analitica && (
-                            <span className="text-muted-foreground"> → {cat.categoria_analitica}</span>
+                          {cat.nome_sintetico}
+                          {cat.nome_analitico && (
+                            <span className="text-muted-foreground"> → {cat.nome_analitico}</span>
                           )}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Forma de Pagamento</Label>
                   <Select value={formData.forma_pagamento_id} onValueChange={(value) => setFormData({ ...formData, forma_pagamento_id: value })}>
@@ -408,6 +427,9 @@ const Lancamentos = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Conta Financeira</Label>
                   <Select value={formData.conta_financeira_id} onValueChange={(value) => setFormData({ ...formData, conta_financeira_id: value })}>
@@ -423,102 +445,97 @@ const Lancamentos = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pago">Pago</SelectItem>
+                      <SelectItem value="pendente">Pendente</SelectItem>
+                      <SelectItem value="cancelado">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {formData.tipo === "receita" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Tratamento</Label>
-                      <Select 
-                        value={formData.tratamento_id} 
-                        onValueChange={(value) => {
-                          const tratamentoSelecionado = tratamentos.find((t: any) => t.id === value);
-                          setFormData({ 
-                            ...formData, 
-                            tratamento_id: value,
-                            valor_entrada: tratamentoSelecionado?.preco?.toString() || formData.valor_entrada
-                          });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tratamentos.map((trat: any) => (
-                            <SelectItem key={trat.id} value={trat.id}>
-                              {trat.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Origem</Label>
-                      <Select value={formData.origem_id} onValueChange={(value) => setFormData({ ...formData, origem_id: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {origens.map((orig: any) => (
-                            <SelectItem key={orig.id} value={orig.id}>
-                              {orig.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Tratamento</Label>
+                    <Select 
+                      value={formData.tratamento_id} 
+                      onValueChange={(value) => {
+                        const tratamentoSelecionado = tratamentos.find((t: any) => t.id === value);
+                        setFormData({ 
+                          ...formData, 
+                          tratamento_id: value,
+                          valor: tratamentoSelecionado?.preco_padrao?.toString() || formData.valor
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tratamentos.map((trat: any) => (
+                          <SelectItem key={trat.id} value={trat.id}>
+                            {trat.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-
-                  {formData.tratamento_id && formData.valor_entrada && (
-                    <Card className="bg-muted/50 border-primary/20">
-                      <CardContent className="pt-4 space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">Cálculo Automático</p>
-                        {(() => {
-                          const tratamentoSelecionado = tratamentos.find((t: any) => t.id === formData.tratamento_id);
-                          const valorEntrada = parseFloat(formData.valor_entrada) || 0;
-                          const custoTratamento = tratamentoSelecionado ? Number(tratamentoSelecionado.custo_estimado || 0) : 0;
-                          const margem = valorEntrada - custoTratamento;
-                          const margemPercentual = valorEntrada > 0 ? (margem / valorEntrada) * 100 : 0;
-
-                          return (
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <p className="text-muted-foreground">Custo do Tratamento</p>
-                                <p className="text-lg font-semibold text-foreground">
-                                  {custoTratamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">Margem Bruta</p>
-                                <p className={`text-lg font-semibold ${margem >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                                  {margem.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">Margem %</p>
-                                <p className={`text-lg font-semibold ${margemPercentual >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                                  {margemPercentual.toFixed(1)}%
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
+                  <div>
+                    <Label>Origem</Label>
+                    <Select value={formData.origem_id} onValueChange={(value) => setFormData({ ...formData, origem_id: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {origens.map((orig: any) => (
+                          <SelectItem key={orig.id} value={orig.id}>
+                            {orig.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               )}
 
-              <div>
-                <Label>Observações</Label>
-                <Textarea
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Observações adicionais"
-                  rows={3}
-                />
-              </div>
+              {formData.tipo === "receita" && formData.tratamento_id && formData.valor && (
+                <Card className="bg-muted/50 border-primary/20">
+                  <CardContent className="pt-4 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Cálculo Automático</p>
+                    {(() => {
+                      const tratamentoSelecionado = tratamentos.find((t: any) => t.id === formData.tratamento_id);
+                      const valorReceita = parseFloat(formData.valor) || 0;
+                      const custoTratamento = Number(tratamentoSelecionado?.custo_estimado || 0);
+                      const margemBruta = valorReceita - custoTratamento;
+                      const percentualMargem = valorReceita > 0 ? (margemBruta / valorReceita) * 100 : 0;
+
+                      return (
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Custo:</span>
+                            <p className="font-medium text-destructive">{formatCurrency(custoTratamento)}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Margem:</span>
+                            <p className="font-medium text-green-600">{formatCurrency(margemBruta)}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">% Margem:</span>
+                            <p className="font-medium text-primary">{percentualMargem.toFixed(1)}%</p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              )}
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
@@ -538,13 +555,13 @@ const Lancamentos = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filtros Avançados
+            Filtros
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Data Inicial</label>
+              <Label>Data Inicial</Label>
               <Input 
                 type="date" 
                 value={startDate}
@@ -552,7 +569,7 @@ const Lancamentos = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Data Final</label>
+              <Label>Data Final</Label>
               <Input 
                 type="date" 
                 value={endDate}
@@ -560,7 +577,7 @@ const Lancamentos = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Tipo</label>
+              <Label>Tipo</Label>
               <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
                 <SelectTrigger>
                   <SelectValue />
@@ -570,7 +587,6 @@ const Lancamentos = () => {
                   <SelectItem value="receita">Receita</SelectItem>
                   <SelectItem value="despesa">Despesa</SelectItem>
                   <SelectItem value="transferencia">Transferência</SelectItem>
-                  <SelectItem value="ajuste">Ajuste</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -578,10 +594,10 @@ const Lancamentos = () => {
         </CardContent>
       </Card>
 
-      {/* Tabela */}
+      {/* Tabela de Lançamentos */}
       <Card>
         <CardHeader>
-          <CardTitle>Lançamentos do Período</CardTitle>
+          <CardTitle>Lançamentos ({lancamentos.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -601,47 +617,54 @@ const Lancamentos = () => {
             <TableBody>
               {lancamentos.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     Nenhum lançamento encontrado no período
                   </TableCell>
                 </TableRow>
               ) : (
                 lancamentos.map((lanc: any) => (
                   <TableRow key={lanc.id} className="hover:bg-muted/50">
-                    <TableCell>{format(new Date(lanc.data), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>
+                      {format(new Date(lanc.data_lancamento), "dd/MM/yyyy")}
+                    </TableCell>
                     <TableCell>
                       <Badge className={getTipoColor(lanc.tipo)}>
                         {lanc.tipo}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {lanc.cliente || lanc.observacoes || "-"}
+                    <TableCell className="max-w-[200px] truncate">
+                      {lanc.clientes_fornecedores?.nome || lanc.descricao || "-"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {lanc.financeiro_tratamentos?.nome || "-"}
+                      {lanc.tratamentos?.nome || "-"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {lanc.financeiro_categorias?.categoria_sintetica || "-"}
-                      {lanc.financeiro_categorias?.categoria_analitica && (
-                        <span className="text-xs block">↳ {lanc.financeiro_categorias.categoria_analitica}</span>
-                      )}
+                      {lanc.categorias?.nome_sintetico || "-"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {lanc.financeiro_formas_pagamento?.nome || "-"}
+                      {lanc.formas_pagamento?.nome || "-"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {lanc.conta_financeira?.nome || "-"}
+                      {lanc.contas_financeiras?.nome || "-"}
                     </TableCell>
-                    <TableCell className={`text-right font-bold ${lanc.tipo === 'receita' ? 'text-green-600' : 'text-destructive'}`}>
-                      {lanc.tipo === 'receita' ? '+' : '-'}{formatCurrency(Number(lanc.valor_entrada || lanc.valor_saida || 0))}
+                    <TableCell className={`text-right font-medium ${lanc.tipo === 'receita' ? 'text-green-600' : 'text-destructive'}`}>
+                      {lanc.tipo === 'receita' ? '+' : '-'}{formatCurrency(Number(lanc.valor || 0))}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(lanc)}>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(lanc)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(lanc.id)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(lanc.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>
