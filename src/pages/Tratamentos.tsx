@@ -11,7 +11,7 @@ import { TratamentosKPIs } from "@/components/tratamentos/TratamentosKPIs";
 import { TratamentosFilters } from "@/components/tratamentos/TratamentosFilters";
 import { TratamentoForm } from "@/components/tratamentos/TratamentoForm";
 import { useTratamentoCalculations } from "@/components/tratamentos/hooks/useTratamentoCalculations";
-import { useAuth } from "@/contexts/AuthContext";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Tratamentos() {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { getMargemColor } = useTratamentoCalculations();
   
@@ -92,11 +91,7 @@ export default function Tratamentos() {
     mutationFn: async (data: any) => {
       const { fichaTecnica, lucro_sessao, margem_bruta, margem_contribuicao, ...tratamentoData } = data;
       
-      // Get current user
-      if (!user) throw new Error("Usuário não autenticado");
-      
       if (selectedTratamento) {
-        // Update tratamento - não incluir user_id nem campos gerados
         const { user_id, ...tratamentoUpdate } = tratamentoData;
         const { error: updateError } = await supabase
           .from("financeiro_tratamentos")
@@ -105,13 +100,11 @@ export default function Tratamentos() {
         
         if (updateError) throw updateError;
 
-        // Delete existing ficha técnica
         await supabase
           .from("tratamentos_ficha_tecnica")
           .delete()
           .eq("tratamento_id", selectedTratamento.id);
 
-        // Insert new ficha técnica items
         if (fichaTecnica && fichaTecnica.length > 0) {
           const items = fichaTecnica.map((item: any) => ({
             tratamento_id: selectedTratamento.id,
@@ -130,19 +123,14 @@ export default function Tratamentos() {
 
         return selectedTratamento.id;
       } else {
-        // Create tratamento with user_id (sem campos gerados)
         const { data: newTratamento, error: createError } = await supabase
           .from("financeiro_tratamentos")
-          .insert([{
-            ...tratamentoData,
-            user_id: user.id,
-          }])
+          .insert([tratamentoData])
           .select()
           .single();
         
         if (createError) throw createError;
 
-        // Insert ficha técnica items
         if (fichaTecnica && fichaTecnica.length > 0) {
           const items = fichaTecnica.map((item: any) => ({
             tratamento_id: newTratamento.id,

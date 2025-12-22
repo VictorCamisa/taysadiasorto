@@ -8,10 +8,8 @@ import { MovimentacoesTab } from "@/components/estoque/MovimentacoesTab";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 
 const Estoque = () => {
-  const { user } = useAuth();
   const [produtosSimples, setProdutosSimples] = useState<any[]>([]);
 
   const fetchProdutos = async () => {
@@ -63,8 +61,6 @@ const Estoque = () => {
 
   const saveProdutoMutation = useMutation({
     mutationFn: async (produto: any) => {
-      if (!user) throw new Error("Usuário não autenticado");
-
       if (produto.id) {
         const { id, user_id, ...produtoUpdate } = produto;
         const { error } = await supabase
@@ -75,7 +71,7 @@ const Estoque = () => {
       } else {
         const { error } = await supabase
           .from("estoque_produtos")
-          .insert({ ...produto, user_id: user.id });
+          .insert(produto);
         if (error) throw error;
       }
     },
@@ -117,13 +113,10 @@ const Estoque = () => {
 
   const saveCompraMutation = useMutation({
     mutationFn: async (compra: any) => {
-      if (!user) throw new Error("Usuário não autenticado");
-
-      // Insert compra
       const { data: compraData, error: compraError } = await supabase
         .from("estoque_compras")
-        .insert({
-          user_id: user.id,
+        .insert([{
+          user_id: "00000000-0000-0000-0000-000000000000",
           numero_nf: compra.numero_nf,
           data_compra: compra.data_compra,
           fornecedor_id: compra.fornecedor_id,
@@ -131,7 +124,7 @@ const Estoque = () => {
           conta_financeira_id: compra.conta_financeira_id,
           valor_total: compra.valor_total,
           observacoes: compra.observacoes,
-        })
+        }])
         .select()
         .single();
 

@@ -14,10 +14,8 @@ import { CategoriaForm } from "@/components/configuracoes/CategoriaForm";
 import { ContaForm } from "@/components/configuracoes/ContaForm";
 import { FormaPagamentoForm } from "@/components/configuracoes/FormaPagamentoForm";
 import { OrigemForm } from "@/components/configuracoes/OrigemForm";
-import { useAuth } from "@/contexts/AuthContext";
 
 const Configuracoes = () => {
-  const { user } = useAuth();
   const {
     categorias,
     contas,
@@ -46,10 +44,7 @@ const Configuracoes = () => {
   // Categoria mutations
   const saveCategoriaMutation = useMutation({
     mutationFn: async (categoria: any) => {
-      if (!user) throw new Error("Usuário não autenticado");
-
       if (categoria.id) {
-        // No UPDATE, não incluir user_id (RLS já valida)
         const { id, user_id, ...categoriaUpdate } = categoria;
         const { error } = await supabase
           .from("financeiro_categorias")
@@ -57,10 +52,9 @@ const Configuracoes = () => {
           .eq("id", id);
         if (error) throw error;
       } else {
-        // No INSERT, incluir user_id
         const { error } = await supabase
           .from("financeiro_categorias")
-          .insert({ ...categoria, user_id: user.id });
+          .insert(categoria);
         if (error) throw error;
       }
     },
@@ -78,10 +72,7 @@ const Configuracoes = () => {
   // Conta mutations
   const saveContaMutation = useMutation({
     mutationFn: async (conta: any) => {
-      if (!user) throw new Error("Usuário não autenticado");
-
       if (conta.id) {
-        // No UPDATE, não incluir user_id (RLS já valida)
         const { id, user_id, ...contaUpdate } = conta;
         const { error } = await supabase
           .from("financeiro_contas")
@@ -89,10 +80,9 @@ const Configuracoes = () => {
           .eq("id", id);
         if (error) throw error;
       } else {
-        // No INSERT, incluir user_id
         const { error } = await supabase
           .from("financeiro_contas")
-          .insert({ ...conta, user_id: user.id });
+          .insert(conta);
         if (error) throw error;
       }
     },
@@ -110,8 +100,6 @@ const Configuracoes = () => {
   // Forma pagamento mutations
   const saveFormaMutation = useMutation({
     mutationFn: async (forma: any) => {
-      if (!user) throw new Error("Usuário não autenticado");
-
       if (forma.id) {
         const { id, user_id, ...formaUpdate } = forma;
         const { error } = await supabase
@@ -122,7 +110,7 @@ const Configuracoes = () => {
       } else {
         const { error } = await supabase
           .from("financeiro_formas_pagamento")
-          .insert({ ...forma, user_id: user.id });
+          .insert(forma);
         if (error) throw error;
       }
     },
@@ -140,8 +128,6 @@ const Configuracoes = () => {
   // Origem mutations
   const saveOrigemMutation = useMutation({
     mutationFn: async (origem: any) => {
-      if (!user) throw new Error("Usuário não autenticado");
-
       if (origem.id) {
         const { id, user_id, ...origemUpdate } = origem;
         const { error } = await supabase
@@ -152,7 +138,7 @@ const Configuracoes = () => {
       } else {
         const { error } = await supabase
           .from("financeiro_origens")
-          .insert({ ...origem, user_id: user.id });
+          .insert(origem);
         if (error) throw error;
       }
     },

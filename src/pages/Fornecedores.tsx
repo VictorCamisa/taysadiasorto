@@ -12,10 +12,8 @@ import { useFornecedoresData } from "@/components/fornecedores/hooks/useForneced
 import { FornecedoresKPIs } from "@/components/fornecedores/FornecedoresKPIs";
 import { FornecedoresFilters } from "@/components/fornecedores/FornecedoresFilters";
 import { FornecedorForm } from "@/components/fornecedores/FornecedorForm";
-import { useAuth } from "@/contexts/AuthContext";
 
 const Fornecedores = () => {
-  const { user } = useAuth();
   const {
     fornecedores,
     refetch,
@@ -47,8 +45,6 @@ const Fornecedores = () => {
 
   const saveFornecedorMutation = useMutation({
     mutationFn: async (fornecedor: any) => {
-      if (!user) throw new Error("Usuário não autenticado");
-
       if (fornecedor.id) {
         const { id, user_id, ...fornecedorUpdate } = fornecedor;
         const { error } = await supabase
@@ -59,7 +55,7 @@ const Fornecedores = () => {
       } else {
         const { error } = await supabase
           .from("financeiro_fornecedores")
-          .insert({ ...fornecedor, user_id: user.id });
+          .insert(fornecedor);
         if (error) throw error;
       }
     },

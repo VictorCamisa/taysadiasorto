@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface Conversation {
   id: string;
@@ -17,7 +16,6 @@ interface Message {
 }
 
 export const useChatConversations = () => {
-  const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -25,12 +23,9 @@ export const useChatConversations = () => {
 
   // Load conversations (last 10)
   const loadConversations = async () => {
-    if (!user) return;
-
     const { data, error } = await supabase
       .from("chat_conversations")
       .select("*")
-      .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
       .limit(10);
 
@@ -54,16 +49,11 @@ export const useChatConversations = () => {
 
   // Create new conversation
   const createConversation = async (firstMessage: string) => {
-    if (!user) return null;
-
     const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? "..." : "");
 
     const { data, error } = await supabase
       .from("chat_conversations")
-      .insert({
-        user_id: user.id,
-        title,
-      })
+      .insert([{ title, user_id: "00000000-0000-0000-0000-000000000000" }])
       .select()
       .single();
 
@@ -128,7 +118,7 @@ export const useChatConversations = () => {
 
   useEffect(() => {
     loadConversations();
-  }, [user]);
+  }, []);
 
   return {
     conversations,
