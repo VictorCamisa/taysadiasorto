@@ -120,21 +120,32 @@ export const useDashboardData = (filters: DashboardFilters) => {
     },
   });
 
-  // Calculate KPIs - ajustado para nova estrutura (valor único em vez de valor_entrada/valor_saida)
+  // Calculate KPIs - usando mesma lógica do DRE gerencial
   const receitas = lancamentos.filter((l: any) => l.tipo === "receita");
   const despesas = lancamentos.filter((l: any) => l.tipo === "despesa");
   
-  const receitaTotal = receitas.reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  // Receita Bruta (total de receitas)
+  const receitaBruta = receitas.reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  
+  // Total de despesas para comparação
   const despesaTotal = despesas.reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
-  const lucroLiquido = receitaTotal - despesaTotal;
+  
+  // Custo de material (das receitas)
+  const custoMaterialTotal = receitas.reduce((sum: number, l: any) => sum + Number(l.custo_material || 0), 0);
+  
+  // Lucro Líquido = Receita Bruta - Custo Material - Todas as Despesas
+  // Esta fórmula corresponde à lógica do DRE: Receita - Custos - Despesas Operacionais - Financeiras - Impostos
+  const lucroLiquido = receitaBruta - custoMaterialTotal - despesaTotal;
   
   const totalReceitas = receitas.length;
-  const ticketMedio = totalReceitas > 0 ? receitaTotal / totalReceitas : 0;
+  const ticketMedio = totalReceitas > 0 ? receitaBruta / totalReceitas : 0;
   
-  // Calcular margem usando custo_material
-  const custoMaterialTotal = receitas.reduce((sum: number, l: any) => sum + Number(l.custo_material || 0), 0);
-  const margemTotal = receitaTotal - custoMaterialTotal;
-  const margemMedia = receitaTotal > 0 ? (margemTotal / receitaTotal) * 100 : 0;
+  // Calcular margem usando custo_material (margem de contribuição)
+  const margemTotal = receitaBruta - custoMaterialTotal;
+  const margemMedia = receitaBruta > 0 ? (margemTotal / receitaBruta) * 100 : 0;
+  
+  // Renomear para manter consistência
+  const receitaTotal = receitaBruta;
 
   // Comparison period calculations
   const compareReceitas = compareLancamentos.filter((l: any) => l.tipo === "receita");
