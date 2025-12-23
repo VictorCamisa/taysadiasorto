@@ -10,11 +10,14 @@ const corsHeaders = {
 // Helper to query database and get clinic context
 async function getClinicContext(supabase: any) {
   const today = new Date().toISOString().split('T')[0];
-  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  const currentYear = new Date().getFullYear();
+  const startOfMonth = new Date(currentYear, new Date().getMonth(), 1).toISOString().split('T')[0];
+  const startOfYear = new Date(currentYear, 0, 1).toISOString().split('T')[0];
 
-  // Fetch multiple data sources in parallel
+  // Fetch multiple data sources in parallel - including annual data
   const [
-    fluxoCaixaRes,
+    fluxoCaixaMesRes,
+    fluxoCaixaAnoRes,
     pacientesRes,
     agendamentosRes,
     tratamentosRes,
@@ -22,11 +25,17 @@ async function getClinicContext(supabase: any) {
     contasPagarRes,
     origensRes
   ] = await Promise.all([
+    // Monthly data
     supabase.from('td_fluxo_de_caixa')
-      .select('*, tratamento:tratamentos(nome), origem:origens(nome), categoria:categorias(nome_sintetico, tipo)')
+      .select('*, tratamento:tratamentos(nome), origem:origens(nome), categoria:categorias(nome_sintetico, tipo, natureza_dre)')
       .gte('data_lancamento', startOfMonth)
-      .order('data_lancamento', { ascending: false })
-      .limit(100),
+      .order('data_lancamento', { ascending: false }),
+    
+    // Annual data for DRE
+    supabase.from('td_fluxo_de_caixa')
+      .select('*, tratamento:tratamentos(nome), origem:origens(nome), categoria:categorias(nome_sintetico, tipo, natureza_dre)')
+      .gte('data_lancamento', startOfYear)
+      .order('data_lancamento', { ascending: false }),
     
     supabase.from('pacientes')
       .select('*')
@@ -56,15 +65,64 @@ async function getClinicContext(supabase: any) {
       .select('*')
   ]);
 
-  // Calculate KPIs
-  const fluxoCaixa = fluxoCaixaRes.data || [];
-  const receitas = fluxoCaixa.filter((f: any) => f.tipo === 'receita');
-  const despesas = fluxoCaixa.filter((f: any) => f.tipo === 'despesa');
+  // === MONTHLY KPIs ===
+  const fluxoCaixaMes = fluxoCaixaMesRes.data || [];
+  const receitasMes = fluxoCaixaMes.filter((f: any) => f.tipo === 'receita');
+  const despesasMes = fluxoCaixaMes.filter((f: any) => f.tipo === 'despesa');
   
-  const totalReceitas = receitas.reduce((sum: number, r: any) => sum + (r.valor || 0), 0);
-  const totalDespesas = despesas.reduce((sum: number, d: any) => sum + (d.valor || 0), 0);
-  const lucroLiquido = totalReceitas - totalDespesas;
-  const margemLucro = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100).toFixed(1) : 0;
+  const totalReceitasMes = receitasMes.reduce((sum: number, r: any) => sum + (r.valor || 0), 0);
+  const totalDespesasMes = despesasMes.reduce((sum: number, d: any) => sum + (d.valor || 0), 0);
+  const lucroLiquidoMes = totalReceitasMes - totalDespesasMes;
+  const margemLucroMes = totalReceitasMes > 0 ? ((lucroLiquidoMes / totalReceitasMes) * 100).toFixed(1) : 0;
+
+  // === ANNUAL KPIs (DRE) ===
+  const fluxoCaixaAno = fluxoCaixaAnoRes.data || [];
+  const receitasAno = fluxoCaixaAno.filter((f: any) => f.tipo === 'receita');
+  const despesasAno = fluxoCaixaAno.filter((f: any) => f.tipo === 'despesa');
+  
+  const totalReceitasAno = receitasAno.reduce((sum: number, r: any) => sum + (r.valor || 0), 0);
+  const totalDespesasAno = despesasAno.reduce((sum: number, d: any) => sum + (d.valor || 0), 0);
+  const lucroLiquidoAno = totalReceitasAno - totalDespesasAno;
+  const margemLucroAno = totalReceitasAno > 0 ? ((lucroLiquidoAno / totalReceitasAno) * 100).toFixed(1) : 0;
+
+  // Calculate monthly breakdown for DRE
+  const monthlyData: Record<number, { receitas: number; despesas: number; custos: number; opex: number }> = {};
+  for (let m = 0; m < 12; m++) {
+    monthlyData[m] = { receitas: 0, despesas: 0, custos: 0, opex: 0 };
+  }
+  
+  fluxoCaixaAno.forEach((f: any) => {
+    const month = new Date(f.data_lancamento).getMonth();
+    if (f.tipo === 'receita') {
+      monthlyData[month].receitas += f.valor || 0;
+    } else if (f.tipo === 'despesa') {
+      monthlyData[month].despesas += f.valor || 0;
+      // Classify by natureza_dre
+      const natureza = f.categoria?.natureza_dre || 'opex';
+      if (natureza === 'custo') {
+        monthlyData[month].custos += f.valor || 0;
+      } else {
+        monthlyData[month].opex += f.valor || 0;
+      }
+    }
+  });
+
+  // Calculate category breakdown for annual expenses
+  const despesasPorCategoria: Record<string, number> = {};
+  despesasAno.forEach((d: any) => {
+    const categoria = d.categoria?.nome_sintetico || 'Não categorizado';
+    despesasPorCategoria[categoria] = (despesasPorCategoria[categoria] || 0) + (d.valor || 0);
+  });
+
+  // Calculate revenue by treatment for the year
+  const receitasPorTratamentoAno: Record<string, number> = {};
+  receitasAno.forEach((r: any) => {
+    const nome = r.tratamento?.nome || 'Outros';
+    receitasPorTratamentoAno[nome] = (receitasPorTratamentoAno[nome] || 0) + (r.valor || 0);
+  });
+  const topTratamentosAno = Object.entries(receitasPorTratamentoAno)
+    .sort(([,a], [,b]) => (b as number) - (a as number))
+    .slice(0, 10);
 
   const pacientes = pacientesRes.data || [];
   const agendamentos = agendamentosRes.data || [];
@@ -92,9 +150,9 @@ async function getClinicContext(supabase: any) {
   );
   const totalContasVencidas = contasVencidas.reduce((sum: number, c: any) => sum + (c.valor || 0), 0);
 
-  // Top treatments by revenue
+  // Top treatments by revenue (monthly)
   const tratamentoReceitas: Record<string, number> = {};
-  receitas.forEach((r: any) => {
+  receitasMes.forEach((r: any) => {
     const nome = r.tratamento?.nome || 'Outros';
     tratamentoReceitas[nome] = (tratamentoReceitas[nome] || 0) + (r.valor || 0);
   });
@@ -102,22 +160,34 @@ async function getClinicContext(supabase: any) {
     .sort(([,a], [,b]) => (b as number) - (a as number))
     .slice(0, 5);
 
-  // Revenue by origin
+  // Revenue by origin (monthly)
   const receitasPorOrigem: Record<string, number> = {};
-  receitas.forEach((r: any) => {
+  receitasMes.forEach((r: any) => {
     const nome = r.origem?.nome || 'Não especificado';
     receitasPorOrigem[nome] = (receitasPorOrigem[nome] || 0) + (r.valor || 0);
   });
 
+  // Revenue by origin (annual)
+  const receitasPorOrigemAno: Record<string, number> = {};
+  receitasAno.forEach((r: any) => {
+    const nome = r.origem?.nome || 'Não especificado';
+    receitasPorOrigemAno[nome] = (receitasPorOrigemAno[nome] || 0) + (r.valor || 0);
+  });
+
+  const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
   return {
     dataAtual: today,
-    periodoAnalise: `${startOfMonth} a ${today}`,
-    kpis: {
-      receitaTotal: totalReceitas,
-      despesaTotal: totalDespesas,
-      lucroLiquido,
-      margemLucro: `${margemLucro}%`,
-      ticketMedio: receitas.length > 0 ? (totalReceitas / receitas.length).toFixed(2) : 0,
+    anoAtual: currentYear,
+    periodoMensal: `${startOfMonth} a ${today}`,
+    periodoAnual: `${startOfYear} a ${today}`,
+    kpisMensais: {
+      receitaTotal: totalReceitasMes,
+      despesaTotal: totalDespesasMes,
+      lucroLiquido: lucroLiquidoMes,
+      margemLucro: `${margemLucroMes}%`,
+      ticketMedio: receitasMes.length > 0 ? (totalReceitasMes / receitasMes.length).toFixed(2) : 0,
       totalPacientesAtivos: pacientes.length,
       totalTratamentosAtivos: tratamentos.length,
       agendamentosConfirmados,
@@ -128,9 +198,38 @@ async function getClinicContext(supabase: any) {
       contasVencidas: contasVencidas.length,
       valorContasVencidas: totalContasVencidas
     },
+    kpisAnuais: {
+      receitaTotal: totalReceitasAno,
+      despesaTotal: totalDespesasAno,
+      lucroLiquido: lucroLiquidoAno,
+      margemLucro: `${margemLucroAno}%`,
+      ticketMedio: receitasAno.length > 0 ? (totalReceitasAno / receitasAno.length).toFixed(2) : 0,
+      totalTransacoes: fluxoCaixaAno.length
+    },
+    dreAnual: {
+      receitaBrutaTotal: totalReceitasAno,
+      custosTotal: despesasAno.filter((d: any) => d.categoria?.natureza_dre === 'custo').reduce((sum: number, d: any) => sum + (d.valor || 0), 0),
+      despesasOperacionaisTotal: despesasAno.filter((d: any) => d.categoria?.natureza_dre !== 'custo').reduce((sum: number, d: any) => sum + (d.valor || 0), 0),
+      lucroLiquido: lucroLiquidoAno,
+      despesasPorCategoria: Object.entries(despesasPorCategoria)
+        .sort(([,a], [,b]) => (b as number) - (a as number))
+        .map(([categoria, valor]) => ({ categoria, valor })),
+      evolucaoMensal: Object.entries(monthlyData)
+        .filter(([, data]) => data.receitas > 0 || data.despesas > 0)
+        .map(([mes, data]) => ({
+          mes: meses[parseInt(mes)],
+          receitas: data.receitas,
+          despesas: data.despesas,
+          custos: data.custos,
+          opex: data.opex,
+          lucro: data.receitas - data.despesas
+        }))
+    },
     detalhes: {
-      topTratamentos: topTratamentos.map(([nome, valor]) => ({ nome, valor })),
-      receitasPorOrigem: Object.entries(receitasPorOrigem).map(([nome, valor]) => ({ nome, valor })),
+      topTratamentosMes: topTratamentos.map(([nome, valor]) => ({ nome, valor })),
+      topTratamentosAno: topTratamentosAno.map(([nome, valor]) => ({ nome, valor })),
+      receitasPorOrigemMes: Object.entries(receitasPorOrigem).map(([nome, valor]) => ({ nome, valor })),
+      receitasPorOrigemAno: Object.entries(receitasPorOrigemAno).map(([nome, valor]) => ({ nome, valor })),
       produtosBaixoEstoque: produtosBaixoEstoque.map((p: any) => ({ 
         nome: p.nome, 
         estoqueAtual: p.estoque_atual, 
@@ -187,30 +286,56 @@ serve(async (req) => {
 
 ## Dados Atuais da Clínica (${clinicContext.dataAtual}):
 
-### KPIs do Mês Atual (${clinicContext.periodoAnalise}):
-- Receita Total: R$ ${clinicContext.kpis.receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-- Despesa Total: R$ ${clinicContext.kpis.despesaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-- Lucro Líquido: R$ ${clinicContext.kpis.lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-- Margem de Lucro: ${clinicContext.kpis.margemLucro}
-- Ticket Médio: R$ ${clinicContext.kpis.ticketMedio}
-- Total de Pacientes Ativos: ${clinicContext.kpis.totalPacientesAtivos}
-- Tratamentos Ativos: ${clinicContext.kpis.totalTratamentosAtivos}
+### KPIs do Mês Atual (${clinicContext.periodoMensal}):
+- Receita Total: R$ ${clinicContext.kpisMensais.receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Despesa Total: R$ ${clinicContext.kpisMensais.despesaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Lucro Líquido: R$ ${clinicContext.kpisMensais.lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Margem de Lucro: ${clinicContext.kpisMensais.margemLucro}
+- Ticket Médio: R$ ${clinicContext.kpisMensais.ticketMedio}
+- Total de Pacientes Ativos: ${clinicContext.kpisMensais.totalPacientesAtivos}
+- Tratamentos Ativos: ${clinicContext.kpisMensais.totalTratamentosAtivos}
+
+### KPIs do Ano ${clinicContext.anoAtual} (${clinicContext.periodoAnual}):
+- Receita Total Anual: R$ ${clinicContext.kpisAnuais.receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Despesa Total Anual: R$ ${clinicContext.kpisAnuais.despesaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Lucro Líquido Anual: R$ ${clinicContext.kpisAnuais.lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Margem de Lucro Anual: ${clinicContext.kpisAnuais.margemLucro}
+- Ticket Médio Anual: R$ ${clinicContext.kpisAnuais.ticketMedio}
+- Total de Transações no Ano: ${clinicContext.kpisAnuais.totalTransacoes}
+
+### DRE - Demonstrativo de Resultado do Exercício (${clinicContext.anoAtual}):
+- Receita Bruta Total: R$ ${clinicContext.dreAnual.receitaBrutaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Custos (CMV): R$ ${clinicContext.dreAnual.custosTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Despesas Operacionais: R$ ${clinicContext.dreAnual.despesasOperacionaisTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- Lucro Líquido: R$ ${clinicContext.dreAnual.lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+
+### Despesas por Categoria (Anual):
+${clinicContext.dreAnual.despesasPorCategoria.slice(0, 10).map((d: any) => `- ${d.categoria}: R$ ${d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join('\n')}
+
+### Evolução Mensal do Ano:
+${clinicContext.dreAnual.evolucaoMensal.map((m: any) => `- ${m.mes}: Receitas R$ ${m.receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Despesas R$ ${m.despesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Lucro R$ ${m.lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join('\n')}
 
 ### Performance Comercial:
-- Agendamentos Confirmados: ${clinicContext.kpis.agendamentosConfirmados}
-- Agendamentos Concluídos: ${clinicContext.kpis.agendamentosConcluidos}
-- Agendamentos Cancelados: ${clinicContext.kpis.agendamentosCancelados}
-- Taxa de Conversão: ${clinicContext.kpis.taxaConversao}
+- Agendamentos Confirmados: ${clinicContext.kpisMensais.agendamentosConfirmados}
+- Agendamentos Concluídos: ${clinicContext.kpisMensais.agendamentosConcluidos}
+- Agendamentos Cancelados: ${clinicContext.kpisMensais.agendamentosCancelados}
+- Taxa de Conversão: ${clinicContext.kpisMensais.taxaConversao}
 
 ### Alertas:
-- Produtos com Estoque Baixo: ${clinicContext.kpis.produtosBaixoEstoque}
-- Contas Vencidas: ${clinicContext.kpis.contasVencidas} (Total: R$ ${clinicContext.kpis.valorContasVencidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+- Produtos com Estoque Baixo: ${clinicContext.kpisMensais.produtosBaixoEstoque}
+- Contas Vencidas: ${clinicContext.kpisMensais.contasVencidas} (Total: R$ ${clinicContext.kpisMensais.valorContasVencidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
 
-### Top 5 Tratamentos por Receita:
-${clinicContext.detalhes.topTratamentos.map((t: any, i: number) => `${i + 1}. ${t.nome}: R$ ${t.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join('\n')}
+### Top Tratamentos por Receita (Mês):
+${clinicContext.detalhes.topTratamentosMes.map((t: any, i: number) => `${i + 1}. ${t.nome}: R$ ${t.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join('\n')}
 
-### Receita por Canal de Marketing:
-${clinicContext.detalhes.receitasPorOrigem.map((o: any) => `- ${o.nome}: R$ ${o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join('\n')}
+### Top 10 Tratamentos por Receita (Ano):
+${clinicContext.detalhes.topTratamentosAno.map((t: any, i: number) => `${i + 1}. ${t.nome}: R$ ${t.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join('\n')}
+
+### Receita por Canal de Marketing (Mês):
+${clinicContext.detalhes.receitasPorOrigemMes.map((o: any) => `- ${o.nome}: R$ ${o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join('\n')}
+
+### Receita por Canal de Marketing (Ano):
+${clinicContext.detalhes.receitasPorOrigemAno.map((o: any) => `- ${o.nome}: R$ ${o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`).join('\n')}
 
 ### Produtos com Estoque Baixo:
 ${clinicContext.detalhes.produtosBaixoEstoque.length > 0 
@@ -224,18 +349,19 @@ ${clinicContext.detalhes.proximasContasPagar.map((c: any) => `- ${c.descricao}: 
 ${clinicContext.detalhes.ultimosAgendamentos.map((a: any) => `- ${a.paciente || 'N/A'}: ${a.tratamento || 'N/A'} em ${a.data || 'N/A'} (${a.status})`).join('\n')}
 
 ## Suas Capacidades:
-1. **Análise Financeira**: Analisar receitas, despesas, lucros, margens e tendências
-2. **Gestão de Pacientes**: Informações sobre pacientes, histórico, agendamentos
-3. **Performance de Tratamentos**: Quais tratamentos geram mais receita, margem, popularidade
-4. **Análise de Marketing**: Performance por canal de aquisição, ROI de marketing
-5. **Gestão de Estoque**: Alertas de estoque baixo, previsão de reposição
-6. **Contas a Pagar**: Status de pagamentos, alertas de vencimento
-7. **Previsões e Insights**: Projeções baseadas em tendências históricas
-8. **KPIs e Métricas**: Fornecer indicadores relevantes para tomada de decisão
+1. **Análise Financeira**: Analisar receitas, despesas, lucros, margens e tendências (mensal E anual)
+2. **DRE Completo**: Demonstrativo de Resultado do Exercício com evolução mensal
+3. **Gestão de Pacientes**: Informações sobre pacientes, histórico, agendamentos
+4. **Performance de Tratamentos**: Quais tratamentos geram mais receita, margem, popularidade
+5. **Análise de Marketing**: Performance por canal de aquisição, ROI de marketing
+6. **Gestão de Estoque**: Alertas de estoque baixo, previsão de reposição
+7. **Contas a Pagar**: Status de pagamentos, alertas de vencimento
+8. **Previsões e Insights**: Projeções baseadas em tendências históricas
+9. **Comparativos**: Comparar mês atual vs ano, identificar sazonalidade
 
 ## Diretrizes de Resposta:
 - Seja objetiva e profissional
-- Use dados concretos nas suas respostas
+- Use dados concretos nas suas respostas - você TEM acesso aos dados anuais e mensais
 - Formate valores monetários em Reais (R$)
 - Quando relevante, sugira ações baseadas nos dados
 - Se não tiver dados suficientes, informe claramente
