@@ -39,7 +39,7 @@ const Dashboard = () => {
       <PageHeader
         title="Dashboard"
         description="Visão geral do desempenho financeiro"
-        icon={LayoutDashboard}
+        icon={<LayoutDashboard className="h-6 w-6 text-primary" />}
       />
 
       {/* Filters */}

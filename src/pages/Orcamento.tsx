@@ -68,7 +68,7 @@ export default function OrcamentoPage() {
       <PageHeader
         title="Orçamento"
         description="Planejamento financeiro e controle orçamentário"
-        icon={Target}
+        icon={<Target className="h-6 w-6 text-primary" />}
         actions={
           <Button onClick={handleCreate}>
             <Plus className="mr-2 h-4 w-4" />
