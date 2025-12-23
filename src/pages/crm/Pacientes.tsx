@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, UserX, UserCheck, FileText, ClipboardList } from "lucide-react";
+import { Plus, Pencil, UserX, UserCheck, FileText, ClipboardList, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +24,7 @@ import { Tables } from "@/integrations/supabase/types";
 type Anamnese = Tables<"anamneses">;
 
 export default function Pacientes() {
+  const navigate = useNavigate();
   const { pacientes, refetch, isLoading, kpis } = usePacientesData();
 
   const [search, setSearch] = useState("");
@@ -263,8 +265,8 @@ export default function Pacientes() {
                   </TableRow>
                 ) : (
                   filteredPacientes.map((paciente) => (
-                    <TableRow key={paciente.id}>
-                      <TableCell className="font-medium">{paciente.nome}</TableCell>
+                    <TableRow key={paciente.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/crm/pacientes/${paciente.id}`)}>
+                      <TableCell className="font-medium text-primary">{paciente.nome}</TableCell>
                       <TableCell>{paciente.cpf || "-"}</TableCell>
                       <TableCell>{paciente.telefone || "-"}</TableCell>
                       <TableCell className="max-w-[200px] truncate">
@@ -288,7 +290,15 @@ export default function Pacientes() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/crm/pacientes/${paciente.id}`)}
+                            title="Ficha 360°"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"

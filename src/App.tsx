@@ -25,6 +25,7 @@ import Orcamento from "./pages/Orcamento";
 // Módulos Placeholder
 import CRMPlaceholder from "./pages/crm/CRMPlaceholder";
 import Pacientes from "./pages/crm/Pacientes";
+import FichaPaciente from "./pages/crm/FichaPaciente";
 import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
 import BIPlaceholder from "./pages/bi/BIPlaceholder";
 
@@ -63,6 +64,7 @@ const App = () => (
               {/* Módulo CRM */}
               <Route path="/crm" element={<CRMPlaceholder />} />
               <Route path="/crm/pacientes" element={<Pacientes />} />
+              <Route path="/crm/pacientes/:id" element={<FichaPaciente />} />
               
               {/* Módulo Administrativo (Placeholder) */}
               <Route path="/admin" element={<AdminPlaceholder />} />
