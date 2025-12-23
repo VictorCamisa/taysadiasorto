@@ -231,14 +231,14 @@ export function ProntuarioForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tratamento/Procedimento</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                <Select onValueChange={field.onChange} value={field.value || "none"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um tratamento" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
+                        <SelectItem value="none">Nenhum</SelectItem>
                         {tratamentos.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
                             {t.nome}
