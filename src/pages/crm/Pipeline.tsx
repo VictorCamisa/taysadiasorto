@@ -8,10 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Filter, Kanban } from "lucide-react";
+import { Plus, Filter } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { PipelineKanban } from "@/components/crm/PipelineKanban";
-import { AgendamentoForm } from "@/components/crm/AgendamentoForm";
+import { OportunidadeForm } from "@/components/crm/OportunidadeForm";
 import {
   useCRMAgendamentos,
   useTratamentos,
@@ -31,20 +31,22 @@ export default function Pipeline() {
   });
   const { createAgendamento, updateAgendamento } = useAgendamentoMutations();
 
-  const handleSaveAgendamento = async (data: any) => {
+  const handleSaveOportunidade = async (data: any) => {
     try {
       const payload = {
-        ...data,
+        paciente_id: data.paciente_id,
         tratamento_id: data.tratamento_id || null,
-        data_agendamento: data.data_agendamento ? new Date(data.data_agendamento).toISOString() : null,
+        valor_previsto: data.valor_previsto || 0,
+        observacoes: data.observacoes || null,
+        status: "lead",
       };
 
       if (selectedAgendamento) {
         await updateAgendamento.mutateAsync({ id: selectedAgendamento.id, ...payload });
-        toast({ title: "Agendamento atualizado!" });
+        toast({ title: "Oportunidade atualizada!" });
       } else {
         await createAgendamento.mutateAsync(payload);
-        toast({ title: "Agendamento criado!" });
+        toast({ title: "Oportunidade criada!" });
       }
       setFormOpen(false);
       setSelectedAgendamento(null);
@@ -146,11 +148,11 @@ export default function Pipeline() {
       )}
 
       {/* Form Modal */}
-      <AgendamentoForm
+      <OportunidadeForm
         open={formOpen}
         onOpenChange={setFormOpen}
-        agendamento={selectedAgendamento}
-        onSave={handleSaveAgendamento}
+        oportunidade={selectedAgendamento}
+        onSave={handleSaveOportunidade}
         isLoading={createAgendamento.isPending || updateAgendamento.isPending}
       />
     </div>
