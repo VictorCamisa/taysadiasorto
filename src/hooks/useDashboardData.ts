@@ -14,7 +14,7 @@ interface DashboardFilters {
 export const useDashboardData = (filters: DashboardFilters) => {
   const { startDate, endDate, compareStartDate, compareEndDate, tratamentoIds, origemIds } = filters;
 
-  // Fetch lancamentos with filters - NOVA TABELA: td_fluxo_de_caixa
+  // Fetch lancamentos with filters - INCLUI CATEGORIAS para natureza_dre
   const { data: lancamentos = [] } = useQuery({
     queryKey: ["dashboard_lancamentos", filters],
     queryFn: async () => {
@@ -23,7 +23,8 @@ export const useDashboardData = (filters: DashboardFilters) => {
         .select(`
           *,
           tratamento:tratamentos(*),
-          origem:origens(*)
+          origem:origens(*),
+          categorias(nome_sintetico, natureza_dre)
         `)
         .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
         .lte("data_lancamento", format(endDate, "yyyy-MM-dd"));
@@ -41,7 +42,7 @@ export const useDashboardData = (filters: DashboardFilters) => {
     },
   });
 
-  // Fetch comparison period data if provided
+  // Fetch comparison period data if provided - INCLUI CATEGORIAS
   const { data: compareLancamentos = [] } = useQuery({
     queryKey: ["dashboard_compare_lancamentos", compareStartDate, compareEndDate],
     queryFn: async () => {
@@ -49,7 +50,10 @@ export const useDashboardData = (filters: DashboardFilters) => {
       
       const { data, error } = await supabase
         .from("td_fluxo_de_caixa")
-        .select("*")
+        .select(`
+          *,
+          categorias(nome_sintetico, natureza_dre)
+        `)
         .gte("data_lancamento", format(compareStartDate, "yyyy-MM-dd"))
         .lte("data_lancamento", format(compareEndDate, "yyyy-MM-dd"));
 
@@ -59,7 +63,7 @@ export const useDashboardData = (filters: DashboardFilters) => {
     enabled: !!compareStartDate && !!compareEndDate,
   });
 
-  // Fetch other data - NOVAS TABELAS
+  // Fetch other data
   const { data: contas = [] } = useQuery({
     queryKey: ["dashboard_contas"],
     queryFn: async () => {
@@ -96,7 +100,6 @@ export const useDashboardData = (filters: DashboardFilters) => {
     },
   });
 
-  // NOVA TABELA: tratamentos
   const { data: tratamentos = [] } = useQuery({
     queryKey: ["dashboard_tratamentos"],
     queryFn: async () => {
@@ -108,7 +111,6 @@ export const useDashboardData = (filters: DashboardFilters) => {
     },
   });
 
-  // NOVA TABELA: origens
   const { data: origens = [] } = useQuery({
     queryKey: ["dashboard_origens"],
     queryFn: async () => {
@@ -120,45 +122,106 @@ export const useDashboardData = (filters: DashboardFilters) => {
     },
   });
 
-  // Calculate KPIs - usando mesma lógica do DRE gerencial
+  // ========== CÁLCULO DO DRE - MESMA LÓGICA DO useDREGerencial ==========
   const receitas = lancamentos.filter((l: any) => l.tipo === "receita");
   const despesas = lancamentos.filter((l: any) => l.tipo === "despesa");
   
-  // Receita Bruta (total de receitas)
+  // 1. Receita Bruta
   const receitaBruta = receitas.reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
   
-  // Total de despesas para comparação
+  // 2. Deduções (ISS, PIS, COFINS - natureza_dre = 'deducao')
+  const deducoes = despesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "deducao")
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  
+  // 3. Receita Líquida
+  const receitaLiquida = receitaBruta - deducoes;
+  
+  // 4. Custo Material (do campo custo_material nas receitas)
+  const custoMaterial = receitas.reduce((sum: number, l: any) => sum + Number(l.custo_material || 0), 0);
+  
+  // 5. Custos Variáveis (natureza_dre = 'custo')
+  const custosVariaveis = despesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "custo")
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  
+  // 6. Lucro Bruto
+  const lucroBruto = receitaLiquida - custoMaterial - custosVariaveis;
+  
+  // 7. Despesas Operacionais (OPEX - natureza_dre = 'opex' ou null)
+  const despesasOperacionais = despesas
+    .filter((l: any) => 
+      (l.categorias as any)?.natureza_dre === "opex" || 
+      !(l.categorias as any)?.natureza_dre
+    )
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  
+  // 8. Resultado Operacional (EBIT)
+  const resultadoOperacional = lucroBruto - despesasOperacionais;
+  
+  // 9. Despesas Financeiras (natureza_dre = 'financeiro')
+  const despesasFinanceiras = despesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "financeiro")
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  
+  // 10. Resultado antes do IR
+  const resultadoAntesIR = resultadoOperacional - despesasFinanceiras;
+  
+  // 11. Impostos sobre Lucro (IRPJ, CSLL - natureza_dre = 'imposto_lucro')
+  const impostoLucro = despesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "imposto_lucro")
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  
+  // 12. Lucro Líquido (IGUAL AO DRE)
+  const lucroLiquido = resultadoAntesIR - impostoLucro;
+  
+  // Margens
+  const margemBruta = receitaLiquida > 0 ? (lucroBruto / receitaLiquida) * 100 : 0;
+  const margemLiquida = receitaLiquida > 0 ? (lucroLiquido / receitaLiquida) * 100 : 0;
+  
+  // Total de despesas (para exibição)
   const despesaTotal = despesas.reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
-  
-  // Custo de material (das receitas)
-  const custoMaterialTotal = receitas.reduce((sum: number, l: any) => sum + Number(l.custo_material || 0), 0);
-  
-  // Lucro Líquido = Receita Bruta - Custo Material - Todas as Despesas
-  // Esta fórmula corresponde à lógica do DRE: Receita - Custos - Despesas Operacionais - Financeiras - Impostos
-  const lucroLiquido = receitaBruta - custoMaterialTotal - despesaTotal;
   
   const totalReceitas = receitas.length;
   const ticketMedio = totalReceitas > 0 ? receitaBruta / totalReceitas : 0;
   
-  // Calcular margem usando custo_material (margem de contribuição)
-  const margemTotal = receitaBruta - custoMaterialTotal;
+  // Margem de contribuição média
+  const margemTotal = receitaBruta - custoMaterial;
   const margemMedia = receitaBruta > 0 ? (margemTotal / receitaBruta) * 100 : 0;
   
-  // Renomear para manter consistência
   const receitaTotal = receitaBruta;
 
-  // Comparison period calculations
+  // ========== COMPARISON PERIOD - MESMA LÓGICA ==========
   const compareReceitas = compareLancamentos.filter((l: any) => l.tipo === "receita");
   const compareDespesas = compareLancamentos.filter((l: any) => l.tipo === "despesa");
-  const compareReceitaTotal = compareReceitas.reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
-  const compareDespesaTotal = compareDespesas.reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
-  const compareLucro = compareReceitaTotal - compareDespesaTotal;
+  
+  const compareReceitaBruta = compareReceitas.reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  const compareDeducoes = compareDespesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "deducao")
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  const compareReceitaLiquida = compareReceitaBruta - compareDeducoes;
+  const compareCustoMaterial = compareReceitas.reduce((sum: number, l: any) => sum + Number(l.custo_material || 0), 0);
+  const compareCustosVariaveis = compareDespesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "custo")
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  const compareLucroBruto = compareReceitaLiquida - compareCustoMaterial - compareCustosVariaveis;
+  const compareDespesasOp = compareDespesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "opex" || !(l.categorias as any)?.natureza_dre)
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  const compareEBIT = compareLucroBruto - compareDespesasOp;
+  const compareDespesasFin = compareDespesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "financeiro")
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  const compareImpostos = compareDespesas
+    .filter((l: any) => (l.categorias as any)?.natureza_dre === "imposto_lucro")
+    .reduce((sum: number, l: any) => sum + Number(l.valor || 0), 0);
+  const compareLucroLiquido = compareEBIT - compareDespesasFin - compareImpostos;
 
-  const taxaCrescimentoReceita = compareReceitaTotal > 0 
-    ? ((receitaTotal - compareReceitaTotal) / compareReceitaTotal) * 100 
+  const taxaCrescimentoReceita = compareReceitaBruta > 0 
+    ? ((receitaTotal - compareReceitaBruta) / compareReceitaBruta) * 100 
     : 0;
-  const taxaCrescimentoLucro = compareLucro > 0 
-    ? ((lucroLiquido - compareLucro) / compareLucro) * 100 
+  const taxaCrescimentoLucro = compareLucroLiquido !== 0 
+    ? ((lucroLiquido - compareLucroLiquido) / Math.abs(compareLucroLiquido)) * 100 
     : 0;
 
   // Top treatments by revenue
@@ -214,6 +277,10 @@ export const useDashboardData = (filters: DashboardFilters) => {
       receitaTotal,
       despesaTotal,
       lucroLiquido,
+      lucroBruto,
+      resultadoOperacional,
+      margemBruta,
+      margemLiquida,
       ticketMedio,
       margemMedia,
       taxaCrescimentoReceita,
