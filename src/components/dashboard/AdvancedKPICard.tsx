@@ -30,16 +30,16 @@ export function AdvancedKPICard({
 }: AdvancedKPICardProps) {
   const variantStyles = {
     default: "text-primary",
-    success: "text-green-600",
-    warning: "text-yellow-600",
+    success: "text-[rgb(var(--success))]",
+    warning: "text-[rgb(var(--warning))]",
     danger: "text-destructive",
   };
 
-  const trendColor = trend && trend > 0 ? "text-green-600" : "text-red-600";
+  const trendColor = trend && trend > 0 ? "text-[rgb(var(--success))]" : "text-destructive";
   const TrendIcon = trend && trend > 0 ? TrendingUp : TrendingDown;
 
   return (
-    <Card className="shadow-md hover:shadow-lg transition-shadow">
+    <Card className="hover-lift">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
