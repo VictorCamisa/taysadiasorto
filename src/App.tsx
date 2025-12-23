@@ -18,7 +18,6 @@ import RelatoriosEstoque from "./pages/RelatoriosEstoque";
 import AssistenteIA from "./pages/AssistenteIA";
 import Configuracoes from "./pages/Configuracoes";
 import Orcamento from "./pages/Orcamento";
-import DREGerencial from "./pages/DREGerencial";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,7 +39,6 @@ const App = () => (
               <Route path="/estoque" element={<Estoque />} />
               <Route path="/fornecedores" element={<Fornecedores />} />
               <Route path="/dre" element={<DRE />} />
-              <Route path="/dre-gerencial" element={<DREGerencial />} />
               <Route path="/orcamento" element={<Orcamento />} />
               <Route path="/relatorios" element={<Relatorios />} />
               <Route path="/relatorios-estoque" element={<RelatoriosEstoque />} />
