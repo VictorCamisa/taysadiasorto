@@ -1219,6 +1219,94 @@ export type Database = {
           },
         ]
       }
+      orcamento_itens: {
+        Row: {
+          categoria_id: string | null
+          created_at: string | null
+          id: string
+          orcamento_id: string
+          tipo: string
+          tratamento_id: string | null
+          updated_at: string | null
+          valor_orcado: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          created_at?: string | null
+          id?: string
+          orcamento_id: string
+          tipo: string
+          tratamento_id?: string | null
+          updated_at?: string | null
+          valor_orcado?: number
+        }
+        Update: {
+          categoria_id?: string | null
+          created_at?: string | null
+          id?: string
+          orcamento_id?: string
+          tipo?: string
+          tratamento_id?: string | null
+          updated_at?: string | null
+          valor_orcado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_itens_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_itens_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_itens_tratamento_id_fkey"
+            columns: ["tratamento_id"]
+            isOneToOne: false
+            referencedRelation: "tratamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orcamentos: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       origens: {
         Row: {
           data_atualizacao: string | null
