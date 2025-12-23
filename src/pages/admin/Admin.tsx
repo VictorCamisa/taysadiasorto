@@ -1,24 +1,46 @@
-import { Building2, Users, Lock, FileText, History, ArrowLeft } from "lucide-react";
+import { Building2, Users, Lock, FileText, History, ChevronRight, Home } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsuariosTab } from "@/components/admin/UsuariosTab";
 import { LgpdTab } from "@/components/admin/LgpdTab";
 import { DocumentosTab } from "@/components/admin/DocumentosTab";
 import { AuditoriaTab } from "@/components/admin/AuditoriaTab";
+import { AdminRoute } from "@/components/admin/AdminRoute";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
-export default function Admin() {
+function AdminContent() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Link>
-        </Button>
-      </div>
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/" className="flex items-center gap-1">
+                <Home className="h-4 w-4" />
+                Home
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator>
+            <ChevronRight className="h-4 w-4" />
+          </BreadcrumbSeparator>
+          <BreadcrumbItem>
+            <BreadcrumbPage className="flex items-center gap-1">
+              <Building2 className="h-4 w-4" />
+              Administrativo
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       <PageHeader
         title="Módulo Administrativo"
@@ -62,5 +84,13 @@ export default function Admin() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function Admin() {
+  return (
+    <AdminRoute>
+      <AdminContent />
+    </AdminRoute>
   );
 }
