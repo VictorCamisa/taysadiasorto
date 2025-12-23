@@ -1,5 +1,5 @@
 import { Building2, Users, Lock, FileText, History, ChevronRight, Home } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsuariosTab } from "@/components/admin/UsuariosTab";
@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/breadcrumb";
 
 function AdminContent() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get("tab") || "usuarios";
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -47,7 +54,7 @@ function AdminContent() {
         description="Gestão de usuários, permissões, LGPD e documentos legais"
       />
 
-      <Tabs defaultValue="usuarios" className="space-y-6">
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="usuarios" className="gap-2">
             <Users className="h-4 w-4" />
