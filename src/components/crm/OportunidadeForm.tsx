@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Phone, Mail, UserPlus, Flame, Thermometer, Snowflake } from "lucide-react";
+import { Phone, Mail, UserPlus, Flame, Thermometer, Snowflake, Info } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,18 +27,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   usePacientes,
   useTratamentos,
   useOrigens,
   useCreatePacienteMutation,
   CRMAgendamento,
-  Prioridade,
-  PRIORIDADE_LABELS,
 } from "./hooks/useCRMAgendamentos";
 
 const oportunidadeSchema = z.object({
@@ -47,6 +45,7 @@ const oportunidadeSchema = z.object({
   origem_id: z.string().optional(),
   prioridade: z.string().default("medio"),
   valor_previsto: z.coerce.number().min(0).optional(),
+  duracao_minutos: z.coerce.number().min(0).optional(),
   data_previsao_fechamento: z.string().optional(),
   observacoes: z.string().optional(),
 });
@@ -89,6 +88,7 @@ export function OportunidadeForm({
       origem_id: "",
       prioridade: "medio",
       valor_previsto: 0,
+      duracao_minutos: 60,
       data_previsao_fechamento: "",
       observacoes: "",
     },
@@ -104,7 +104,20 @@ export function OportunidadeForm({
   });
 
   const selectedPacienteId = form.watch("paciente_id");
+  const selectedTratamentoId = form.watch("tratamento_id");
+  
   const selectedPaciente = pacientes.find((p) => p.id === selectedPacienteId);
+  const selectedTratamento = tratamentos.find((t) => t.id === selectedTratamentoId);
+
+  // Auto-fill treatment data when treatment changes
+  useEffect(() => {
+    if (selectedTratamento && selectedTratamentoId && selectedTratamentoId !== "none") {
+      // Only auto-fill if it's a new opportunity or the treatment changed
+      if (!oportunidade || oportunidade.tratamento_id !== selectedTratamentoId) {
+        form.setValue("valor_previsto", Number(selectedTratamento.preco_padrao) || 0);
+      }
+    }
+  }, [selectedTratamentoId, selectedTratamento, form, oportunidade]);
 
   useEffect(() => {
     if (oportunidade) {
@@ -114,6 +127,7 @@ export function OportunidadeForm({
         origem_id: oportunidade.origem_id || "",
         prioridade: oportunidade.prioridade || "medio",
         valor_previsto: Number(oportunidade.valor_previsto) || 0,
+        duracao_minutos: Number(oportunidade.duracao_minutos) || 60,
         data_previsao_fechamento: oportunidade.data_previsao_fechamento || "",
         observacoes: oportunidade.observacoes || "",
       });
@@ -125,6 +139,7 @@ export function OportunidadeForm({
         origem_id: "",
         prioridade: "medio",
         valor_previsto: 0,
+        duracao_minutos: 60,
         data_previsao_fechamento: "",
         observacoes: "",
       });
@@ -159,22 +174,17 @@ export function OportunidadeForm({
     });
   };
 
-  const getPrioridadeIcon = (prioridade: string) => {
-    switch (prioridade) {
-      case "alto":
-        return <Flame className="h-4 w-4 text-red-500" />;
-      case "medio":
-        return <Thermometer className="h-4 w-4 text-amber-500" />;
-      case "baixo":
-        return <Snowflake className="h-4 w-4 text-blue-500" />;
-      default:
-        return null;
-    }
+  const formatCurrency = (value: number | null | undefined) => {
+    if (!value) return "R$ 0,00";
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {oportunidade ? "Editar Oportunidade" : "Nova Oportunidade"}
@@ -306,37 +316,114 @@ export function OportunidadeForm({
 
             <Separator />
 
+            {/* Treatment Selection */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Tratamento de Interesse</h3>
+              
+              <FormField
+                control={form.control}
+                name="tratamento_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <Select onValueChange={field.onChange} value={field.value || "none"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tratamento" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {tratamentos.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.nome} {t.preco_padrao ? `- ${formatCurrency(t.preco_padrao)}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Treatment Details Card */}
+              {selectedTratamento && selectedTratamentoId !== "none" && (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="pt-4 pb-3">
+                    <div className="flex items-start gap-2 mb-3">
+                      <Info className="h-4 w-4 text-primary mt-0.5" />
+                      <span className="text-sm font-medium text-primary">Informações do Tratamento</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground block">Preço Padrão</span>
+                        <span className="font-semibold text-lg">
+                          {formatCurrency(selectedTratamento.preco_padrao)}
+                        </span>
+                      </div>
+                      
+                      <div>
+                        <span className="text-muted-foreground block">Custo Estimado</span>
+                        <span className="font-medium">
+                          {formatCurrency(selectedTratamento.custo_estimado)}
+                        </span>
+                      </div>
+
+                      {selectedTratamento.e_cirurgico && (
+                        <div>
+                          <span className="text-muted-foreground block">Custo Cirúrgico</span>
+                          <span className="font-medium">
+                            {formatCurrency(selectedTratamento.custo_cirurgico)}
+                          </span>
+                        </div>
+                      )}
+
+                      {selectedTratamento.unidade_medida && (
+                        <div>
+                          <span className="text-muted-foreground block">Unidade</span>
+                          <span className="font-medium">{selectedTratamento.unidade_medida}</span>
+                        </div>
+                      )}
+
+                      <div>
+                        <span className="text-muted-foreground block">Tipo</span>
+                        <Badge variant={selectedTratamento.e_cirurgico ? "destructive" : "secondary"}>
+                          {selectedTratamento.e_cirurgico ? "Cirúrgico" : "Não Cirúrgico"}
+                        </Badge>
+                      </div>
+
+                      {selectedTratamento.preco_padrao && selectedTratamento.custo_estimado && (
+                        <div>
+                          <span className="text-muted-foreground block">Margem Estimada</span>
+                          <span className="font-medium text-emerald-600">
+                            {formatCurrency(
+                              Number(selectedTratamento.preco_padrao) - 
+                              Number(selectedTratamento.custo_estimado) - 
+                              (selectedTratamento.e_cirurgico ? Number(selectedTratamento.custo_cirurgico || 0) : 0)
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedTratamento.descricao && (
+                      <div className="mt-3 pt-3 border-t border-primary/10">
+                        <span className="text-muted-foreground text-xs block mb-1">Descrição</span>
+                        <p className="text-sm">{selectedTratamento.descricao}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            <Separator />
+
             {/* Opportunity Details */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium">Detalhes da Oportunidade</h3>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="tratamento_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tratamento de Interesse</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || "none"}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">Nenhum</SelectItem>
-                          {tratamentos.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>
-                              {t.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="origem_id"
@@ -362,9 +449,7 @@ export function OportunidadeForm({
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="prioridade"
@@ -402,7 +487,9 @@ export function OportunidadeForm({
                     </FormItem>
                   )}
                 />
+              </div>
 
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="valor_previsto"
@@ -415,6 +502,26 @@ export function OportunidadeForm({
                           step="0.01"
                           min="0"
                           placeholder="0,00"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="duracao_minutos"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duração (minutos)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="15"
+                          placeholder="60"
                           {...field}
                         />
                       </FormControl>
