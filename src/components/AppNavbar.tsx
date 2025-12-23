@@ -12,6 +12,7 @@ import {
   History,
   Home,
   Kanban,
+  Leaf,
   LineChart,
   Lock,
   Menu,
@@ -35,8 +36,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -146,37 +145,42 @@ function ModuleDropdown({ module }: { module: NavModule }) {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            "hover:bg-accent/50",
-            isActive ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
+            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300",
+            isActive 
+              ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" 
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
           )}
         >
           <Icon className="h-4 w-4" />
           <span>{module.label}</span>
-          <ChevronDown className="h-3 w-3 opacity-60" />
+          <ChevronDown className={cn(
+            "h-3.5 w-3.5 transition-transform duration-200",
+            isActive ? "opacity-80" : "opacity-60"
+          )} />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
-          {module.label}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent 
+        align="start" 
+        className="w-56 p-2 glass rounded-xl border-border/50"
+        sideOffset={8}
+      >
         {module.items.map((item) => {
           const ItemIcon = item.icon;
           const isItemActive = location.pathname === item.to || 
             (item.to.includes("?") && location.pathname + location.search === item.to);
           
           return (
-            <DropdownMenuItem key={item.to} asChild>
-              <Link
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-2 cursor-pointer",
-                  isItemActive && "bg-accent"
-                )}
-              >
+            <DropdownMenuItem 
+              key={item.to} 
+              asChild
+              className={cn(
+                "rounded-lg px-3 py-2.5 cursor-pointer transition-all duration-200",
+                isItemActive && "bg-primary/10 text-primary"
+              )}
+            >
+              <Link to={item.to} className="flex items-center gap-3">
                 <ItemIcon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <span className="font-medium">{item.label}</span>
               </Link>
             </DropdownMenuItem>
           );
@@ -196,18 +200,20 @@ function MobileModuleSection({ module, onClose }: { module: NavModule; onClose: 
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger
         className={cn(
-          "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-          isActive ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+          "flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
+          isActive 
+            ? "bg-primary text-primary-foreground" 
+            : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
         )}
       >
         <div className="flex items-center gap-3">
           <Icon className="h-4 w-4" />
           <span>{module.label}</span>
         </div>
-        <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("h-4 w-4 transition-transform duration-300", isOpen && "rotate-180")} />
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="ml-4 mt-1 space-y-0.5 border-l border-border/50 pl-4">
+        <div className="ml-4 mt-2 space-y-1 border-l-2 border-primary/20 pl-4">
           {module.items.map((item) => {
             const ItemIcon = item.icon;
             const isItemActive = location.pathname === item.to ||
@@ -219,13 +225,13 @@ function MobileModuleSection({ module, onClose }: { module: NavModule; onClose: 
                 to={item.to}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
                   isItemActive
-                    ? "bg-accent text-foreground font-medium"
+                    ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                 )}
               >
-                <ItemIcon className="h-3.5 w-3.5" />
+                <ItemIcon className="h-4 w-4" />
                 <span>{item.label}</span>
               </Link>
             );
@@ -241,20 +247,20 @@ export function AppNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-2.5 md:px-6">
+    <header className="sticky top-0 z-50 glass-navbar">
+      <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-3 md:px-6">
         {/* Brand */}
         <NavLink
           to="/"
           end
-          className="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-accent/50 transition-colors"
+          className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-accent/50 transition-all duration-300"
         >
-          <div className="h-9 w-9 rounded-lg bg-foreground/5 border border-border/40 flex items-center justify-center">
-            <span className="text-sm font-semibold text-foreground/80">TD</span>
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25">
+            <Leaf className="h-5 w-5 text-primary-foreground" />
           </div>
           <div className="hidden sm:block">
             <p className="text-sm font-semibold leading-none text-foreground">Taysa Dias</p>
-            <p className="text-[11px] text-muted-foreground">Gestão Clínica</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Gestão Clínica</p>
           </div>
         </NavLink>
 
@@ -265,10 +271,10 @@ export function AppNavbar() {
             to="/"
             end
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300",
+              "text-muted-foreground hover:text-foreground hover:bg-accent/60"
             )}
-            activeClassName="text-foreground bg-accent"
+            activeClassName="bg-primary text-primary-foreground shadow-md shadow-primary/25"
           >
             <Home className="h-4 w-4" />
             <span>Início</span>
@@ -279,7 +285,7 @@ export function AppNavbar() {
             <ModuleDropdown key={module.basePath} module={module} />
           ))}
 
-          <Separator orientation="vertical" className="mx-2 h-6" />
+          <div className="mx-3 h-6 w-px bg-border/50" />
 
           {/* Global items */}
           {globalItems.map((item) => {
@@ -289,10 +295,10 @@ export function AppNavbar() {
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300",
+                  "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                 )}
-                activeClassName="text-foreground bg-accent"
+                activeClassName="bg-primary text-primary-foreground shadow-md shadow-primary/25"
               >
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
@@ -302,29 +308,42 @@ export function AppNavbar() {
         </nav>
 
         {/* Right actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Mobile menu */}
           <div className="lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" aria-label="Abrir menu">
-                  <Menu className="h-4 w-4" />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-xl border-border/50 bg-card/50 backdrop-blur-sm"
+                  aria-label="Abrir menu"
+                >
+                  <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[320px] overflow-y-auto">
+              <SheetContent side="left" className="w-[320px] overflow-y-auto glass border-border/50">
                 <SheetHeader>
-                  <SheetTitle className="text-sm">Menu</SheetTitle>
+                  <SheetTitle className="flex items-center gap-3 text-left">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                      <Leaf className="h-5 w-5 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Taysa Dias</p>
+                      <p className="text-xs text-muted-foreground font-normal">Gestão Clínica</p>
+                    </div>
+                  </SheetTitle>
                 </SheetHeader>
 
-                <div className="mt-4 space-y-1">
+                <div className="mt-6 space-y-2">
                   {/* Home */}
                   <SheetClose asChild>
                     <Link
                       to="/"
                       className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
                         location.pathname === "/"
-                          ? "bg-accent text-foreground"
+                          ? "bg-primary text-primary-foreground"
                           : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       )}
                     >
@@ -333,7 +352,7 @@ export function AppNavbar() {
                     </Link>
                   </SheetClose>
 
-                  <Separator className="my-2" />
+                  <Separator className="my-3 bg-border/50" />
 
                   {/* Modules */}
                   {modules.map((module) => (
@@ -344,7 +363,7 @@ export function AppNavbar() {
                     />
                   ))}
 
-                  <Separator className="my-2" />
+                  <Separator className="my-3 bg-border/50" />
 
                   {/* Global */}
                   {globalItems.map((item) => {
@@ -356,9 +375,9 @@ export function AppNavbar() {
                         <Link
                           to={item.to}
                           className={cn(
-                            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                            "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
                             isActive
-                              ? "bg-accent text-foreground"
+                              ? "bg-primary text-primary-foreground"
                               : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                           )}
                         >
@@ -370,9 +389,9 @@ export function AppNavbar() {
                   })}
                 </div>
 
-                <Separator className="my-4" />
+                <Separator className="my-4 bg-border/50" />
 
-                <div className="flex items-center justify-between px-3">
+                <div className="flex items-center justify-between px-4">
                   <ThemeToggle />
                   <UserAuthMenu />
                 </div>
@@ -380,9 +399,9 @@ export function AppNavbar() {
             </Sheet>
           </div>
 
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-3">
             <ThemeToggle />
-            <div className="h-5 w-px bg-border" />
+            <div className="h-6 w-px bg-border/50" />
             <UserAuthMenu />
           </div>
         </div>

@@ -11,14 +11,14 @@ export function Layout({ children }: LayoutProps) {
   const isAssistenteIA = location.pathname === "/assistente-ia";
 
   return (
-    <div className="min-h-screen flex flex-col w-full bg-background">
+    <div className="min-h-screen flex flex-col w-full bg-mesh">
       <AppNavbar />
 
       {/* Main content area */}
       <main
         className={cn(
-          "flex-1",
-          isAssistenteIA ? "flex flex-col min-h-0 p-0" : "p-6",
+          "flex-1 animate-fade-in",
+          isAssistenteIA ? "flex flex-col min-h-0 p-0" : "p-4 md:p-6 lg:p-8",
         )}
       >
         <div
