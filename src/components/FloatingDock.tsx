@@ -65,9 +65,11 @@ const modules: ModuleGroup[] = [
     title: "CRM",
     icon: UserCircle,
     color: "module-crm",
-    status: "coming-soon",
+    status: "active",
     basePath: "/crm",
-    items: []
+    items: [
+      { title: "Pacientes", url: "/crm/pacientes", icon: Users },
+    ]
   },
   {
     title: "Administrativo",
