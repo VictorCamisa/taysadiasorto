@@ -33,7 +33,7 @@ import PosVenda from "./pages/crm/PosVenda";
 import LeadsPerdidos from "./pages/crm/LeadsPerdidos";
 
 // Módulos Placeholder
-import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
+import Admin from "./pages/admin/Admin";
 import BIPlaceholder from "./pages/bi/BIPlaceholder";
 
 // Global
@@ -79,8 +79,8 @@ const App = () => (
               <Route path="/crm/pacientes/:id" element={<FichaPaciente />} />
               
               {/* Módulo Administrativo (Placeholder) */}
-              <Route path="/admin" element={<AdminPlaceholder />} />
-              <Route path="/admin/*" element={<AdminPlaceholder />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/*" element={<Admin />} />
               
               {/* Módulo BI (Placeholder) */}
               <Route path="/bi" element={<BIPlaceholder />} />
