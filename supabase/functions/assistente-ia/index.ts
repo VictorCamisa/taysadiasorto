@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -10,7 +11,6 @@ const corsHeaders = {
 async function getClinicContext(supabase: any) {
   const today = new Date().toISOString().split('T')[0];
   const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-  const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
 
   // Fetch multiple data sources in parallel
   const [
@@ -20,51 +20,39 @@ async function getClinicContext(supabase: any) {
     tratamentosRes,
     produtosRes,
     contasPagarRes,
-    origensRes,
-    categoriasRes
+    origensRes
   ] = await Promise.all([
-    // Cash flow - current month
     supabase.from('td_fluxo_de_caixa')
       .select('*, tratamento:tratamentos(nome), origem:origens(nome), categoria:categorias(nome_sintetico, tipo)')
       .gte('data_lancamento', startOfMonth)
       .order('data_lancamento', { ascending: false })
       .limit(100),
     
-    // Patients
     supabase.from('pacientes')
       .select('*')
       .eq('ativo', true)
       .order('created_at', { ascending: false })
       .limit(50),
     
-    // Appointments - recent and upcoming
     supabase.from('crm_agendamentos')
       .select('*, paciente:pacientes(nome), tratamento:tratamentos(nome, preco), origem:origens(nome)')
       .order('data_agendamento', { ascending: false })
       .limit(50),
     
-    // Treatments
     supabase.from('tratamentos')
       .select('*')
       .eq('ativo', true),
     
-    // Products/Inventory
     supabase.from('estoque_produtos')
       .select('*')
       .eq('ativo', true),
     
-    // Bills payable
     supabase.from('financeiro_contas_pagar')
       .select('*, categoria:financeiro_categorias_old(categoria_sintetica), fornecedor:financeiro_fornecedores_old(nome)')
       .order('data_vencimento', { ascending: true })
       .limit(30),
     
-    // Origins (marketing channels)
     supabase.from('origens')
-      .select('*'),
-    
-    // Categories
-    supabase.from('categorias')
       .select('*')
   ]);
 
@@ -180,9 +168,9 @@ serve(async (req) => {
   try {
     const { message, conversationHistory } = await req.json();
     
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
 
     // Create Supabase client for database access
@@ -263,38 +251,27 @@ ${clinicContext.detalhes.ultimosAgendamentos.map((a: any) => `- ${a.paciente || 
       { role: 'user', content: message }
     ];
 
-    console.log('Calling Lovable AI Gateway...');
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    console.log('Calling OpenAI API...');
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4o-mini',
         messages,
         stream: true,
       }),
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns segundos.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Créditos esgotados. Entre em contato com o suporte.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
       const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      throw new Error(`AI Gateway error: ${response.status}`);
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
+    console.log('Streaming response from OpenAI...');
     return new Response(response.body, {
       headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
     });
