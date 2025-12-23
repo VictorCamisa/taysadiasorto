@@ -22,10 +22,14 @@ import Relatorios from "./pages/Relatorios";
 import RelatoriosEstoque from "./pages/RelatoriosEstoque";
 import Orcamento from "./pages/Orcamento";
 
-// Módulos Placeholder
+// Módulo CRM
 import CRMPlaceholder from "./pages/crm/CRMPlaceholder";
 import Pacientes from "./pages/crm/Pacientes";
 import FichaPaciente from "./pages/crm/FichaPaciente";
+import Pipeline from "./pages/crm/Pipeline";
+import Agenda from "./pages/crm/Agenda";
+
+// Módulos Placeholder
 import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
 import BIPlaceholder from "./pages/bi/BIPlaceholder";
 
@@ -62,7 +66,9 @@ const App = () => (
               <Route path="/financeiro/relatorios-estoque" element={<RelatoriosEstoque />} />
               
               {/* Módulo CRM */}
-              <Route path="/crm" element={<CRMPlaceholder />} />
+              <Route path="/crm" element={<Pipeline />} />
+              <Route path="/crm/pipeline" element={<Pipeline />} />
+              <Route path="/crm/agenda" element={<Agenda />} />
               <Route path="/crm/pacientes" element={<Pacientes />} />
               <Route path="/crm/pacientes/:id" element={<FichaPaciente />} />
               
