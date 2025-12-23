@@ -62,6 +62,68 @@ export type Database = {
           },
         ]
       }
+      anamneses: {
+        Row: {
+          alergias: string | null
+          antecedentes_familiares: string | null
+          cirurgias_anteriores: string | null
+          contraindicacoes: string | null
+          created_at: string | null
+          data_anamnese: string
+          expectativas: string | null
+          habitos: string | null
+          historico_medico: string | null
+          id: string
+          medicamentos_uso: string | null
+          observacoes: string | null
+          paciente_id: string
+          queixa_principal: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          alergias?: string | null
+          antecedentes_familiares?: string | null
+          cirurgias_anteriores?: string | null
+          contraindicacoes?: string | null
+          created_at?: string | null
+          data_anamnese?: string
+          expectativas?: string | null
+          habitos?: string | null
+          historico_medico?: string | null
+          id?: string
+          medicamentos_uso?: string | null
+          observacoes?: string | null
+          paciente_id: string
+          queixa_principal?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          alergias?: string | null
+          antecedentes_familiares?: string | null
+          cirurgias_anteriores?: string | null
+          contraindicacoes?: string | null
+          created_at?: string | null
+          data_anamnese?: string
+          expectativas?: string | null
+          habitos?: string | null
+          historico_medico?: string | null
+          id?: string
+          medicamentos_uso?: string | null
+          observacoes?: string | null
+          paciente_id?: string
+          queixa_principal?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamneses_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_date: string
@@ -1330,6 +1392,120 @@ export type Database = {
           nome?: string
         }
         Relationships: []
+      }
+      pacientes: {
+        Row: {
+          ativo: boolean | null
+          cep: string | null
+          cidade: string | null
+          cpf: string | null
+          created_at: string | null
+          data_nascimento: string | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          foto_url: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cep?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          foto_url?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cep?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          foto_url?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      prontuarios: {
+        Row: {
+          created_at: string | null
+          data_atendimento: string
+          descricao_procedimento: string | null
+          evolucao: string | null
+          fotos_antes: string[] | null
+          fotos_depois: string[] | null
+          id: string
+          observacoes_clinicas: string | null
+          paciente_id: string
+          proximos_passos: string | null
+          tratamento_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_atendimento?: string
+          descricao_procedimento?: string | null
+          evolucao?: string | null
+          fotos_antes?: string[] | null
+          fotos_depois?: string[] | null
+          id?: string
+          observacoes_clinicas?: string | null
+          paciente_id: string
+          proximos_passos?: string | null
+          tratamento_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_atendimento?: string
+          descricao_procedimento?: string | null
+          evolucao?: string | null
+          fotos_antes?: string[] | null
+          fotos_depois?: string[] | null
+          id?: string
+          observacoes_clinicas?: string | null
+          paciente_id?: string
+          proximos_passos?: string | null
+          tratamento_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prontuarios_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prontuarios_tratamento_id_fkey"
+            columns: ["tratamento_id"]
+            isOneToOne: false
+            referencedRelation: "tratamentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       td_fluxo_de_caixa: {
         Row: {
