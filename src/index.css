@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* macOS-inspired Design System */
+/* SGCTD Design System - macOS + Wellness */
 
 @layer base {
   :root {
@@ -38,7 +38,7 @@
     
     /* Chart Colors - Vibrant macOS palette */
     --chart-1: 211 100% 50%;
-    --chart-2: 142 71% 45%;
+    --chart-2: 158 64% 45%;
     --chart-3: 35 100% 50%;
     --chart-4: 280 59% 55%;
     --chart-5: 4 90% 58%;
@@ -54,12 +54,24 @@
     --sidebar-ring: 211 100% 50%;
     
     /* Status Colors */
-    --success: 142 71% 45%;
+    --success: 158 64% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 35 100% 50%;
     --warning-foreground: 0 0% 100%;
     --info: 211 100% 50%;
     --info-foreground: 0 0% 100%;
+    
+    /* Wellness Colors - Mint/Sage palette */
+    --wellness-mint: 158 64% 52%;
+    --wellness-sage: 147 39% 60%;
+    --wellness-cream: 48 100% 97%;
+    --wellness-teal: 173 58% 45%;
+    
+    /* Module Colors */
+    --module-financeiro: 158 64% 45%;
+    --module-crm: 211 100% 50%;
+    --module-admin: 280 59% 55%;
+    --module-bi: 35 100% 50%;
     
     /* Typography */
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -111,7 +123,7 @@
     
     /* Chart Colors - Vibrant for dark mode */
     --chart-1: 211 100% 52%;
-    --chart-2: 142 71% 50%;
+    --chart-2: 158 64% 50%;
     --chart-3: 38 100% 52%;
     --chart-4: 280 59% 65%;
     --chart-5: 4 90% 61%;
@@ -127,12 +139,24 @@
     --sidebar-ring: 211 100% 52%;
     
     /* Status Colors */
-    --success: 142 71% 50%;
+    --success: 158 64% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 38 100% 52%;
     --warning-foreground: 0 0% 100%;
     --info: 211 100% 52%;
     --info-foreground: 0 0% 100%;
+    
+    /* Wellness Colors - Mint/Sage palette (dark mode adjusted) */
+    --wellness-mint: 158 64% 48%;
+    --wellness-sage: 147 39% 50%;
+    --wellness-cream: 48 30% 15%;
+    --wellness-teal: 173 58% 40%;
+    
+    /* Module Colors (dark mode) */
+    --module-financeiro: 158 64% 50%;
+    --module-crm: 211 100% 52%;
+    --module-admin: 280 59% 65%;
+    --module-bi: 38 100% 52%;
     
     /* Shadows - Subtle for dark mode */
     --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
@@ -184,6 +208,18 @@
     --color-warning-foreground: hsl(var(--warning-foreground));
     --color-info: hsl(var(--info));
     --color-info-foreground: hsl(var(--info-foreground));
+    
+    /* Wellness Colors */
+    --color-wellness-mint: hsl(var(--wellness-mint));
+    --color-wellness-sage: hsl(var(--wellness-sage));
+    --color-wellness-cream: hsl(var(--wellness-cream));
+    --color-wellness-teal: hsl(var(--wellness-teal));
+    
+    /* Module Colors */
+    --color-module-financeiro: hsl(var(--module-financeiro));
+    --color-module-crm: hsl(var(--module-crm));
+    --color-module-admin: hsl(var(--module-admin));
+    --color-module-bi: hsl(var(--module-bi));
 
     --font-sans: var(--font-sans);
     --font-mono: var(--font-mono);
@@ -217,7 +253,7 @@
   }
 }
 
-/* macOS Utility Classes */
+/* macOS + Wellness Utility Classes */
 @layer utilities {
   /* Glass/Vibrancy effect */
   .glass {
@@ -232,6 +268,14 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid hsl(var(--border) / 0.3);
+  }
+  
+  /* Wellness glass with subtle tint */
+  .glass-wellness {
+    background: linear-gradient(135deg, hsl(var(--wellness-mint) / 0.05), hsl(var(--card) / 0.8));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--wellness-mint) / 0.2);
   }
   
   /* Hover effects */
@@ -263,10 +307,19 @@
   
   /* Gradient text */
   .text-gradient {
-    background: linear-gradient(to right, rgb(var(--primary)), rgb(var(--accent)));
+    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--wellness-mint)));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+  
+  /* Wellness gradient backgrounds */
+  .bg-gradient-wellness {
+    background: linear-gradient(135deg, hsl(var(--wellness-mint) / 0.1), hsl(var(--wellness-sage) / 0.05));
+  }
+  
+  .bg-gradient-module {
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--muted) / 0.5));
   }
   
   /* macOS window title bar style */
@@ -275,14 +328,14 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgb(var(--border) / 0.5);
-    background-color: rgb(var(--muted) / 0.3);
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+    background-color: hsl(var(--muted) / 0.3);
   }
   
   /* Scrollbar styling */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgb(var(--muted-foreground) / 0.3) transparent;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
   }
   
   .scrollbar-thin::-webkit-scrollbar {
@@ -295,11 +348,28 @@
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgb(var(--muted-foreground) / 0.3);
+    background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 3px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgb(var(--muted-foreground) / 0.5);
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+  
+  /* Module indicator colors */
+  .module-indicator-financeiro {
+    background-color: hsl(var(--module-financeiro));
+  }
+  
+  .module-indicator-crm {
+    background-color: hsl(var(--module-crm));
+  }
+  
+  .module-indicator-admin {
+    background-color: hsl(var(--module-admin));
+  }
+  
+  .module-indicator-bi {
+    background-color: hsl(var(--module-bi));
   }
 }
