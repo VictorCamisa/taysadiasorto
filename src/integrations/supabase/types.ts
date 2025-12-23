@@ -1825,6 +1825,45 @@ export type Database = {
           },
         ]
       }
+      solicitacoes_acesso: {
+        Row: {
+          aprovado_por: string | null
+          created_at: string | null
+          email: string
+          id: string
+          motivo_rejeicao: string | null
+          nome: string
+          senha_hash: string
+          status: string
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aprovado_por?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          motivo_rejeicao?: string | null
+          nome: string
+          senha_hash: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aprovado_por?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          motivo_rejeicao?: string | null
+          nome?: string
+          senha_hash?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       td_fluxo_de_caixa: {
         Row: {
           categoria_id: string | null
@@ -2211,6 +2250,7 @@ export type Database = {
       }
     }
     Functions: {
+      check_email_exists: { Args: { check_email: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
