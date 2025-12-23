@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { useFichaPacienteData, Anamnese, Prontuario } from "@/components/crm/hooks/useFichaPacienteData";
 import { AnamneseForm } from "@/components/crm/AnamneseForm";
+import { ProntuarioForm } from "@/components/crm/ProntuarioForm";
+import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,6 +41,9 @@ export default function FichaPaciente() {
 
   const [anamneseFormOpen, setAnamneseFormOpen] = useState(false);
   const [selectedAnamnese, setSelectedAnamnese] = useState<Anamnese | null>(null);
+  
+  const [prontuarioFormOpen, setProntuarioFormOpen] = useState(false);
+  const [selectedProntuario, setSelectedProntuario] = useState<Prontuario | null>(null);
 
   const saveAnamnese = useMutation({
     mutationFn: async (anamnese: Partial<Anamnese> & { paciente_id: string }) => {
@@ -62,6 +67,31 @@ export default function FichaPaciente() {
     },
     onError: (error) => {
       toast({ title: "Erro ao salvar anamnese", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const saveProntuario = useMutation({
+    mutationFn: async (prontuario: Partial<Tables<"prontuarios">> & { paciente_id: string }) => {
+      if (selectedProntuario?.id) {
+        const { id: prontuarioId, created_at, updated_at, ...payload } = prontuario as Tables<"prontuarios">;
+        const { error } = await supabase
+          .from("prontuarios")
+          .update(payload)
+          .eq("id", selectedProntuario.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("prontuarios").insert(prontuario);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["prontuarios", id] });
+      setProntuarioFormOpen(false);
+      setSelectedProntuario(null);
+      toast({ title: "Prontuário salvo com sucesso!" });
+    },
+    onError: (error) => {
+      toast({ title: "Erro ao salvar prontuário", description: error.message, variant: "destructive" });
     },
   });
 
@@ -425,6 +455,17 @@ export default function FichaPaciente() {
 
         {/* Prontuários Tab */}
         <TabsContent value="prontuarios" className="space-y-4">
+          <div className="flex justify-end">
+            <Button
+              onClick={() => {
+                setSelectedProntuario(null);
+                setProntuarioFormOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Prontuário
+            </Button>
+          </div>
           {prontuarios.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
@@ -443,6 +484,16 @@ export default function FichaPaciente() {
                         </CardTitle>
                         <CardDescription>{formatDate(prontuario.data_atendimento)}</CardDescription>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedProntuario(prontuario);
+                          setProntuarioFormOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -469,6 +520,46 @@ export default function FichaPaciente() {
                         <div>
                           <div className="text-xs font-medium text-muted-foreground mb-1">Próximos Passos</div>
                           <p className="text-sm">{prontuario.proximos_passos}</p>
+                        </div>
+                      )}
+                      {/* Fotos */}
+                      {((prontuario.fotos_antes && prontuario.fotos_antes.length > 0) || 
+                        (prontuario.fotos_depois && prontuario.fotos_depois.length > 0)) && (
+                        <div className="pt-3 border-t">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {prontuario.fotos_antes && prontuario.fotos_antes.length > 0 && (
+                              <div>
+                                <div className="text-xs font-medium text-muted-foreground mb-2">Fotos Antes</div>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {prontuario.fotos_antes.map((foto, index) => (
+                                    <img
+                                      key={index}
+                                      src={foto}
+                                      alt={`Antes ${index + 1}`}
+                                      className="w-full h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80"
+                                      onClick={() => window.open(foto, '_blank')}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {prontuario.fotos_depois && prontuario.fotos_depois.length > 0 && (
+                              <div>
+                                <div className="text-xs font-medium text-muted-foreground mb-2">Fotos Depois</div>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {prontuario.fotos_depois.map((foto, index) => (
+                                    <img
+                                      key={index}
+                                      src={foto}
+                                      alt={`Depois ${index + 1}`}
+                                      className="w-full h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80"
+                                      onClick={() => window.open(foto, '_blank')}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -564,6 +655,17 @@ export default function FichaPaciente() {
         pacienteNome={paciente.nome}
         onSave={saveAnamnese.mutate}
         isLoading={saveAnamnese.isPending}
+      />
+
+      {/* Prontuario Form */}
+      <ProntuarioForm
+        open={prontuarioFormOpen}
+        onOpenChange={setProntuarioFormOpen}
+        prontuario={selectedProntuario}
+        pacienteId={paciente.id}
+        pacienteNome={paciente.nome}
+        onSave={saveProntuario.mutate}
+        isLoading={saveProntuario.isPending}
       />
     </div>
   );
