@@ -140,26 +140,26 @@ const DRERow = ({
 }: DRERowProps) => {
   const getValueColor = (val: number) => {
     if (type === "header") return "";
-    if (isExpense) return val !== 0 ? "text-red-500 dark:text-red-400" : "text-muted-foreground";
+    if (isExpense) return val !== 0 ? "text-red-500 dark:text-red-400" : "text-muted-foreground/60";
     return val > 0 
       ? "text-emerald-600 dark:text-emerald-400" 
       : val < 0 
         ? "text-red-500 dark:text-red-400" 
-        : "text-muted-foreground";
+        : "text-muted-foreground/60";
   };
 
   const rowStyles = {
-    header: "bg-muted/50 font-semibold text-foreground",
-    item: "hover:bg-muted/30 transition-colors",
-    subtotal: "bg-muted/30 font-semibold border-t border-border/50",
-    total: "bg-primary/5 font-bold text-primary border-t-2 border-primary/20",
+    header: "bg-muted/60 font-semibold text-foreground border-b-2 border-border",
+    item: "hover:bg-muted/20 transition-colors border-b border-border/30",
+    subtotal: "bg-gradient-to-r from-muted/50 to-muted/30 font-semibold border-b border-border/50",
+    total: "bg-gradient-to-r from-primary/10 to-primary/5 font-bold text-primary border-t-2 border-primary/30",
   };
 
   return (
     <div
       className={cn(
-        "group grid gap-0",
-        "grid-cols-[minmax(220px,2fr)_repeat(12,minmax(75px,1fr))_minmax(110px,1.3fr)]",
+        "group grid",
+        "grid-cols-[minmax(280px,2.5fr)_repeat(12,minmax(90px,1fr))_minmax(130px,1.5fr)]",
         rowStyles[type],
         expandable && "cursor-pointer"
       )}
@@ -168,21 +168,27 @@ const DRERow = ({
       {/* Label */}
       <div 
         className={cn(
-          "flex items-center gap-2 border-r border-border/30 px-4 py-3",
-          type === "total" && "text-primary"
+          "flex items-center gap-3 border-r border-border/40 px-5 py-4",
+          type === "total" && "text-primary",
+          type === "header" && "py-5"
         )}
-        style={{ paddingLeft: `${16 + indent * 20}px` }}
+        style={{ paddingLeft: `${20 + indent * 24}px` }}
       >
         {expandable && (
-          <span className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors group-hover:bg-muted">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-muted/50 text-muted-foreground transition-all group-hover:bg-muted group-hover:text-foreground">
             {expanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="h-4 w-4" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-4 w-4" />
             )}
           </span>
         )}
-        <span className={cn("truncate text-sm", type === "header" && "text-xs uppercase tracking-wide")}>
+        <span className={cn(
+          "text-sm",
+          type === "header" && "text-xs font-semibold uppercase tracking-widest text-muted-foreground",
+          type === "subtotal" && "text-foreground",
+          type === "total" && "text-base"
+        )}>
           {label}
         </span>
       </div>
@@ -192,19 +198,21 @@ const DRERow = ({
         <div 
           key={i} 
           className={cn(
-            "flex flex-col items-end justify-center border-r border-border/20 px-2 py-3 text-right",
-            type === "header" && "text-center items-center"
+            "flex flex-col items-end justify-center border-r border-border/20 px-4 py-4",
+            type === "header" && "items-center justify-center py-5"
           )}
         >
           <span className={cn(
-            "tabular-nums text-sm",
-            getValueColor(val),
-            type === "header" && "text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            "tabular-nums",
+            type === "header" 
+              ? "text-[11px] font-semibold uppercase tracking-widest text-muted-foreground" 
+              : "text-sm",
+            type !== "header" && getValueColor(val)
           )}>
             {type === "header" ? val : formatCurrency(val, true)}
           </span>
           {percent && percent[i] !== undefined && type !== "header" && (
-            <span className="mt-0.5 text-[10px] text-muted-foreground">
+            <span className="mt-1.5 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               {formatPercent(percent[i])}
             </span>
           )}
@@ -213,33 +221,35 @@ const DRERow = ({
 
       {/* Total */}
       <div className={cn(
-        "flex flex-col items-end justify-center bg-muted/20 px-4 py-3",
-        type === "header" && "text-center items-center"
+        "flex flex-col items-end justify-center bg-muted/30 px-5 py-4",
+        type === "header" && "items-center justify-center py-5",
+        type === "total" && "bg-primary/10"
       )}>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {type !== "header" && total !== 0 && (
             <>
               {isExpense ? (
-                <TrendingDown className="h-3 w-3 text-red-500" />
+                <TrendingDown className="h-4 w-4 text-red-500" />
               ) : total > 0 ? (
-                <TrendingUp className="h-3 w-3 text-emerald-500" />
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
               ) : total < 0 ? (
-                <TrendingDown className="h-3 w-3 text-red-500" />
+                <TrendingDown className="h-4 w-4 text-red-500" />
               ) : (
-                <Minus className="h-3 w-3 text-muted-foreground" />
+                <Minus className="h-4 w-4 text-muted-foreground" />
               )}
             </>
           )}
           <span className={cn(
-            "tabular-nums font-semibold",
-            type === "total" ? "text-primary text-base" : getValueColor(total),
-            type === "header" && "text-[11px] font-bold uppercase tracking-wide text-foreground"
+            "tabular-nums font-bold",
+            type === "total" ? "text-primary text-lg" : "text-base",
+            type !== "header" && type !== "total" && getValueColor(total),
+            type === "header" && "text-xs font-bold uppercase tracking-widest text-foreground"
           )}>
-            {type === "header" ? "Total" : formatCurrency(total)}
+            {type === "header" ? "Total Ano" : formatCurrency(total)}
           </span>
         </div>
         {totalPercent !== undefined && type !== "header" && (
-          <span className="mt-0.5 text-[10px] text-muted-foreground">
+          <span className="mt-1.5 rounded bg-muted/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
             {formatPercent(totalPercent)}
           </span>
         )}
@@ -383,16 +393,21 @@ const DRE = () => {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <div className="min-w-[1200px]">
+            <div className="min-w-[1400px]">
               {/* Header Row */}
-              <DRERow
-                label="Descrição"
-                values={monthLabels as any}
-                total={0}
-                type="header"
-              />
-
-              <Separator />
+              <div className="grid grid-cols-[minmax(280px,2.5fr)_repeat(12,minmax(90px,1fr))_minmax(130px,1.5fr)] bg-muted/60 border-b-2 border-border">
+                <div className="flex items-center px-5 py-5 border-r border-border/40">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Descrição</span>
+                </div>
+                {monthLabels.map((label, i) => (
+                  <div key={i} className="flex items-center justify-center border-r border-border/20 px-4 py-5">
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-center bg-muted/30 px-5 py-5">
+                  <span className="text-xs font-bold uppercase tracking-widest text-foreground">Total Ano</span>
+                </div>
+              </div>
 
               {/* RECEITA BRUTA */}
               <DRERow
