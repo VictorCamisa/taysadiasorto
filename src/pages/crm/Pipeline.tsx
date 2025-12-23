@@ -36,9 +36,12 @@ export default function Pipeline() {
       const payload = {
         paciente_id: data.paciente_id,
         tratamento_id: data.tratamento_id || null,
+        origem_id: data.origem_id || null,
+        prioridade: data.prioridade || "medio",
         valor_previsto: data.valor_previsto || 0,
+        data_previsao_fechamento: data.data_previsao_fechamento || null,
         observacoes: data.observacoes || null,
-        status: "lead",
+        status: selectedAgendamento?.status || "lead",
       };
 
       if (selectedAgendamento) {
@@ -131,7 +134,7 @@ export default function Pipeline() {
 
         <Button onClick={() => { setSelectedAgendamento(null); setFormOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" />
-          Novo Lead
+          Nova Oportunidade
         </Button>
       </div>
 

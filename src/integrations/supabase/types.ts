@@ -408,11 +408,14 @@ export type Database = {
         Row: {
           created_at: string | null
           data_agendamento: string | null
+          data_previsao_fechamento: string | null
           duracao_minutos: number | null
           id: string
           motivo_cancelamento: string | null
           observacoes: string | null
+          origem_id: string | null
           paciente_id: string
+          prioridade: string | null
           status: string
           tratamento_id: string | null
           updated_at: string | null
@@ -422,11 +425,14 @@ export type Database = {
         Insert: {
           created_at?: string | null
           data_agendamento?: string | null
+          data_previsao_fechamento?: string | null
           duracao_minutos?: number | null
           id?: string
           motivo_cancelamento?: string | null
           observacoes?: string | null
+          origem_id?: string | null
           paciente_id: string
+          prioridade?: string | null
           status?: string
           tratamento_id?: string | null
           updated_at?: string | null
@@ -436,11 +442,14 @@ export type Database = {
         Update: {
           created_at?: string | null
           data_agendamento?: string | null
+          data_previsao_fechamento?: string | null
           duracao_minutos?: number | null
           id?: string
           motivo_cancelamento?: string | null
           observacoes?: string | null
+          origem_id?: string | null
           paciente_id?: string
+          prioridade?: string | null
           status?: string
           tratamento_id?: string | null
           updated_at?: string | null
@@ -448,6 +457,13 @@ export type Database = {
           valor_realizado?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "crm_agendamentos_origem_id_fkey"
+            columns: ["origem_id"]
+            isOneToOne: false
+            referencedRelation: "origens"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "crm_agendamentos_paciente_id_fkey"
             columns: ["paciente_id"]
