@@ -1,4 +1,4 @@
-import { Home, DollarSign, Package, Users, CreditCard, TrendingUp, FileText, Settings, BarChart3, FileBarChart, Sparkles, Target } from "lucide-react";
+import { Home, DollarSign, Package, Users, CreditCard, TrendingUp, FileText, Settings, BarChart3, FileBarChart, Sparkles, Target, PieChart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -22,7 +22,8 @@ const menuItems = [
   { title: "Tratamentos", url: "/tratamentos", icon: TrendingUp },
   { title: "Estoque", url: "/estoque", icon: Package },
   { title: "Fornecedores", url: "/fornecedores", icon: Users },
-  { title: "DRE", url: "/dre", icon: BarChart3 },
+  { title: "DRE Mensal", url: "/dre", icon: BarChart3 },
+  { title: "DRE Gerencial", url: "/dre-gerencial", icon: PieChart },
   { title: "Orçamento", url: "/orcamento", icon: Target },
   { title: "Relatórios", url: "/relatorios", icon: FileBarChart },
   { title: "Assistente IA", url: "/assistente-ia", icon: Sparkles },
