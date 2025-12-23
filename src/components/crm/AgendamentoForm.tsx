@@ -32,7 +32,7 @@ import { format } from "date-fns";
 const agendamentoSchema = z.object({
   paciente_id: z.string().min(1, "Paciente é obrigatório"),
   tratamento_id: z.string().optional(),
-  status: z.enum(["lead", "agendado", "confirmado", "realizado", "cancelado", "no_show"]),
+  status: z.string(),
   data_agendamento: z.string().optional(),
   duracao_minutos: z.coerce.number().min(15).default(60),
   valor_previsto: z.coerce.number().min(0).default(0),

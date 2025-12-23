@@ -409,6 +409,8 @@ export type Database = {
           created_at: string | null
           data_agendamento: string | null
           data_previsao_fechamento: string | null
+          data_proxima_acao: string | null
+          data_ultimo_contato: string | null
           duracao_minutos: number | null
           id: string
           motivo_cancelamento: string | null
@@ -416,6 +418,8 @@ export type Database = {
           origem_id: string | null
           paciente_id: string
           prioridade: string | null
+          proxima_acao: string | null
+          responsavel: string | null
           status: string
           tratamento_id: string | null
           updated_at: string | null
@@ -426,6 +430,8 @@ export type Database = {
           created_at?: string | null
           data_agendamento?: string | null
           data_previsao_fechamento?: string | null
+          data_proxima_acao?: string | null
+          data_ultimo_contato?: string | null
           duracao_minutos?: number | null
           id?: string
           motivo_cancelamento?: string | null
@@ -433,6 +439,8 @@ export type Database = {
           origem_id?: string | null
           paciente_id: string
           prioridade?: string | null
+          proxima_acao?: string | null
+          responsavel?: string | null
           status?: string
           tratamento_id?: string | null
           updated_at?: string | null
@@ -443,6 +451,8 @@ export type Database = {
           created_at?: string | null
           data_agendamento?: string | null
           data_previsao_fechamento?: string | null
+          data_proxima_acao?: string | null
+          data_ultimo_contato?: string | null
           duracao_minutos?: number | null
           id?: string
           motivo_cancelamento?: string | null
@@ -450,6 +460,8 @@ export type Database = {
           origem_id?: string | null
           paciente_id?: string
           prioridade?: string | null
+          proxima_acao?: string | null
+          responsavel?: string | null
           status?: string
           tratamento_id?: string | null
           updated_at?: string | null
@@ -476,6 +488,41 @@ export type Database = {
             columns: ["tratamento_id"]
             isOneToOne: false
             referencedRelation: "tratamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_interacoes: {
+        Row: {
+          agendamento_id: string
+          created_at: string | null
+          data_contato: string | null
+          id: string
+          observacao: string | null
+          tipo: string
+        }
+        Insert: {
+          agendamento_id: string
+          created_at?: string | null
+          data_contato?: string | null
+          id?: string
+          observacao?: string | null
+          tipo: string
+        }
+        Update: {
+          agendamento_id?: string
+          created_at?: string | null
+          data_contato?: string | null
+          id?: string
+          observacao?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_interacoes_agendamento_id_fkey"
+            columns: ["agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "crm_agendamentos"
             referencedColumns: ["id"]
           },
         ]

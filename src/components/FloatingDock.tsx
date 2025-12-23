@@ -64,13 +64,13 @@ const modules: ModuleGroup[] = [
     ]
   },
   {
-    title: "CRM",
+    title: "Comercial",
     icon: UserCircle,
     color: "module-crm",
     status: "active",
     basePath: "/crm",
     items: [
-      { title: "Pipeline", url: "/crm/pipeline", icon: Kanban },
+      { title: "Pipeline de Vendas", url: "/crm/pipeline", icon: Kanban },
       { title: "Agenda", url: "/crm/agenda", icon: CalendarDays },
       { title: "Pacientes", url: "/crm/pacientes", icon: Users },
     ]

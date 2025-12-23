@@ -8,39 +8,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Filter } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Filter, TrendingUp, Users, Calendar, DollarSign, Target, Clock } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { PipelineKanban } from "@/components/crm/PipelineKanban";
 import { OportunidadeForm } from "@/components/crm/OportunidadeForm";
 import {
   useCRMAgendamentos,
   useTratamentos,
+  useOrigens,
   useAgendamentoMutations,
   CRMAgendamento,
+  PIPELINE_COLUMNS,
+  PRIORIDADE_LABELS,
+  Prioridade,
 } from "@/components/crm/hooks/useCRMAgendamentos";
 import { toast } from "@/hooks/use-toast";
 
 export default function Pipeline() {
   const [selectedTratamento, setSelectedTratamento] = useState<string>("all");
+  const [selectedOrigem, setSelectedOrigem] = useState<string>("all");
+  const [selectedPrioridade, setSelectedPrioridade] = useState<string>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [selectedAgendamento, setSelectedAgendamento] = useState<CRMAgendamento | null>(null);
 
   const { data: tratamentos = [] } = useTratamentos();
+  const { data: origens = [] } = useOrigens();
   const { data: agendamentos = [], isLoading } = useCRMAgendamentos({
     tratamentoId: selectedTratamento !== "all" ? selectedTratamento : undefined,
+    origemId: selectedOrigem !== "all" ? selectedOrigem : undefined,
+    prioridade: selectedPrioridade !== "all" ? selectedPrioridade as Prioridade : undefined,
   });
   const { createAgendamento, updateAgendamento } = useAgendamentoMutations();
 
-  const handleSaveOportunidade = async (data: any) => {
+  const handleSaveOportunidade = async (data: Record<string, unknown>) => {
     try {
       const payload = {
-        paciente_id: data.paciente_id,
-        tratamento_id: data.tratamento_id || null,
-        origem_id: data.origem_id || null,
-        prioridade: data.prioridade || "medio",
-        valor_previsto: data.valor_previsto || 0,
-        data_previsao_fechamento: data.data_previsao_fechamento || null,
-        observacoes: data.observacoes || null,
+        paciente_id: data.paciente_id as string,
+        tratamento_id: (data.tratamento_id as string) || null,
+        origem_id: (data.origem_id as string) || null,
+        prioridade: (data.prioridade as string) || "medio",
+        valor_previsto: (data.valor_previsto as number) || 0,
+        duracao_minutos: (data.duracao_minutos as number) || 60,
+        data_previsao_fechamento: (data.data_previsao_fechamento as string) || null,
+        observacoes: (data.observacoes as string) || null,
         status: selectedAgendamento?.status || "lead",
       };
 
@@ -53,8 +64,9 @@ export default function Pipeline() {
       }
       setFormOpen(false);
       setSelectedAgendamento(null);
-    } catch (error: any) {
-      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      toast({ title: "Erro ao salvar", description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -63,13 +75,38 @@ export default function Pipeline() {
     setFormOpen(true);
   };
 
+  const handleNewAgendamento = () => {
+    setSelectedAgendamento(null);
+    setFormOpen(true);
+  };
+
   // Calculate KPIs
+  const pipelineAgendamentos = agendamentos.filter(
+    (a) => PIPELINE_COLUMNS.includes(a.status as typeof PIPELINE_COLUMNS[number])
+  );
+
   const totalLeads = agendamentos.filter((a) => a.status === "lead").length;
+  const totalEmNegociacao = agendamentos.filter((a) => a.status === "em_negociacao").length;
   const totalAgendados = agendamentos.filter((a) => a.status === "agendado" || a.status === "confirmado").length;
   const totalRealizados = agendamentos.filter((a) => a.status === "realizado").length;
-  const totalValorPrevisto = agendamentos
-    .filter((a) => a.status !== "cancelado" && a.status !== "no_show")
+  
+  const totalValorFunil = pipelineAgendamentos.reduce(
+    (sum, a) => sum + Number(a.valor_previsto || 0),
+    0
+  );
+
+  const valorRealizados = agendamentos
+    .filter((a) => a.status === "realizado")
     .reduce((sum, a) => sum + Number(a.valor_previsto || 0), 0);
+
+  // Taxa de conversão: realizados / (realizados + perdidos)
+  const totalPerdidos = agendamentos.filter((a) => a.status === "perdido" || a.status === "cancelado").length;
+  const taxaConversao = totalRealizados + totalPerdidos > 0
+    ? Math.round((totalRealizados / (totalRealizados + totalPerdidos)) * 100)
+    : 0;
+
+  // Ticket médio
+  const ticketMedio = totalRealizados > 0 ? valorRealizados / totalRealizados : 0;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -78,51 +115,109 @@ export default function Pipeline() {
     }).format(value);
   };
 
+  const hasActiveFilters = selectedTratamento !== "all" || selectedOrigem !== "all" || selectedPrioridade !== "all";
+
+  const clearFilters = () => {
+    setSelectedTratamento("all");
+    setSelectedOrigem("all");
+    setSelectedPrioridade("all");
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Pipeline de Vendas"
-        description="Gerencie suas oportunidades e acompanhe o funil de vendas"
+        description="Gerencie suas oportunidades e acompanhe o funil comercial"
       />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* KPIs Comerciais */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Users className="h-4 w-4" />
+              <span className="text-xs">Leads</span>
+            </div>
             <div className="text-2xl font-bold">{totalLeads}</div>
-            <p className="text-xs text-muted-foreground">Leads</p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">{totalAgendados}</div>
-            <p className="text-xs text-muted-foreground">Agendados</p>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Target className="h-4 w-4" />
+              <span className="text-xs">Em Negociação</span>
+            </div>
+            <div className="text-2xl font-bold text-blue-600">{totalEmNegociacao}</div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-emerald-600">{totalRealizados}</div>
-            <p className="text-xs text-muted-foreground">Realizados</p>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Calendar className="h-4 w-4" />
+              <span className="text-xs">Agendados</span>
+            </div>
+            <div className="text-2xl font-bold text-indigo-600">{totalAgendados}</div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-primary">{formatCurrency(totalValorPrevisto)}</div>
-            <p className="text-xs text-muted-foreground">Valor no Funil</p>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-xs">Taxa Conversão</span>
+            </div>
+            <div className="text-2xl font-bold text-emerald-600">{taxaConversao}%</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Clock className="h-4 w-4" />
+              <span className="text-xs">Ticket Médio</span>
+            </div>
+            <div className="text-xl font-bold">{formatCurrency(ticketMedio)}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-primary/5">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <DollarSign className="h-4 w-4" />
+              <span className="text-xs">Previsão no Funil</span>
+            </div>
+            <div className="text-xl font-bold text-primary">{formatCurrency(totalValorFunil)}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters and Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={selectedTratamento} onValueChange={setSelectedTratamento}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por tratamento" />
+          
+          <Select value={selectedOrigem} onValueChange={setSelectedOrigem}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Origem" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os tratamentos</SelectItem>
+              <SelectItem value="all">Todas origens</SelectItem>
+              {origens.map((o) => (
+                <SelectItem key={o.id} value={o.id}>
+                  {o.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedTratamento} onValueChange={setSelectedTratamento}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Tratamento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos tratamentos</SelectItem>
               {tratamentos.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.nome}
@@ -130,9 +225,33 @@ export default function Pipeline() {
               ))}
             </SelectContent>
           </Select>
+
+          <Select value={selectedPrioridade} onValueChange={setSelectedPrioridade}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Temperatura" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="alto">🔥 {PRIORIDADE_LABELS.alto}</SelectItem>
+              <SelectItem value="medio">🌡️ {PRIORIDADE_LABELS.medio}</SelectItem>
+              <SelectItem value="baixo">❄️ {PRIORIDADE_LABELS.baixo}</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
+              Limpar
+            </Button>
+          )}
+
+          {hasActiveFilters && (
+            <Badge variant="secondary" className="text-xs">
+              {agendamentos.length} resultados
+            </Badge>
+          )}
         </div>
 
-        <Button onClick={() => { setSelectedAgendamento(null); setFormOpen(true); }}>
+        <Button onClick={handleNewAgendamento}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Oportunidade
         </Button>
@@ -147,6 +266,7 @@ export default function Pipeline() {
         <PipelineKanban
           agendamentos={agendamentos}
           onEditAgendamento={handleEditAgendamento}
+          onNewAgendamento={handleNewAgendamento}
         />
       )}
 
