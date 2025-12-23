@@ -1,6 +1,6 @@
 import { FloatingDock } from "@/components/FloatingDock";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { UserMenu } from "@/components/UserMenu";
+import { UserAuthMenu } from "@/components/UserAuthMenu";
 import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -50,7 +50,7 @@ export function Layout({ children }: LayoutProps) {
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <div className="h-5 w-px bg-border/50" />
-              <UserMenu />
+              <UserAuthMenu />
             </div>
           </div>
         </div>
