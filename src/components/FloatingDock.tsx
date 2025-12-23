@@ -25,6 +25,8 @@ import {
   XCircle,
   Lock,
   History,
+  PieChart,
+  LineChart,
   type LucideIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -100,9 +102,16 @@ const modules: ModuleGroup[] = [
     title: "Business Intelligence",
     icon: BarChart3,
     color: "module-bi",
-    status: "coming-soon",
+    status: "active",
     basePath: "/bi",
-    items: []
+    items: [
+      { title: "Dashboard BI", url: "/bi", icon: BarChart3 },
+      { title: "LTV / CAC", url: "/bi?tab=ltv-cac", icon: Users },
+      { title: "Marketing", url: "/bi?tab=marketing", icon: Target },
+      { title: "Tratamentos", url: "/bi?tab=tratamentos", icon: PieChart },
+      { title: "Sazonalidade", url: "/bi?tab=sazonalidade", icon: Calendar },
+      { title: "Projeções", url: "/bi?tab=projecoes", icon: LineChart },
+    ]
   }
 ];
 
