@@ -5,9 +5,12 @@ import { Tables } from "@/integrations/supabase/types";
 export type CRMAgendamento = Tables<"crm_agendamentos"> & {
   paciente?: Tables<"pacientes"> | null;
   tratamento?: Tables<"tratamentos"> | null;
+  origem?: Tables<"origens"> | null;
 };
 
 export type AgendamentoStatus = "lead" | "agendado" | "confirmado" | "realizado" | "cancelado" | "no_show";
+
+export type Prioridade = "alto" | "medio" | "baixo";
 
 export const STATUS_LABELS: Record<AgendamentoStatus, string> = {
   lead: "Lead",
@@ -27,6 +30,18 @@ export const STATUS_COLORS: Record<AgendamentoStatus, string> = {
   no_show: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
 };
 
+export const PRIORIDADE_LABELS: Record<Prioridade, string> = {
+  alto: "Quente",
+  medio: "Morno",
+  baixo: "Frio",
+};
+
+export const PRIORIDADE_COLORS: Record<Prioridade, string> = {
+  alto: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+  medio: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  baixo: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+};
+
 export function useCRMAgendamentos(filters?: {
   tratamentoId?: string;
   status?: AgendamentoStatus[];
@@ -38,7 +53,7 @@ export function useCRMAgendamentos(filters?: {
     queryFn: async () => {
       let query = supabase
         .from("crm_agendamentos")
-        .select("*, paciente:pacientes(*), tratamento:tratamentos(*)")
+        .select("*, paciente:pacientes(*), tratamento:tratamentos(*), origem:origens(*)")
         .order("data_agendamento", { ascending: true, nullsFirst: false });
 
       if (filters?.tratamentoId) {
@@ -86,6 +101,20 @@ export function usePacientes() {
         .from("pacientes")
         .select("id, nome, telefone, email")
         .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useOrigens() {
+  return useQuery({
+    queryKey: ["origens"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("origens")
+        .select("*")
         .order("nome");
       if (error) throw error;
       return data;
@@ -143,4 +172,24 @@ export function useAgendamentoMutations() {
   });
 
   return { createAgendamento, updateAgendamento, deleteAgendamento, updateStatus };
+}
+
+// Mutation to create a new patient inline
+export function useCreatePacienteMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { nome: string; telefone?: string; email?: string }) => {
+      const { data: newPaciente, error } = await supabase
+        .from("pacientes")
+        .insert([{ ...data, ativo: true }])
+        .select()
+        .single();
+      if (error) throw error;
+      return newPaciente;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pacientes-list"] });
+    },
+  });
 }
