@@ -36,8 +36,8 @@ export function CohortChart({ data }: CohortChartProps) {
 
   // Calculate averages
   const averages = months.map((_, i) => {
-    const key = `mes${i}` as keyof CohortData;
-    const values = data.filter(d => d[key] > 0).map(d => d[key] as number);
+    const key = `mes${i}` as 'mes0' | 'mes1' | 'mes2' | 'mes3' | 'mes4' | 'mes5';
+    const values = data.filter(d => d[key] > 0).map(d => d[key]);
     return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
   });
 
