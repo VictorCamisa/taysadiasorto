@@ -170,7 +170,7 @@ function ModuleDropdown({
   const Icon = module.icon;
   return <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300", isActive ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-muted-foreground hover:text-foreground hover:bg-accent/60")}>
+        <button className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300", isActive ? "bg-white/20 text-white shadow-md" : "text-white/70 hover:text-white hover:bg-white/10")}>
           <Icon className="h-4 w-4" />
           <span>{module.label}</span>
           <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", isActive ? "opacity-80" : "opacity-60")} />
@@ -226,21 +226,21 @@ function MobileModuleSection({
 export function AppNavbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  return <header className="sticky top-0 z-50 bg-black border-b border-amber-500/20">
+  return <header className="sticky top-0 z-50 bg-gradient-to-r from-[hsl(160,45%,25%)] via-[hsl(160,40%,30%)] to-[hsl(170,35%,28%)] border-b border-white/10 shadow-lg">
       <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-3 md:px-6">
         {/* Brand */}
-        <NavLink to="/" end className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-amber-500/10 transition-all duration-300">
+        <NavLink to="/" end className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-white/10 transition-all duration-300">
           
           <div className="hidden sm:block">
-            <p className="font-semibold leading-none text-amber-400 text-2xl">Taysa Dias</p>
-            <p className="text-xs text-amber-200/60 mt-0.5 font-mono">Gestão Clínica</p>
+            <p className="font-semibold leading-none text-white text-2xl">Taysa Dias</p>
+            <p className="text-xs text-white/70 mt-0.5 font-mono">Gestão Clínica</p>
           </div>
         </NavLink>
 
         {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-1">
           {/* Home */}
-          <NavLink to="/" end className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300", "text-muted-foreground hover:text-foreground hover:bg-accent/60")} activeClassName="bg-primary text-primary-foreground shadow-md shadow-primary/25">
+          <NavLink to="/" end className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300", "text-white/70 hover:text-white hover:bg-white/10")} activeClassName="bg-white/20 text-white shadow-md">
             <Home className="h-4 w-4" />
             <span>Início</span>
           </NavLink>
@@ -248,12 +248,12 @@ export function AppNavbar() {
           {/* Module dropdowns */}
           {modules.map(module => <ModuleDropdown key={module.basePath} module={module} />)}
 
-          <div className="mx-3 h-6 w-px bg-border/50" />
+          <div className="mx-3 h-6 w-px bg-white/20" />
 
           {/* Global items */}
           {globalItems.map(item => {
           const Icon = item.icon;
-          return <NavLink key={item.to} to={item.to} className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300", "text-muted-foreground hover:text-foreground hover:bg-accent/60")} activeClassName="bg-primary text-primary-foreground shadow-md shadow-primary/25">
+          return <NavLink key={item.to} to={item.to} className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300", "text-white/70 hover:text-white hover:bg-white/10")} activeClassName="bg-white/20 text-white shadow-md">
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
               </NavLink>;
@@ -266,7 +266,7 @@ export function AppNavbar() {
           <div className="lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="rounded-xl border-border/50 bg-card/50 backdrop-blur-sm" aria-label="Abrir menu">
+                <Button variant="ghost" size="icon" className="rounded-xl text-white/70 hover:text-white hover:bg-white/10" aria-label="Abrir menu">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -323,9 +323,9 @@ export function AppNavbar() {
           </div>
 
           <div className="hidden lg:flex items-center gap-3">
-            <ThemeToggle />
-            <div className="h-6 w-px bg-border/50" />
-            <UserAuthMenu />
+            <ThemeToggle className="text-white/70 hover:text-white hover:bg-white/10" />
+            <div className="h-6 w-px bg-white/20" />
+            <UserAuthMenu className="text-white/70 hover:text-white" />
           </div>
         </div>
       </div>

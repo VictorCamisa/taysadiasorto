@@ -13,7 +13,11 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-export function UserAuthMenu() {
+interface UserAuthMenuProps {
+  className?: string;
+}
+
+export function UserAuthMenu({ className }: UserAuthMenuProps) {
   const { user, signOut, isAdmin, loading } = useAuth();
 
   if (loading) {
@@ -22,7 +26,7 @@ export function UserAuthMenu() {
 
   if (!user) {
     return (
-      <Button asChild variant="outline" size="sm">
+      <Button asChild variant="outline" size="sm" className={className}>
         <Link to="/auth">
           <User className="h-4 w-4 mr-2" />
           Entrar
@@ -36,7 +40,7 @@ export function UserAuthMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+        <Button variant="ghost" className={`relative h-9 w-9 rounded-full ${className || ''}`}>
           <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-primary text-primary-foreground text-xs">
               {initials}
