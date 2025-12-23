@@ -1461,31 +1461,40 @@ export type Database = {
       }
       tratamentos: {
         Row: {
+          custo_cirurgico: number | null
           custo_estimado: number | null
           data_atualizacao: string | null
           data_criacao: string | null
           descricao: string | null
+          e_cirurgico: boolean | null
           id: string
           nome: string
           preco_padrao: number | null
+          unidade_medida: string | null
         }
         Insert: {
+          custo_cirurgico?: number | null
           custo_estimado?: number | null
           data_atualizacao?: string | null
           data_criacao?: string | null
           descricao?: string | null
+          e_cirurgico?: boolean | null
           id?: string
           nome: string
           preco_padrao?: number | null
+          unidade_medida?: string | null
         }
         Update: {
+          custo_cirurgico?: number | null
           custo_estimado?: number | null
           data_atualizacao?: string | null
           data_criacao?: string | null
           descricao?: string | null
+          e_cirurgico?: boolean | null
           id?: string
           nome?: string
           preco_padrao?: number | null
+          unidade_medida?: string | null
         }
         Relationships: []
       }
