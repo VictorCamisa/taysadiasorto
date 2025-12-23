@@ -18,6 +18,8 @@ import {
   ChevronDown,
   Building2,
   UserCircle,
+  CalendarDays,
+  Kanban,
   type LucideIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -68,6 +70,8 @@ const modules: ModuleGroup[] = [
     status: "active",
     basePath: "/crm",
     items: [
+      { title: "Pipeline", url: "/crm/pipeline", icon: Kanban },
+      { title: "Agenda", url: "/crm/agenda", icon: CalendarDays },
       { title: "Pacientes", url: "/crm/pacientes", icon: Users },
     ]
   },

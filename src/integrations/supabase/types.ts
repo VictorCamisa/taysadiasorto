@@ -404,6 +404,66 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_agendamentos: {
+        Row: {
+          created_at: string | null
+          data_agendamento: string | null
+          duracao_minutos: number | null
+          id: string
+          motivo_cancelamento: string | null
+          observacoes: string | null
+          paciente_id: string
+          status: string
+          tratamento_id: string | null
+          updated_at: string | null
+          valor_previsto: number | null
+          valor_realizado: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_agendamento?: string | null
+          duracao_minutos?: number | null
+          id?: string
+          motivo_cancelamento?: string | null
+          observacoes?: string | null
+          paciente_id: string
+          status?: string
+          tratamento_id?: string | null
+          updated_at?: string | null
+          valor_previsto?: number | null
+          valor_realizado?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data_agendamento?: string | null
+          duracao_minutos?: number | null
+          id?: string
+          motivo_cancelamento?: string | null
+          observacoes?: string | null
+          paciente_id?: string
+          status?: string
+          tratamento_id?: string | null
+          updated_at?: string | null
+          valor_previsto?: number | null
+          valor_realizado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_agendamentos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_agendamentos_tratamento_id_fkey"
+            columns: ["tratamento_id"]
+            isOneToOne: false
+            referencedRelation: "tratamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque_compras: {
         Row: {
           conta_financeira_id: string | null
