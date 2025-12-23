@@ -26,6 +26,7 @@ import { useFichaPacienteData, Anamnese, Prontuario } from "@/components/crm/hoo
 import { AnamneseForm } from "@/components/crm/AnamneseForm";
 import { ProntuarioForm } from "@/components/crm/ProntuarioForm";
 import { AtendimentosTimeline } from "@/components/crm/AtendimentosTimeline";
+import { HistoricoInteracoes } from "@/components/crm/HistoricoInteracoes";
 import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -236,12 +237,13 @@ export default function FichaPaciente() {
 
       {/* Tabs */}
       <Tabs defaultValue="resumo" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="contatos">Contatos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="anamneses">Anamneses</TabsTrigger>
           <TabsTrigger value="prontuarios">Prontuários</TabsTrigger>
-          <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
+          <TabsTrigger value="dados">Dados</TabsTrigger>
         </TabsList>
 
         {/* Resumo Tab */}
@@ -355,6 +357,11 @@ export default function FichaPaciente() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Contatos Tab */}
+        <TabsContent value="contatos" className="space-y-4">
+          {id && <HistoricoInteracoes pacienteId={id} />}
         </TabsContent>
 
         {/* Timeline Tab */}
