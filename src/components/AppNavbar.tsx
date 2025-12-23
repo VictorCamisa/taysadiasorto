@@ -58,7 +58,7 @@ const modules: NavModule[] = [{
     to: "/financeiro/dre",
     icon: BarChart3
   }, {
-    label: "Orçamento",
+    label: "Budget",
     to: "/financeiro/orcamento",
     icon: Target
   }, {

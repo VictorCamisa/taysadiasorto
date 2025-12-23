@@ -66,13 +66,13 @@ export default function OrcamentoPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <PageHeader
-        title="Orçamento"
+        title="Budget"
         description="Planejamento financeiro e controle orçamentário"
         icon={<Target className="h-6 w-6 text-primary" />}
         actions={
           <Button onClick={handleCreate}>
             <Plus className="mr-2 h-4 w-4" />
-            Novo Orçamento
+            Novo Budget
           </Button>
         }
       />
@@ -80,7 +80,7 @@ export default function OrcamentoPage() {
       {/* Lista de Orçamentos */}
       <Card>
         <CardHeader>
-          <CardTitle>Orçamentos Cadastrados</CardTitle>
+          <CardTitle>Budgets Cadastrados</CardTitle>
         </CardHeader>
         <CardContent>
           {loadingOrcamentos ? (

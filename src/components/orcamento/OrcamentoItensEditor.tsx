@@ -235,7 +235,7 @@ export function OrcamentoItensEditor({ orcamentoId, periodoInicio, periodoFim }:
         <TabsContent value="receitas">
           <Card>
             <CardHeader>
-              <CardTitle>Orçamento de Receitas por Tratamento</CardTitle>
+              <CardTitle>Budget de Receitas por Tratamento</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>

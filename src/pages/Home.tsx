@@ -32,7 +32,7 @@ const modules: ModuleCardProps[] = [
     href: "/financeiro",
     status: "active",
     color: "160 45% 45%",
-    features: ["Dashboard", "Lançamentos", "DRE", "Orçamento"],
+    features: ["Dashboard", "Lançamentos", "DRE", "Budget"],
   },
   {
     title: "Comercial",

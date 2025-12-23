@@ -52,18 +52,18 @@ export function OrcamentoForm({ open, onOpenChange, orcamento, onSubmit, isLoadi
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {orcamento ? "Editar Orçamento" : "Novo Orçamento"}
+            {orcamento ? "Editar Budget" : "Novo Budget"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="nome">Nome do Orçamento</Label>
+            <Label htmlFor="nome">Nome do Budget</Label>
             <Input
               id="nome"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Orçamento 2025"
+              placeholder="Ex: Budget 2025"
               required
             />
           </div>
