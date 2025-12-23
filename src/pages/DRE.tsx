@@ -1,17 +1,59 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { TrendingUp, DollarSign, Activity, Package, Briefcase } from "lucide-react";
+import { TrendingUp, DollarSign, Activity, Package, Briefcase, Sparkles, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const DRE = () => {
+  const queryClient = useQueryClient();
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(currentDate, "yyyy-MM"));
+  const [isCorrectingWithAI, setIsCorrectingWithAI] = useState(false);
+
+  const handleCorrigirComIA = async () => {
+    setIsCorrectingWithAI(true);
+    try {
+      toast.info("Analisando categorias e lançamentos com IA...", { duration: 10000 });
+      
+      const response = await fetch("https://ynstyufdfrctktsgwxwv.supabase.co/functions/v1/corrigir-dre-ia", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Erro ao corrigir com IA");
+      }
+
+      toast.success(data.message, { duration: 5000 });
+      
+      if (data.detalhes?.observacoes_ia) {
+        toast.info(data.detalhes.observacoes_ia, { duration: 8000 });
+      }
+
+      // Invalidar queries para recarregar dados
+      queryClient.invalidateQueries({ queryKey: ["dre"] });
+      queryClient.invalidateQueries({ queryKey: ["dre-anual"] });
+      queryClient.invalidateQueries({ queryKey: ["dre-evolucao"] });
+
+    } catch (error) {
+      console.error("Erro ao corrigir com IA:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao processar com IA");
+    } finally {
+      setIsCorrectingWithAI(false);
+    }
+  };
 
   // Dados da DRE do mês selecionado - usando td_fluxo_de_caixa com natureza_dre
   const { data: dreData } = useQuery({
@@ -253,6 +295,24 @@ const DRE = () => {
           <p className="text-muted-foreground mt-1">Análise completa dos resultados financeiros</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            onClick={handleCorrigirComIA}
+            disabled={isCorrectingWithAI}
+            variant="outline"
+            className="gap-2"
+          >
+            {isCorrectingWithAI ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analisando...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Corrigir com IA
+              </>
+            )}
+          </Button>
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Selecione o período" />
