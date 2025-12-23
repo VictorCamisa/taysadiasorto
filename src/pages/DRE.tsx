@@ -5,15 +5,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { TrendingUp, DollarSign, Activity } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { TrendingUp, DollarSign, Activity, Package, Briefcase } from "lucide-react";
 import { useState } from "react";
 
 const DRE = () => {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(currentDate, "yyyy-MM"));
 
-  // Dados da DRE do mês selecionado - usando td_fluxo_de_caixa
+  // Dados da DRE do mês selecionado - usando td_fluxo_de_caixa com natureza_dre
   const { data: dreData } = useQuery({
     queryKey: ["dre", selectedMonth],
     queryFn: async () => {
@@ -28,7 +28,7 @@ const DRE = () => {
         .select(`
           *,
           tratamentos(nome),
-          categorias(nome_sintetico, nome_analitico)
+          categorias(nome_sintetico, nome_analitico, natureza_dre)
         `)
         .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
         .lte("data_lancamento", format(endDate, "yyyy-MM-dd"));
@@ -38,7 +38,13 @@ const DRE = () => {
       // Receita por tratamento
       const receitaPorTratamento = new Map<string, { quantidade: number; total: number }>();
       const custoPorTratamento = new Map<string, number>();
-      const despesaPorCategoria = new Map<string, Map<string, number>>();
+      
+      // Despesas separadas por natureza_dre
+      const despesasOpex = new Map<string, Map<string, number>>();
+      const despesasCusto = new Map<string, Map<string, number>>();
+      const despesasInvestimento = new Map<string, Map<string, number>>();
+      const despesasDistribuicao = new Map<string, Map<string, number>>();
+      const despesasFinanceiro = new Map<string, Map<string, number>>();
 
       lancamentos?.forEach(l => {
         if (l.tipo === "receita") {
@@ -56,32 +62,82 @@ const DRE = () => {
         if (l.tipo === "despesa") {
           const catSintetica = l.categorias?.nome_sintetico || "Sem categoria";
           const catAnalitica = l.categorias?.nome_analitico || "Não especificado";
+          const naturezaDre = l.categorias?.natureza_dre || "opex";
           
-          if (!despesaPorCategoria.has(catSintetica)) {
-            despesaPorCategoria.set(catSintetica, new Map());
+          let targetMap: Map<string, Map<string, number>>;
+          switch (naturezaDre) {
+            case "custo":
+              targetMap = despesasCusto;
+              break;
+            case "investimento":
+              targetMap = despesasInvestimento;
+              break;
+            case "distribuicao":
+              targetMap = despesasDistribuicao;
+              break;
+            case "financeiro":
+              targetMap = despesasFinanceiro;
+              break;
+            default:
+              targetMap = despesasOpex;
           }
-          const analiticas = despesaPorCategoria.get(catSintetica)!;
+          
+          if (!targetMap.has(catSintetica)) {
+            targetMap.set(catSintetica, new Map());
+          }
+          const analiticas = targetMap.get(catSintetica)!;
           const valorAtual = analiticas.get(catAnalitica) || 0;
           analiticas.set(catAnalitica, valorAtual + Number(l.valor || 0));
         }
       });
 
+      // Função para calcular total de um mapa de categorias
+      const calcularTotalMapa = (mapa: Map<string, Map<string, number>>) => 
+        Array.from(mapa.values()).reduce((sum, map) => 
+          sum + Array.from(map.values()).reduce((s, v) => s + v, 0), 0
+        );
+
+      // Função para converter mapa em array
+      const mapaParaArray = (mapa: Map<string, Map<string, number>>) => 
+        Array.from(mapa.entries()).map(([sintetica, analiticas]) => ({
+          sintetica,
+          analiticas: Array.from(analiticas.entries()).map(([analitica, valor]) => ({
+            analitica,
+            valor,
+          })),
+          total: Array.from(analiticas.values()).reduce((sum, v) => sum + v, 0),
+        }));
+
       // Calcular totais
       const receitaTotal = Array.from(receitaPorTratamento.values()).reduce((sum, r) => sum + r.total, 0);
-      const custoTotal = Array.from(custoPorTratamento.values()).reduce((sum, c) => sum + c, 0);
-      const despesaTotal = Array.from(despesaPorCategoria.values()).reduce((sum, map) => 
-        sum + Array.from(map.values()).reduce((s, v) => s + v, 0), 0
-      );
+      const custoMaterial = Array.from(custoPorTratamento.values()).reduce((sum, c) => sum + c, 0);
+      const custosVariaveis = calcularTotalMapa(despesasCusto);
+      const custoTotal = custoMaterial + custosVariaveis;
+      const despesaOpexTotal = calcularTotalMapa(despesasOpex);
+      const despesaInvestimentoTotal = calcularTotalMapa(despesasInvestimento);
+      const despesaDistribuicaoTotal = calcularTotalMapa(despesasDistribuicao);
+      const despesaFinanceiroTotal = calcularTotalMapa(despesasFinanceiro);
+      
       const margemBruta = receitaTotal - custoTotal;
-      const lucroLiquido = margemBruta - despesaTotal;
+      const resultadoOperacional = margemBruta - despesaOpexTotal;
+      const resultadoAntesIR = resultadoOperacional - despesaFinanceiroTotal;
+      const lucroLiquido = resultadoAntesIR - despesaDistribuicaoTotal - despesaInvestimentoTotal;
 
       return {
         receitaTotal,
+        custoMaterial,
+        custosVariaveis,
         custoTotal,
         margemBruta,
-        despesaTotal,
+        despesaOpexTotal,
+        despesaInvestimentoTotal,
+        despesaDistribuicaoTotal,
+        despesaFinanceiroTotal,
+        resultadoOperacional,
+        resultadoAntesIR,
         lucroLiquido,
         percentualMargemBruta: receitaTotal > 0 ? (margemBruta / receitaTotal) * 100 : 0,
+        percentualResultadoOp: receitaTotal > 0 ? (resultadoOperacional / receitaTotal) * 100 : 0,
         percentualLucro: receitaTotal > 0 ? (lucroLiquido / receitaTotal) * 100 : 0,
         receitaPorTratamento: Array.from(receitaPorTratamento.entries()).map(([nome, data]) => ({
           tratamento: nome,
@@ -92,14 +148,11 @@ const DRE = () => {
           tratamento: nome,
           total,
         })),
-        despesaPorCategoria: Array.from(despesaPorCategoria.entries()).map(([sintetica, analiticas]) => ({
-          sintetica,
-          analiticas: Array.from(analiticas.entries()).map(([analitica, valor]) => ({
-            analitica,
-            valor,
-          })),
-          total: Array.from(analiticas.values()).reduce((sum, v) => sum + v, 0),
-        })),
+        despesasOpex: mapaParaArray(despesasOpex),
+        despesasCusto: mapaParaArray(despesasCusto),
+        despesasInvestimento: mapaParaArray(despesasInvestimento),
+        despesasDistribuicao: mapaParaArray(despesasDistribuicao),
+        despesasFinanceiro: mapaParaArray(despesasFinanceiro),
       };
     },
   });
@@ -118,26 +171,31 @@ const DRE = () => {
 
         const { data: lancamentos } = await supabase
           .from("td_fluxo_de_caixa")
-          .select("tipo, valor, custo_material")
+          .select("tipo, valor, custo_material, categorias(natureza_dre)")
           .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
           .lte("data_lancamento", format(endDate, "yyyy-MM-dd"));
 
         const receita = lancamentos?.filter(l => l.tipo === "receita")
           .reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
-        const custo = lancamentos?.filter(l => l.tipo === "receita")
+        const custoMaterial = lancamentos?.filter(l => l.tipo === "receita")
           .reduce((sum, l) => sum + Number(l.custo_material || 0), 0) || 0;
-        const despesas = lancamentos?.filter(l => l.tipo === "despesa")
-          .reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
+        const custosVariaveis = lancamentos?.filter(l => 
+          l.tipo === "despesa" && (l.categorias as any)?.natureza_dre === "custo"
+        ).reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
+        const custo = custoMaterial + custosVariaveis;
+        const despesasOpex = lancamentos?.filter(l => 
+          l.tipo === "despesa" && ((l.categorias as any)?.natureza_dre === "opex" || !(l.categorias as any)?.natureza_dre)
+        ).reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
         const margemBruta = receita - custo;
-        const lucro = margemBruta - despesas;
+        const resultadoOp = margemBruta - despesasOpex;
 
         meses.push({
           mes: format(date, "MMM", { locale: ptBR }),
           receita,
           custo,
           margemBruta,
-          despesas,
-          lucro,
+          despesasOpex,
+          resultadoOp,
         });
       }
 
@@ -157,24 +215,29 @@ const DRE = () => {
 
         const { data: lancamentos } = await supabase
           .from("td_fluxo_de_caixa")
-          .select("tipo, valor, custo_material")
+          .select("tipo, valor, custo_material, categorias(natureza_dre)")
           .gte("data_lancamento", format(startDate, "yyyy-MM-dd"))
           .lte("data_lancamento", format(endDate, "yyyy-MM-dd"));
 
         const receita = lancamentos?.filter(l => l.tipo === "receita")
           .reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
-        const custo = lancamentos?.filter(l => l.tipo === "receita")
+        const custoMaterial = lancamentos?.filter(l => l.tipo === "receita")
           .reduce((sum, l) => sum + Number(l.custo_material || 0), 0) || 0;
-        const despesas = lancamentos?.filter(l => l.tipo === "despesa")
-          .reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
+        const custosVariaveis = lancamentos?.filter(l => 
+          l.tipo === "despesa" && (l.categorias as any)?.natureza_dre === "custo"
+        ).reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
+        const custo = custoMaterial + custosVariaveis;
+        const despesasOpex = lancamentos?.filter(l => 
+          l.tipo === "despesa" && ((l.categorias as any)?.natureza_dre === "opex" || !(l.categorias as any)?.natureza_dre)
+        ).reduce((sum, l) => sum + Number(l.valor || 0), 0) || 0;
         const margemBruta = receita - custo;
-        const lucro = margemBruta - despesas;
+        const resultadoOp = margemBruta - despesasOpex;
 
         meses.push({
           mes: format(date, "MMM/yy", { locale: ptBR }),
           receita,
           margemBruta,
-          lucro,
+          resultadoOp,
         });
       }
       return meses;
@@ -211,14 +274,14 @@ const DRE = () => {
       </div>
 
       {/* Cards Principais */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-4">
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Receita Bruta</CardTitle>
             <TrendingUp className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">
+            <div className="text-2xl font-bold text-primary">
               R$ {(dreData?.receitaTotal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
@@ -227,10 +290,10 @@ const DRE = () => {
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Margem Bruta</CardTitle>
-            <DollarSign className="h-5 w-5 text-green-600" />
+            <Package className="h-5 w-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-blue-600">
               R$ {(dreData?.margemBruta || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -241,11 +304,26 @@ const DRE = () => {
 
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
-            <Activity className="h-5 w-5 text-blue-600" />
+            <CardTitle className="text-sm font-medium">Resultado Operacional</CardTitle>
+            <Briefcase className="h-5 w-5 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${(dreData?.lucroLiquido || 0) >= 0 ? "text-green-600" : "text-destructive"}`}>
+            <div className={`text-2xl font-bold ${(dreData?.resultadoOperacional || 0) >= 0 ? "text-green-600" : "text-destructive"}`}>
+              R$ {(dreData?.resultadoOperacional || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {dreData?.percentualResultadoOp.toFixed(1) || "0"}% da receita
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
+            <Activity className="h-5 w-5 text-emerald-600" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${(dreData?.lucroLiquido || 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>
               R$ {(dreData?.lucroLiquido || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -263,7 +341,10 @@ const DRE = () => {
         <CardContent className="space-y-6">
           {/* Receita Bruta */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">Receita Bruta</h3>
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Receita Bruta
+            </h3>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -292,39 +373,72 @@ const DRE = () => {
             </Table>
           </div>
 
-          {/* Custo dos Tratamentos */}
+          {/* Custo dos Tratamentos (Material) */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">(-) Custo dos Tratamentos</h3>
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <Package className="h-5 w-5 text-orange-600" />
+              (-) Custos Variáveis dos Tratamentos (Material)
+            </h3>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Tratamento</TableHead>
-                  <TableHead className="text-right">Custo Total</TableHead>
+                  <TableHead className="text-right">Custo Material</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dreData?.custoPorTratamento.map((item, idx) => (
+                {dreData?.custoPorTratamento.filter(item => item.total > 0).map((item, idx) => (
                   <TableRow key={idx}>
                     <TableCell className="font-medium">{item.tratamento}</TableCell>
-                    <TableCell className="text-right text-destructive">
+                    <TableCell className="text-right text-orange-600">
                       R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="bg-muted/50 font-bold">
-                  <TableCell>Total Custos dos Tratamentos</TableCell>
-                  <TableCell className="text-right text-destructive">
-                    R$ {(dreData?.custoTotal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  <TableCell>Total Custo Material</TableCell>
+                  <TableCell className="text-right text-orange-600">
+                    R$ {(dreData?.custoMaterial || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </div>
 
+          {/* Custos Variáveis Adicionais (categoria natureza_dre = custo) */}
+          {dreData?.despesasCusto && dreData.despesasCusto.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">(-) Outros Custos Variáveis</h3>
+              {dreData.despesasCusto.map((cat, idx) => (
+                <div key={idx} className="mb-4">
+                  <h4 className="font-semibold text-sm mb-2 text-orange-600">{cat.sintetica}</h4>
+                  <Table>
+                    <TableBody>
+                      {cat.analiticas.map((ana, anaIdx) => (
+                        <TableRow key={anaIdx}>
+                          <TableCell className="pl-6">{ana.analitica}</TableCell>
+                          <TableCell className="text-right text-orange-600">
+                            R$ {ana.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+              <div className="flex justify-between items-center bg-muted/50 px-4 py-3 rounded font-bold">
+                <span>Total Outros Custos Variáveis</span>
+                <span className="text-orange-600">
+                  R$ {(dreData?.custosVariaveis || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Margem Bruta */}
-          <div className="flex justify-between items-center border-y py-4">
+          <div className="flex justify-between items-center border-y py-4 bg-blue-50 dark:bg-blue-950/20 px-4 rounded">
             <span className="text-xl font-bold">(=) Margem Bruta</span>
-            <span className="text-xl font-bold text-green-600">
+            <span className="text-xl font-bold text-blue-600">
               R$ {(dreData?.margemBruta || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               <span className="text-sm ml-2">({dreData?.percentualMargemBruta.toFixed(1)}%)</span>
             </span>
@@ -332,17 +446,14 @@ const DRE = () => {
 
           {/* Despesas Operacionais */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">(-) Despesas Operacionais</h3>
-            {dreData?.despesaPorCategoria.map((cat, idx) => (
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-destructive" />
+              (-) Despesas Operacionais
+            </h3>
+            {dreData?.despesasOpex.map((cat, idx) => (
               <div key={idx} className="mb-4">
                 <h4 className="font-semibold text-sm mb-2 text-primary">{cat.sintetica}</h4>
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Subcategoria</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
                   <TableBody>
                     {cat.analiticas.map((ana, anaIdx) => (
                       <TableRow key={anaIdx}>
@@ -365,15 +476,93 @@ const DRE = () => {
             <div className="flex justify-between items-center bg-muted/50 px-4 py-3 rounded font-bold">
               <span>Total Despesas Operacionais</span>
               <span className="text-destructive">
-                R$ {(dreData?.despesaTotal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R$ {(dreData?.despesaOpexTotal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>
 
+          {/* Resultado Operacional */}
+          <div className="flex justify-between items-center border-y py-4 bg-green-50 dark:bg-green-950/20 px-4 rounded">
+            <span className="text-xl font-bold">(=) Resultado Operacional (EBITDA)</span>
+            <span className={`text-xl font-bold ${(dreData?.resultadoOperacional || 0) >= 0 ? "text-green-600" : "text-destructive"}`}>
+              R$ {(dreData?.resultadoOperacional || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              <span className="text-sm ml-2">({dreData?.percentualResultadoOp.toFixed(1)}%)</span>
+            </span>
+          </div>
+
+          {/* Despesas Financeiras (se houver) */}
+          {dreData?.despesasFinanceiro && dreData.despesasFinanceiro.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">(-) Despesas Financeiras</h3>
+              {dreData.despesasFinanceiro.map((cat, idx) => (
+                <div key={idx} className="mb-2">
+                  <Table>
+                    <TableBody>
+                      {cat.analiticas.map((ana, anaIdx) => (
+                        <TableRow key={anaIdx}>
+                          <TableCell>{ana.analitica}</TableCell>
+                          <TableCell className="text-right text-destructive">
+                            R$ {ana.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Investimentos (se houver) */}
+          {dreData?.despesasInvestimento && dreData.despesasInvestimento.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">(-) Investimentos</h3>
+              {dreData.despesasInvestimento.map((cat, idx) => (
+                <div key={idx} className="mb-2">
+                  <Table>
+                    <TableBody>
+                      {cat.analiticas.map((ana, anaIdx) => (
+                        <TableRow key={anaIdx}>
+                          <TableCell>{ana.analitica}</TableCell>
+                          <TableCell className="text-right text-amber-600">
+                            R$ {ana.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Distribuição de Dividendos (se houver) */}
+          {dreData?.despesasDistribuicao && dreData.despesasDistribuicao.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">(-) Distribuição de Dividendos</h3>
+              {dreData.despesasDistribuicao.map((cat, idx) => (
+                <div key={idx} className="mb-2">
+                  <Table>
+                    <TableBody>
+                      {cat.analiticas.map((ana, anaIdx) => (
+                        <TableRow key={anaIdx}>
+                          <TableCell>{ana.analitica}</TableCell>
+                          <TableCell className="text-right text-purple-600">
+                            R$ {ana.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Lucro Líquido */}
-          <div className="flex justify-between items-center border-t pt-4">
+          <div className="flex justify-between items-center border-t pt-4 bg-emerald-50 dark:bg-emerald-950/20 px-4 py-4 rounded">
             <span className="text-2xl font-bold">(=) Lucro Líquido</span>
-            <span className={`text-2xl font-bold ${(dreData?.lucroLiquido || 0) >= 0 ? "text-green-600" : "text-destructive"}`}>
+            <span className={`text-2xl font-bold ${(dreData?.lucroLiquido || 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>
               R$ {(dreData?.lucroLiquido || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               <span className="text-base ml-2">({dreData?.percentualLucro.toFixed(1)}%)</span>
             </span>
@@ -413,47 +602,47 @@ const DRE = () => {
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-semibold">(-) Custos</TableCell>
+                  <TableCell className="font-semibold">(-) Custos Variáveis</TableCell>
                   {dreAnual?.map((m, idx) => (
-                    <TableCell key={idx} className="text-right text-destructive">
+                    <TableCell key={idx} className="text-right text-orange-600">
                       {m.custo.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-bold text-destructive">
+                  <TableCell className="text-right font-bold text-orange-600">
                     {dreAnual?.reduce((sum, m) => sum + m.custo, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                   </TableCell>
                 </TableRow>
-                <TableRow className="bg-muted/50">
+                <TableRow className="bg-blue-50 dark:bg-blue-950/20">
                   <TableCell className="font-bold">(=) Margem Bruta</TableCell>
                   {dreAnual?.map((m, idx) => (
-                    <TableCell key={idx} className="text-right font-medium text-green-600">
+                    <TableCell key={idx} className="text-right font-bold text-blue-600">
                       {m.margemBruta.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-bold text-green-600">
+                  <TableCell className="text-right font-bold text-blue-600">
                     {dreAnual?.reduce((sum, m) => sum + m.margemBruta, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-semibold">(-) Despesas</TableCell>
+                  <TableCell className="font-semibold">(-) Despesas Operacionais</TableCell>
                   {dreAnual?.map((m, idx) => (
                     <TableCell key={idx} className="text-right text-destructive">
-                      {m.despesas.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                      {m.despesasOpex.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                     </TableCell>
                   ))}
                   <TableCell className="text-right font-bold text-destructive">
-                    {dreAnual?.reduce((sum, m) => sum + m.despesas, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                    {dreAnual?.reduce((sum, m) => sum + m.despesasOpex, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                   </TableCell>
                 </TableRow>
-                <TableRow className="bg-primary/10">
-                  <TableCell className="font-bold">(=) Lucro Líquido</TableCell>
+                <TableRow className="bg-green-50 dark:bg-green-950/20">
+                  <TableCell className="font-bold">(=) Resultado Operacional</TableCell>
                   {dreAnual?.map((m, idx) => (
-                    <TableCell key={idx} className={`text-right font-bold ${m.lucro >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                      {m.lucro.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                    <TableCell key={idx} className={`text-right font-bold ${m.resultadoOp >= 0 ? "text-green-600" : "text-destructive"}`}>
+                      {m.resultadoOp.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-bold text-primary">
-                    {dreAnual?.reduce((sum, m) => sum + m.lucro, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                  <TableCell className={`text-right font-bold ${(dreAnual?.reduce((sum, m) => sum + m.resultadoOp, 0) || 0) >= 0 ? "text-green-600" : "text-destructive"}`}>
+                    {dreAnual?.reduce((sum, m) => sum + m.resultadoOp, 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -468,22 +657,41 @@ const DRE = () => {
           <CardTitle>Evolução Financeira - Últimos 12 Meses</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evolucaoMensal}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-                />
-                <Legend />
-                <Line type="monotone" dataKey="receita" name="Receita" stroke="hsl(var(--primary))" strokeWidth={2} />
-                <Line type="monotone" dataKey="margemBruta" name="Margem Bruta" stroke="#22c55e" strokeWidth={2} />
-                <Line type="monotone" dataKey="lucro" name="Lucro Líquido" stroke="#3b82f6" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={evolucaoMensal || []}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="mes" />
+              <YAxis 
+                tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+              />
+              <Tooltip 
+                formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, ""]}
+                labelFormatter={(label) => `Mês: ${label}`}
+              />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="receita" 
+                stroke="hsl(var(--primary))" 
+                strokeWidth={2}
+                name="Receita"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="margemBruta" 
+                stroke="#2563eb" 
+                strokeWidth={2}
+                name="Margem Bruta"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="resultadoOp" 
+                stroke="#16a34a" 
+                strokeWidth={2}
+                name="Resultado Operacional"
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>
