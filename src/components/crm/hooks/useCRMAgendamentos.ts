@@ -32,7 +32,7 @@ export type AgendamentoStatus =
 
 export type Prioridade = "alto" | "medio" | "baixo";
 
-export type InteracaoTipo = "whatsapp" | "ligacao" | "email" | "reuniao" | "nota";
+export type InteracaoTipo = "whatsapp" | "ligacao" | "email" | "reuniao" | "nota" | "status_change" | "orcamento" | "agendamento";
 
 export const STATUS_LABELS: Record<AgendamentoStatus, string> = {
   lead: "Lead",
@@ -97,6 +97,9 @@ export const INTERACAO_LABELS: Record<InteracaoTipo, string> = {
   email: "E-mail",
   reuniao: "Reunião",
   nota: "Nota",
+  status_change: "Mudança de Status",
+  orcamento: "Orçamento",
+  agendamento: "Agendamento",
 };
 
 export const INTERACAO_ICONS: Record<InteracaoTipo, string> = {
@@ -105,6 +108,9 @@ export const INTERACAO_ICONS: Record<InteracaoTipo, string> = {
   email: "✉️",
   reuniao: "🤝",
   nota: "📝",
+  status_change: "🔄",
+  orcamento: "💰",
+  agendamento: "📅",
 };
 
 // Pipeline columns - fluxo principal

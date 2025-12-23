@@ -21,6 +21,7 @@ import {
   AgendamentoStatus,
   STATUS_LABELS,
   STATUS_ICONS,
+  InteracaoTipo,
   useAgendamentoMutations,
   useInteracaoMutations,
 } from "./hooks/useCRMAgendamentos";
@@ -52,14 +53,23 @@ export function TransicaoModal({
   const { updateAgendamento, updateStatus } = useAgendamentoMutations();
   const { createInteracao } = useInteracaoMutations();
 
-  const getTransitionConfig = () => {
+  const getTransitionConfig = (): { 
+    title: string; 
+    description: string; 
+    showObservacao?: boolean;
+    showValor?: boolean;
+    showAgendamento?: boolean;
+    showMotivo?: boolean;
+    autoConfirm?: boolean;
+    interacaoTipo: InteracaoTipo;
+  } => {
     // Lead → Em Negociação
     if (fromStatus === "lead" && toStatus === "em_negociacao") {
       return {
         title: "Iniciar Negociação",
         description: "Registre o primeiro contato com o lead.",
         showObservacao: true,
-        interacaoTipo: "nota" as const,
+        interacaoTipo: "status_change",
       };
     }
 
@@ -70,7 +80,7 @@ export function TransicaoModal({
         description: "Registre o valor do orçamento enviado.",
         showValor: true,
         showObservacao: true,
-        interacaoTipo: "nota" as const,
+        interacaoTipo: "orcamento",
       };
     }
 
@@ -81,7 +91,7 @@ export function TransicaoModal({
         description: "Defina a data e horário do agendamento.",
         showAgendamento: true,
         showObservacao: true,
-        interacaoTipo: "nota" as const,
+        interacaoTipo: "agendamento",
       };
     }
 
@@ -92,7 +102,7 @@ export function TransicaoModal({
         description: "O cliente confirmou o agendamento.",
         showObservacao: true,
         autoConfirm: true,
-        interacaoTipo: "nota" as const,
+        interacaoTipo: "status_change",
       };
     }
 
@@ -102,7 +112,7 @@ export function TransicaoModal({
         title: "Registrar Realização",
         description: "O procedimento foi realizado com sucesso.",
         showObservacao: true,
-        interacaoTipo: "nota" as const,
+        interacaoTipo: "status_change",
       };
     }
 
@@ -112,7 +122,7 @@ export function TransicaoModal({
         title: "Registrar Perda",
         description: "Por que esse lead foi perdido?",
         showMotivo: true,
-        interacaoTipo: "nota" as const,
+        interacaoTipo: "status_change",
       };
     }
 
@@ -122,7 +132,7 @@ export function TransicaoModal({
         title: "Reativar Lead",
         description: "Dê uma nova chance a esse lead.",
         showObservacao: true,
-        interacaoTipo: "nota" as const,
+        interacaoTipo: "status_change",
       };
     }
 
@@ -131,7 +141,7 @@ export function TransicaoModal({
       title: `Mover para ${STATUS_LABELS[toStatus]}`,
       description: "Confirme a mudança de status.",
       showObservacao: true,
-      interacaoTipo: "nota" as const,
+      interacaoTipo: "status_change",
     };
   };
 
@@ -162,14 +172,13 @@ export function TransicaoModal({
         ...updates,
       });
 
-      // Registra a interação
-      if (observacao || config.showMotivo) {
-        await createInteracao.mutateAsync({
-          agendamento_id: agendamentoId,
-          tipo: config.interacaoTipo,
-          observacao: config.showMotivo ? motivoPerda : observacao,
-        });
-      }
+      // Sempre registra a interação para documentar a mudança
+      const interacaoObservacao = buildInteracaoObservacao();
+      await createInteracao.mutateAsync({
+        agendamento_id: agendamentoId,
+        tipo: config.interacaoTipo,
+        observacao: interacaoObservacao,
+      });
 
       toast({
         title: "Status atualizado!",
@@ -189,6 +198,32 @@ export function TransicaoModal({
       const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       toast({ title: "Erro ao atualizar", description: errorMessage, variant: "destructive" });
     }
+  };
+
+  const buildInteracaoObservacao = () => {
+    const parts: string[] = [];
+    
+    // Adiciona info da transição
+    parts.push(`Status alterado de "${STATUS_LABELS[fromStatus]}" para "${STATUS_LABELS[toStatus]}"`);
+    
+    // Info específica por tipo
+    if (config.showValor && valorOrcamento) {
+      parts.push(`Valor do orçamento: ${valorOrcamento}`);
+    }
+    
+    if (config.showAgendamento && dataAgendamento) {
+      parts.push(`Agendado para: ${format(dataAgendamento, "dd/MM/yyyy", { locale: ptBR })} às ${horaAgendamento}`);
+    }
+    
+    if (config.showMotivo && motivoPerda) {
+      parts.push(`Motivo: ${motivoPerda}`);
+    }
+    
+    if (observacao) {
+      parts.push(`Obs: ${observacao}`);
+    }
+    
+    return parts.join(". ");
   };
 
   const isLoading = updateAgendamento.isPending || updateStatus.isPending;
