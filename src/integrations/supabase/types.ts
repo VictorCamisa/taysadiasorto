@@ -1541,7 +1541,7 @@ export type Database = {
             foreignKeyName: "tratamentos_ficha_tecnica_tratamento_id_fkey"
             columns: ["tratamento_id"]
             isOneToOne: false
-            referencedRelation: "financeiro_tratamentos_old"
+            referencedRelation: "tratamentos"
             referencedColumns: ["id"]
           },
         ]
