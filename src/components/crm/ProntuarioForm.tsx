@@ -30,8 +30,9 @@ import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, X, Plus } from "lucide-react";
-import { useState } from "react";
+import { Camera, X, Upload, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
 
 const prontuarioSchema = z.object({
   data_atendimento: z.string().min(1, "Data é obrigatória"),
@@ -67,10 +68,21 @@ export function ProntuarioForm({
   onSave,
   isLoading,
 }: ProntuarioFormProps) {
-  const [fotosAntes, setFotosAntes] = useState<string[]>(prontuario?.fotos_antes || []);
-  const [fotosDepois, setFotosDepois] = useState<string[]>(prontuario?.fotos_depois || []);
-  const [novaFotoAntes, setNovaFotoAntes] = useState("");
-  const [novaFotoDepois, setNovaFotoDepois] = useState("");
+  const [fotosAntes, setFotosAntes] = useState<string[]>([]);
+  const [fotosDepois, setFotosDepois] = useState<string[]>([]);
+  const [uploadingAntes, setUploadingAntes] = useState(false);
+  const [uploadingDepois, setUploadingDepois] = useState(false);
+  
+  const fileInputAntesRef = useRef<HTMLInputElement>(null);
+  const fileInputDepoisRef = useRef<HTMLInputElement>(null);
+
+  // Reset state when dialog opens with new prontuario
+  useEffect(() => {
+    if (open) {
+      setFotosAntes(prontuario?.fotos_antes || []);
+      setFotosDepois(prontuario?.fotos_depois || []);
+    }
+  }, [open, prontuario]);
 
   const { data: tratamentos = [] } = useQuery({
     queryKey: ["tratamentos-select"],
@@ -96,6 +108,20 @@ export function ProntuarioForm({
     },
   });
 
+  // Reset form when prontuario changes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        data_atendimento: prontuario?.data_atendimento || format(new Date(), "yyyy-MM-dd"),
+        tratamento_id: prontuario?.tratamento_id || "",
+        descricao_procedimento: prontuario?.descricao_procedimento || "",
+        evolucao: prontuario?.evolucao || "",
+        observacoes_clinicas: prontuario?.observacoes_clinicas || "",
+        proximos_passos: prontuario?.proximos_passos || "",
+      });
+    }
+  }, [open, prontuario, form]);
+
   const handleSubmit = (data: ProntuarioFormData) => {
     onSave({ 
       ...data, 
@@ -106,26 +132,71 @@ export function ProntuarioForm({
     });
   };
 
-  const addFotoAntes = () => {
-    if (novaFotoAntes.trim()) {
-      setFotosAntes([...fotosAntes, novaFotoAntes.trim()]);
-      setNovaFotoAntes("");
+  const uploadFile = async (file: File, tipo: 'antes' | 'depois'): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${pacienteId}/${tipo}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    
+    const { error } = await supabase.storage
+      .from('prontuarios-fotos')
+      .upload(fileName, file);
+    
+    if (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Erro no upload",
+        description: error.message,
+        variant: "destructive",
+      });
+      return null;
     }
+    
+    const { data: urlData } = supabase.storage
+      .from('prontuarios-fotos')
+      .getPublicUrl(fileName);
+    
+    return urlData.publicUrl;
   };
 
-  const addFotoDepois = () => {
-    if (novaFotoDepois.trim()) {
-      setFotosDepois([...fotosDepois, novaFotoDepois.trim()]);
-      setNovaFotoDepois("");
+  const handleFileUpload = async (files: FileList | null, tipo: 'antes' | 'depois') => {
+    if (!files || files.length === 0) return;
+    
+    const setUploading = tipo === 'antes' ? setUploadingAntes : setUploadingDepois;
+    const setFotos = tipo === 'antes' ? setFotosAntes : setFotosDepois;
+    const currentFotos = tipo === 'antes' ? fotosAntes : fotosDepois;
+    
+    setUploading(true);
+    
+    const uploadPromises = Array.from(files).map(file => uploadFile(file, tipo));
+    const urls = await Promise.all(uploadPromises);
+    const validUrls = urls.filter((url): url is string => url !== null);
+    
+    if (validUrls.length > 0) {
+      setFotos([...currentFotos, ...validUrls]);
+      toast({
+        title: `${validUrls.length} foto(s) enviada(s)`,
+        description: `Fotos ${tipo} adicionadas com sucesso`,
+      });
     }
+    
+    setUploading(false);
   };
 
-  const removeFotoAntes = (index: number) => {
-    setFotosAntes(fotosAntes.filter((_, i) => i !== index));
-  };
-
-  const removeFotoDepois = (index: number) => {
-    setFotosDepois(fotosDepois.filter((_, i) => i !== index));
+  const removeFoto = async (index: number, tipo: 'antes' | 'depois') => {
+    const fotos = tipo === 'antes' ? fotosAntes : fotosDepois;
+    const setFotos = tipo === 'antes' ? setFotosAntes : setFotosDepois;
+    const fotoUrl = fotos[index];
+    
+    // Try to delete from storage
+    try {
+      const path = fotoUrl.split('/prontuarios-fotos/')[1];
+      if (path) {
+        await supabase.storage.from('prontuarios-fotos').remove([path]);
+      }
+    } catch (e) {
+      console.warn('Could not delete file from storage:', e);
+    }
+    
+    setFotos(fotos.filter((_, i) => i !== index));
   };
 
   return (
@@ -272,17 +343,34 @@ export function ProntuarioForm({
                     <h4 className="font-medium">Fotos Antes</h4>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Cole a URL da imagem..."
-                      value={novaFotoAntes}
-                      onChange={(e) => setNovaFotoAntes(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFotoAntes())}
-                    />
-                    <Button type="button" variant="outline" onClick={addFotoAntes}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <input
+                    ref={fileInputAntesRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e.target.files, 'antes')}
+                  />
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => fileInputAntesRef.current?.click()}
+                    disabled={uploadingAntes}
+                  >
+                    {uploadingAntes ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Selecionar Fotos (Antes)
+                      </>
+                    )}
+                  </Button>
 
                   {fotosAntes.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -301,7 +389,7 @@ export function ProntuarioForm({
                             variant="destructive"
                             size="icon"
                             className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => removeFotoAntes(index)}
+                            onClick={() => removeFoto(index, 'antes')}
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -318,17 +406,34 @@ export function ProntuarioForm({
                     <h4 className="font-medium">Fotos Depois</h4>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Cole a URL da imagem..."
-                      value={novaFotoDepois}
-                      onChange={(e) => setNovaFotoDepois(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFotoDepois())}
-                    />
-                    <Button type="button" variant="outline" onClick={addFotoDepois}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <input
+                    ref={fileInputDepoisRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e.target.files, 'depois')}
+                  />
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => fileInputDepoisRef.current?.click()}
+                    disabled={uploadingDepois}
+                  >
+                    {uploadingDepois ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Selecionar Fotos (Depois)
+                      </>
+                    )}
+                  </Button>
 
                   {fotosDepois.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -347,7 +452,7 @@ export function ProntuarioForm({
                             variant="destructive"
                             size="icon"
                             className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => removeFotoDepois(index)}
+                            onClick={() => removeFoto(index, 'depois')}
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -358,7 +463,7 @@ export function ProntuarioForm({
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  * Cole URLs de imagens para adicionar fotos. Futuramente será possível fazer upload direto.
+                  * Formatos aceitos: JPEG, PNG, WebP. Tamanho máximo: 5MB por foto.
                 </p>
               </TabsContent>
             </Tabs>
@@ -371,7 +476,7 @@ export function ProntuarioForm({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || uploadingAntes || uploadingDepois}>
                 {isLoading ? "Salvando..." : "Salvar Prontuário"}
               </Button>
             </div>
