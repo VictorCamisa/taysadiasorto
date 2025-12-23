@@ -2,20 +2,57 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { TrendingUp, DollarSign, Activity, Package, Briefcase, Sparkles, Loader2 } from "lucide-react";
+import { TrendingUp, DollarSign, Activity, Package, Briefcase, Sparkles, Loader2, Target } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useOrcamentoDRE, calcularDesvio } from "@/hooks/useOrcamentoDRE";
+
+// Componente para exibir o desvio
+const DesvioCell = ({ 
+  realizado, 
+  orcado, 
+  inverter = false 
+}: { 
+  realizado: number; 
+  orcado: number; 
+  inverter?: boolean;
+}) => {
+  if (orcado === 0) {
+    return <span className="text-muted-foreground">-</span>;
+  }
+
+  const { percentual } = calcularDesvio(realizado, orcado);
+  const ajustado = inverter ? -percentual : percentual;
+  
+  let colorClass = "text-muted-foreground";
+  if (ajustado > 5) colorClass = "text-chart-2";
+  else if (ajustado < -5) colorClass = "text-destructive";
+
+  return (
+    <span className={`${colorClass} font-medium`}>
+      {percentual >= 0 ? "+" : ""}{percentual.toFixed(1)}%
+    </span>
+  );
+};
+
+// Helper para formatar moeda
+const formatCurrency = (value: number) => 
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const DRE = () => {
   const queryClient = useQueryClient();
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(currentDate, "yyyy-MM"));
   const [isCorrectingWithAI, setIsCorrectingWithAI] = useState(false);
+
+  // Buscar dados do orçamento para o mês selecionado
+  const { data: orcamentoData } = useOrcamentoDRE(selectedMonth);
 
   const handleCorrigirComIA = async () => {
     setIsCorrectingWithAI(true);
@@ -333,6 +370,16 @@ const DRE = () => {
         </div>
       </div>
 
+      {/* Indicador de Orçamento */}
+      {orcamentoData?.hasOrcamento && (
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-chart-2/10 text-chart-2 border-chart-2/30">
+            <Target className="h-3 w-3 mr-1" />
+            Orçamento Ativo
+          </Badge>
+        </div>
+      )}
+
       {/* Cards Principais */}
       <div className="grid gap-6 md:grid-cols-4">
         <Card className="shadow-md">
@@ -342,8 +389,16 @@ const DRE = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              R$ {(dreData?.receitaTotal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              {formatCurrency(dreData?.receitaTotal || 0)}
             </div>
+            {orcamentoData?.hasOrcamento && orcamentoData.receitaOrcada > 0 && (
+              <div className="flex items-center justify-between mt-1 text-xs">
+                <span className="text-muted-foreground">
+                  Orçado: {formatCurrency(orcamentoData.receitaOrcada)}
+                </span>
+                <DesvioCell realizado={dreData?.receitaTotal || 0} orcado={orcamentoData.receitaOrcada} />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -354,7 +409,7 @@ const DRE = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              R$ {(dreData?.margemBruta || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              {formatCurrency(dreData?.margemBruta || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {dreData?.percentualMargemBruta.toFixed(1) || "0"}% da receita
@@ -369,7 +424,7 @@ const DRE = () => {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${(dreData?.resultadoOperacional || 0) >= 0 ? "text-green-600" : "text-destructive"}`}>
-              R$ {(dreData?.resultadoOperacional || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              {formatCurrency(dreData?.resultadoOperacional || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {dreData?.percentualResultadoOp.toFixed(1) || "0"}% da receita
@@ -384,7 +439,7 @@ const DRE = () => {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${(dreData?.lucroLiquido || 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>
-              R$ {(dreData?.lucroLiquido || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              {formatCurrency(dreData?.lucroLiquido || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {dreData?.percentualLucro.toFixed(1) || "0"}% da receita
@@ -410,24 +465,53 @@ const DRE = () => {
                 <TableRow>
                   <TableHead>Tratamento</TableHead>
                   <TableHead className="text-right">Quantidade</TableHead>
-                  <TableHead className="text-right">Receita Total</TableHead>
+                  <TableHead className="text-right">Realizado</TableHead>
+                  {orcamentoData?.hasOrcamento && (
+                    <>
+                      <TableHead className="text-right">Orçado</TableHead>
+                      <TableHead className="text-right">Desvio</TableHead>
+                    </>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dreData?.receitaPorTratamento.map((item, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{item.tratamento}</TableCell>
-                    <TableCell className="text-right">{item.quantidade}</TableCell>
-                    <TableCell className="text-right text-primary font-medium">
-                      R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {dreData?.receitaPorTratamento.map((item, idx) => {
+                  const orcado = orcamentoData?.receitasOrcadasPorTratamento.get(item.tratamento) || 0;
+                  return (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">{item.tratamento}</TableCell>
+                      <TableCell className="text-right">{item.quantidade}</TableCell>
+                      <TableCell className="text-right text-primary font-medium">
+                        {formatCurrency(item.total)}
+                      </TableCell>
+                      {orcamentoData?.hasOrcamento && (
+                        <>
+                          <TableCell className="text-right text-muted-foreground">
+                            {orcado > 0 ? formatCurrency(orcado) : "-"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DesvioCell realizado={item.total} orcado={orcado} />
+                          </TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  );
+                })}
                 <TableRow className="bg-muted/50 font-bold">
                   <TableCell colSpan={2}>Total Receita Bruta</TableCell>
                   <TableCell className="text-right text-primary">
-                    R$ {(dreData?.receitaTotal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    {formatCurrency(dreData?.receitaTotal || 0)}
                   </TableCell>
+                  {orcamentoData?.hasOrcamento && (
+                    <>
+                      <TableCell className="text-right text-muted-foreground">
+                        {orcamentoData.receitaOrcada > 0 ? formatCurrency(orcamentoData.receitaOrcada) : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DesvioCell realizado={dreData?.receitaTotal || 0} orcado={orcamentoData.receitaOrcada} />
+                      </TableCell>
+                    </>
+                  )}
                 </TableRow>
               </TableBody>
             </Table>
@@ -509,35 +593,60 @@ const DRE = () => {
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-destructive" />
               (-) Despesas Operacionais
+              {orcamentoData?.hasOrcamento && orcamentoData.totalDespesasOrcadas > 0 && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  (Orçado: {formatCurrency(orcamentoData.totalDespesasOrcadas)})
+                </span>
+              )}
             </h3>
-            {dreData?.despesasOpex.map((cat, idx) => (
-              <div key={idx} className="mb-4">
-                <h4 className="font-semibold text-sm mb-2 text-primary">{cat.sintetica}</h4>
-                <Table>
-                  <TableBody>
-                    {cat.analiticas.map((ana, anaIdx) => (
-                      <TableRow key={anaIdx}>
-                        <TableCell className="pl-6">{ana.analitica}</TableCell>
+            {dreData?.despesasOpex.map((cat, idx) => {
+              const orcadoCategoria = orcamentoData?.despesasOrcadasPorCategoria.get(cat.sintetica) || 0;
+              return (
+                <div key={idx} className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-sm text-primary">{cat.sintetica}</h4>
+                    {orcamentoData?.hasOrcamento && orcadoCategoria > 0 && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground">Orçado: {formatCurrency(orcadoCategoria)}</span>
+                        <DesvioCell realizado={cat.total} orcado={orcadoCategoria} inverter />
+                      </div>
+                    )}
+                  </div>
+                  <Table>
+                    <TableBody>
+                      {cat.analiticas.map((ana, anaIdx) => (
+                        <TableRow key={anaIdx}>
+                          <TableCell className="pl-6">{ana.analitica}</TableCell>
+                          <TableCell className="text-right text-destructive">
+                            {formatCurrency(ana.valor)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-muted/30 font-medium">
+                        <TableCell>Subtotal {cat.sintetica}</TableCell>
                         <TableCell className="text-right text-destructive">
-                          R$ {ana.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          {formatCurrency(cat.total)}
                         </TableCell>
                       </TableRow>
-                    ))}
-                    <TableRow className="bg-muted/30 font-medium">
-                      <TableCell>Subtotal {cat.sintetica}</TableCell>
-                      <TableCell className="text-right text-destructive">
-                        R$ {cat.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              );
+            })}
             <div className="flex justify-between items-center bg-muted/50 px-4 py-3 rounded font-bold">
               <span>Total Despesas Operacionais</span>
-              <span className="text-destructive">
-                R$ {(dreData?.despesaOpexTotal || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </span>
+              <div className="flex items-center gap-4">
+                {orcamentoData?.hasOrcamento && orcamentoData.totalDespesasOrcadas > 0 && (
+                  <DesvioCell 
+                    realizado={dreData?.despesaOpexTotal || 0} 
+                    orcado={orcamentoData.totalDespesasOrcadas} 
+                    inverter 
+                  />
+                )}
+                <span className="text-destructive">
+                  {formatCurrency(dreData?.despesaOpexTotal || 0)}
+                </span>
+              </div>
             </div>
           </div>
 
