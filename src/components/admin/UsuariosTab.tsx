@@ -32,6 +32,7 @@ import { useAdminData, ROLE_LABELS, AppRole, Profile } from "./hooks/useAdminDat
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./EmptyState";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { SolicitacoesAcessoSection } from "./SolicitacoesAcessoSection";
 
 export function UsuariosTab() {
   const {
@@ -119,6 +120,9 @@ export function UsuariosTab() {
 
   return (
     <div className="space-y-6">
+      {/* Solicitações de Acesso */}
+      <SolicitacoesAcessoSection />
+      
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
