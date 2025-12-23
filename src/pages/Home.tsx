@@ -19,108 +19,117 @@ interface ModuleCardProps {
   icon: React.ElementType;
   href: string;
   status: "active" | "coming-soon";
+  color: string;
   features: string[];
 }
 
 const modules: ModuleCardProps[] = [
   {
     title: "Financeiro",
-    description: "Gestão completa de finanças, fluxo de caixa, DRE e orçamentos",
+    description: "Fluxo de caixa, DRE, contas e relatórios em um só lugar.",
     icon: DollarSign,
     href: "/financeiro",
     status: "active",
-    features: ["Dashboard", "Lançamentos", "DRE", "Orçamento"]
+    color: "module-financeiro",
+    features: ["Dashboard", "Lançamentos", "DRE", "Orçamento"],
   },
   {
     title: "Comercial",
-    description: "Pipeline de vendas, agenda, ficha 360° do paciente e follow-up",
+    description: "Pipeline, agenda e acompanhamento completo do paciente.",
     icon: Users,
     href: "/crm",
     status: "active",
-    features: ["Pipeline", "Agenda", "Ficha 360°", "Pós-venda"]
+    color: "module-crm",
+    features: ["Pipeline", "Agenda", "Ficha 360°", "Pós-venda"],
   },
   {
     title: "Administrativo",
-    description: "Gestão de usuários, permissões, LGPD e conformidade",
+    description: "Usuários, permissões, LGPD e auditoria com controle total.",
     icon: Building2,
     href: "/admin",
     status: "active",
-    features: ["Usuários", "Permissões", "LGPD", "Documentos"]
+    color: "module-admin",
+    features: ["Usuários", "Permissões", "LGPD", "Documentos"],
   },
   {
     title: "Business Intelligence",
-    description: "Painel central de BI, LTV/CAC, ROAS e análises estratégicas",
+    description: "Indicadores, LTV/CAC, marketing e análises estratégicas.",
     icon: BarChart3,
     href: "/bi",
-    status: "coming-soon",
-    features: ["Dashboard BI", "LTV/CAC", "Marketing", "Relatórios"]
-  }
+    status: "active",
+    color: "module-bi",
+    features: ["Dashboard BI", "LTV/CAC", "Marketing", "Relatórios"],
+  },
 ];
 
-function ModuleCard({ title, description, icon: Icon, href, status, features }: ModuleCardProps) {
+function ModuleCard({ title, description, icon: Icon, href, status, color, features }: ModuleCardProps) {
   const isActive = status === "active";
-  
-  const CardWrapper = isActive ? Link : 'div';
+
+  const CardWrapper = isActive ? Link : "div";
   const cardProps = isActive ? { to: href } : {};
-  
+
   return (
-    <CardWrapper 
-      {...cardProps as any}
+    <CardWrapper
+      {...(cardProps as any)}
       className={cn(
-        "group relative block rounded-2xl p-6 transition-all duration-300",
-        "bg-card/50 backdrop-blur-sm border border-border/40",
+        "group relative block rounded-2xl p-6",
+        "glass-subtle border border-border/40",
         "shadow-sm hover:shadow-lg",
-        isActive 
-          ? "cursor-pointer hover:bg-card hover:border-border/60 hover:-translate-y-1" 
-          : "opacity-50 cursor-not-allowed"
+        "transition-all duration-300",
+        isActive
+          ? "cursor-pointer hover:border-border/60 hover:-translate-y-1"
+          : "opacity-50 cursor-not-allowed",
       )}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div 
-          className={cn(
-            "p-3 rounded-xl transition-all duration-300",
-            "bg-muted/50 group-hover:bg-muted"
-          )}
-        >
-          <Icon className="h-5 w-5 text-foreground/70" />
+      {/* subtle module accent */}
+      <div
+        className="absolute inset-x-0 top-0 h-px"
+        style={{
+          background: `linear-gradient(90deg, transparent, hsl(var(--${color}) / 0.45), transparent)`,
+        }}
+      />
+
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="h-10 w-10 rounded-xl flex items-center justify-center border border-border/40"
+            style={{ background: `hsl(var(--${color}) / 0.10)` }}
+          >
+            <Icon className="h-5 w-5" style={{ color: `hsl(var(--${color}))` }} />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+            <p className="text-xs text-muted-foreground">{isActive ? "Disponível" : "Em breve"}</p>
+          </div>
         </div>
-        
-        <span 
+
+        <span
           className={cn(
             "px-2.5 py-1 text-xs font-medium rounded-full",
-            isActive 
-              ? "bg-foreground/5 text-foreground/60" 
-              : "bg-muted text-muted-foreground"
+            isActive ? "bg-foreground/5 text-foreground/60" : "bg-muted text-muted-foreground",
           )}
         >
           {isActive ? "Ativo" : "Em breve"}
         </span>
       </div>
-      
-      {/* Content */}
-      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
+
       <p className="text-sm text-muted-foreground leading-relaxed mb-4">{description}</p>
-      
-      {/* Features */}
+
       <div className="flex flex-wrap gap-1.5 mb-5">
         {features.map((feature) => (
-          <span 
+          <span
             key={feature}
-            className="px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground"
+            className="px-2 py-0.5 text-xs rounded-md bg-muted/40 text-muted-foreground"
           >
             {feature}
           </span>
         ))}
       </div>
-      
-      {/* Footer */}
-      <div 
+
+      <div
         className={cn(
-          "flex items-center text-sm font-medium transition-all duration-300",
-          isActive 
-            ? "text-foreground/60 group-hover:text-foreground" 
-            : "text-muted-foreground"
+          "flex items-center text-sm font-medium",
+          isActive ? "text-foreground/60 group-hover:text-foreground" : "text-muted-foreground",
         )}
       >
         {isActive ? (
@@ -188,8 +197,8 @@ export default function Home() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={Activity} label="Módulos" value="3 Ativos" />
-        <StatCard icon={Calendar} label="Próximos" value="1 Módulo" />
+        <StatCard icon={Activity} label="Módulos" value="4 Ativos" />
+        <StatCard icon={Calendar} label="Próximos" value="0" />
         <StatCard icon={Sparkles} label="Assistente" value="IA Ativa" />
         <StatCard icon={Shield} label="Status" value="Operacional" />
       </div>
