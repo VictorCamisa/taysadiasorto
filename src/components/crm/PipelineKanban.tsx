@@ -1,59 +1,59 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Calendar, DollarSign, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus } from "lucide-react";
 import {
   CRMAgendamento,
   AgendamentoStatus,
   STATUS_LABELS,
   STATUS_COLORS,
-  useAgendamentoMutations,
+  STATUS_ICONS,
+  PIPELINE_COLUMNS,
+  AUXILIARY_COLUMNS,
 } from "./hooks/useCRMAgendamentos";
+import { CardOportunidade } from "./CardOportunidade";
+import { TransicaoModal } from "./TransicaoModal";
+import { InteracaoForm } from "./InteracaoForm";
+import { cn } from "@/lib/utils";
 
 interface PipelineKanbanProps {
   agendamentos: CRMAgendamento[];
   onEditAgendamento?: (agendamento: CRMAgendamento) => void;
+  onNewAgendamento?: () => void;
 }
 
-const PIPELINE_COLUMNS: AgendamentoStatus[] = [
-  "lead",
-  "agendado",
-  "confirmado",
-  "realizado",
-];
-
-export function PipelineKanban({ agendamentos, onEditAgendamento }: PipelineKanbanProps) {
+export function PipelineKanban({
+  agendamentos,
+  onEditAgendamento,
+  onNewAgendamento,
+}: PipelineKanbanProps) {
   const navigate = useNavigate();
-  const { updateStatus } = useAgendamentoMutations();
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<AgendamentoStatus | null>(null);
+
+  // Modal states
+  const [transicaoModal, setTransicaoModal] = useState<{
+    open: boolean;
+    agendamentoId: string;
+    fromStatus: AgendamentoStatus;
+    toStatus: AgendamentoStatus;
+  } | null>(null);
+
+  const [interacaoModal, setInteracaoModal] = useState<{
+    open: boolean;
+    agendamentoId: string;
+    tipo: "whatsapp" | "ligacao";
+  } | null>(null);
 
   const getColumnAgendamentos = (status: AgendamentoStatus) => {
     return agendamentos.filter((a) => a.status === status);
   };
 
-  const getInitials = (nome: string) => {
-    return nome
-      .split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    try {
-      return format(new Date(dateString), "dd/MM HH:mm", { locale: ptBR });
-    } catch {
-      return null;
-    }
-  };
-
-  const formatCurrency = (value: number | null) => {
-    if (!value) return null;
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -68,18 +68,48 @@ export function PipelineKanban({ agendamentos, onEditAgendamento }: PipelineKanb
 
   const handleDragStart = (e: React.DragEvent, agendamentoId: string) => {
     e.dataTransfer.setData("agendamentoId", agendamentoId);
+    setDraggedId(agendamentoId);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverColumn(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, status: AgendamentoStatus) => {
     e.preventDefault();
+    setDragOverColumn(status);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverColumn(null);
   };
 
   const handleDrop = (e: React.DragEvent, newStatus: AgendamentoStatus) => {
     e.preventDefault();
     const agendamentoId = e.dataTransfer.getData("agendamentoId");
-    if (agendamentoId) {
-      updateStatus.mutate({ id: agendamentoId, status: newStatus });
+    const agendamento = agendamentos.find((a) => a.id === agendamentoId);
+
+    if (agendamento && agendamento.status !== newStatus) {
+      // Open transition modal
+      setTransicaoModal({
+        open: true,
+        agendamentoId,
+        fromStatus: agendamento.status as AgendamentoStatus,
+        toStatus: newStatus,
+      });
     }
+
+    setDraggedId(null);
+    setDragOverColumn(null);
+  };
+
+  const handleQuickAction = (agendamentoId: string, action: "whatsapp" | "ligacao") => {
+    setInteracaoModal({
+      open: true,
+      agendamentoId,
+      tipo: action,
+    });
   };
 
   const getColumnTotal = (status: AgendamentoStatus) => {
@@ -89,116 +119,145 @@ export function PipelineKanban({ agendamentos, onEditAgendamento }: PipelineKanb
     );
   };
 
-  return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {PIPELINE_COLUMNS.map((status) => {
-        const columnAgendamentos = getColumnAgendamentos(status);
-        const columnTotal = getColumnTotal(status);
+  const renderColumn = (status: AgendamentoStatus, isAuxiliary = false) => {
+    const columnAgendamentos = getColumnAgendamentos(status);
+    const columnTotal = getColumnTotal(status);
+    const isDragOver = dragOverColumn === status;
 
-        return (
-          <div
-            key={status}
-            className="flex-shrink-0 w-72"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, status)}
-          >
-            <Card className="h-full">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm font-medium">
-                      {STATUS_LABELS[status]}
-                    </CardTitle>
-                    <Badge variant="secondary" className="text-xs">
-                      {columnAgendamentos.length}
-                    </Badge>
+    return (
+      <div
+        key={status}
+        className={cn(
+          "flex-shrink-0",
+          isAuxiliary ? "w-60" : "w-72"
+        )}
+        onDragOver={(e) => handleDragOver(e, status)}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, status)}
+      >
+        <Card
+          className={cn(
+            "h-full transition-colors",
+            isDragOver && "ring-2 ring-primary ring-offset-2",
+            isAuxiliary && "opacity-80"
+          )}
+        >
+          <CardHeader className="pb-2 space-y-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-base">{STATUS_ICONS[status]}</span>
+                <CardTitle className="text-sm font-medium">
+                  {STATUS_LABELS[status]}
+                </CardTitle>
+                <Badge variant="secondary" className="text-xs">
+                  {columnAgendamentos.length}
+                </Badge>
+              </div>
+              {status === "lead" && onNewAgendamento && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={onNewAgendamento}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Nova Oportunidade</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            {columnTotal > 0 && (
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                {formatCurrency(columnTotal)}
+              </p>
+            )}
+          </CardHeader>
+          <CardContent className="p-2">
+            <ScrollArea className={cn(
+              isAuxiliary ? "h-[calc(100vh-380px)]" : "h-[calc(100vh-340px)]"
+            )}>
+              <div className="space-y-2 pr-2">
+                {columnAgendamentos.map((agendamento) => (
+                  <div
+                    key={agendamento.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, agendamento.id)}
+                    onDragEnd={handleDragEnd}
+                    className={cn(
+                      "transition-opacity",
+                      draggedId === agendamento.id && "opacity-50"
+                    )}
+                  >
+                    <CardOportunidade
+                      agendamento={agendamento}
+                      onEdit={() => onEditAgendamento?.(agendamento)}
+                      onQuickAction={(action) => handleQuickAction(agendamento.id, action)}
+                      onClick={() => handleCardClick(agendamento)}
+                    />
                   </div>
-                </div>
-                {columnTotal > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {formatCurrency(columnTotal)}
-                  </p>
-                )}
-              </CardHeader>
-              <CardContent className="p-2">
-                <ScrollArea className="h-[calc(100vh-280px)]">
-                  <div className="space-y-2 pr-2">
-                    {columnAgendamentos.map((agendamento) => (
-                      <Card
-                        key={agendamento.id}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, agendamento.id)}
-                        onClick={() => handleCardClick(agendamento)}
-                      >
-                        <CardContent className="p-3 space-y-2">
-                          {/* Header with Avatar */}
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                {agendamento.paciente?.nome
-                                  ? getInitials(agendamento.paciente.nome)
-                                  : "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {agendamento.paciente?.nome || "Paciente"}
-                              </p>
-                            </div>
-                          </div>
+                ))}
 
-                          {/* Treatment Badge */}
-                          {agendamento.tratamento && (
-                            <Badge variant="outline" className="text-xs w-fit">
-                              {agendamento.tratamento.nome}
-                            </Badge>
-                          )}
-
-                          {/* Meta info */}
-                          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                            {agendamento.data_agendamento && (
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {formatDate(agendamento.data_agendamento)}
-                              </span>
-                            )}
-                            {agendamento.duracao_minutos && (
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {agendamento.duracao_minutos}min
-                              </span>
-                            )}
-                            {Number(agendamento.valor_previsto) > 0 && (
-                              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                                <DollarSign className="h-3 w-3" />
-                                {formatCurrency(Number(agendamento.valor_previsto))}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Observations */}
-                          {agendamento.observacoes && (
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {agendamento.observacoes}
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                    {columnAgendamentos.length === 0 && (
-                      <div className="py-8 text-center text-sm text-muted-foreground">
-                        Nenhum item
-                      </div>
+                {columnAgendamentos.length === 0 && (
+                  <div className="py-8 text-center text-sm text-muted-foreground">
+                    <p>Nenhum item</p>
+                    {status === "lead" && (
+                      <p className="text-xs mt-1">Arraste leads para cá</p>
                     )}
                   </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <div className="space-y-4">
+        {/* Main Pipeline */}
+        <div className="flex gap-3 overflow-x-auto pb-4">
+          {PIPELINE_COLUMNS.map((status) => renderColumn(status))}
+        </div>
+
+        {/* Auxiliary Columns */}
+        <div className="border-t pt-4">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+            Fora do Funil
+          </p>
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {AUXILIARY_COLUMNS.map((status) => renderColumn(status, true))}
           </div>
-        );
-      })}
-    </div>
+        </div>
+      </div>
+
+      {/* Transition Modal */}
+      {transicaoModal && (
+        <TransicaoModal
+          open={transicaoModal.open}
+          onOpenChange={(open) => !open && setTransicaoModal(null)}
+          agendamentoId={transicaoModal.agendamentoId}
+          fromStatus={transicaoModal.fromStatus}
+          toStatus={transicaoModal.toStatus}
+          onSuccess={() => setTransicaoModal(null)}
+        />
+      )}
+
+      {/* Interaction Modal */}
+      {interacaoModal && (
+        <InteracaoForm
+          open={interacaoModal.open}
+          onOpenChange={(open) => !open && setInteracaoModal(null)}
+          agendamentoId={interacaoModal.agendamentoId}
+          defaultTipo={interacaoModal.tipo}
+          title={interacaoModal.tipo === "whatsapp" ? "WhatsApp Enviado" : "Ligação Realizada"}
+          description="Registre o que foi conversado."
+        />
+      )}
+    </>
   );
 }
