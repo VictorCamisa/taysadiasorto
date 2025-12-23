@@ -130,14 +130,14 @@ export function AgendamentoForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tratamento</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <Select onValueChange={(val) => field.onChange(val === "none" ? "" : val)} value={field.value || "none"}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tratamento" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {tratamentos.map((t) => (
                         <SelectItem key={t.id} value={t.id}>
                           {t.nome}
