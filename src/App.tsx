@@ -5,6 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Layout } from "./components/Layout";
+
+// Home / Landing
+import Home from "./pages/Home";
+
+// Módulo Financeiro
 import Dashboard from "./pages/Dashboard";
 import DiarioCaixa from "./pages/DiarioCaixa";
 import Lancamentos from "./pages/Lancamentos";
@@ -15,9 +20,16 @@ import Fornecedores from "./pages/Fornecedores";
 import DRE from "./pages/DRE";
 import Relatorios from "./pages/Relatorios";
 import RelatoriosEstoque from "./pages/RelatoriosEstoque";
+import Orcamento from "./pages/Orcamento";
+
+// Módulos Placeholder
+import CRMPlaceholder from "./pages/crm/CRMPlaceholder";
+import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
+import BIPlaceholder from "./pages/bi/BIPlaceholder";
+
+// Global
 import AssistenteIA from "./pages/AssistenteIA";
 import Configuracoes from "./pages/Configuracoes";
-import Orcamento from "./pages/Orcamento";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,19 +43,39 @@ const App = () => (
         <BrowserRouter>
           <Layout>
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/diario-caixa" element={<DiarioCaixa />} />
-              <Route path="/lancamentos" element={<Lancamentos />} />
-              <Route path="/contas-pagar" element={<ContasPagar />} />
-              <Route path="/tratamentos" element={<Tratamentos />} />
-              <Route path="/estoque" element={<Estoque />} />
-              <Route path="/fornecedores" element={<Fornecedores />} />
-              <Route path="/dre" element={<DRE />} />
-              <Route path="/orcamento" element={<Orcamento />} />
-              <Route path="/relatorios" element={<Relatorios />} />
-              <Route path="/relatorios-estoque" element={<RelatoriosEstoque />} />
+              {/* Home / Landing SGCTD */}
+              <Route path="/" element={<Home />} />
+              
+              {/* Módulo Financeiro */}
+              <Route path="/financeiro" element={<Dashboard />} />
+              <Route path="/financeiro/diario-caixa" element={<DiarioCaixa />} />
+              <Route path="/financeiro/lancamentos" element={<Lancamentos />} />
+              <Route path="/financeiro/contas-pagar" element={<ContasPagar />} />
+              <Route path="/financeiro/tratamentos" element={<Tratamentos />} />
+              <Route path="/financeiro/estoque" element={<Estoque />} />
+              <Route path="/financeiro/fornecedores" element={<Fornecedores />} />
+              <Route path="/financeiro/dre" element={<DRE />} />
+              <Route path="/financeiro/orcamento" element={<Orcamento />} />
+              <Route path="/financeiro/relatorios" element={<Relatorios />} />
+              <Route path="/financeiro/relatorios-estoque" element={<RelatoriosEstoque />} />
+              
+              {/* Módulo CRM (Placeholder) */}
+              <Route path="/crm" element={<CRMPlaceholder />} />
+              <Route path="/crm/*" element={<CRMPlaceholder />} />
+              
+              {/* Módulo Administrativo (Placeholder) */}
+              <Route path="/admin" element={<AdminPlaceholder />} />
+              <Route path="/admin/*" element={<AdminPlaceholder />} />
+              
+              {/* Módulo BI (Placeholder) */}
+              <Route path="/bi" element={<BIPlaceholder />} />
+              <Route path="/bi/*" element={<BIPlaceholder />} />
+              
+              {/* Global */}
               <Route path="/assistente-ia" element={<AssistenteIA />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
+              
+              {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
