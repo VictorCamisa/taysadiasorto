@@ -1,7 +1,7 @@
 project_id = "ynstyufdfrctktsgwxwv"
 
 [functions.chat-n8n]
-verify_jwt = true
+verify_jwt = false
 
 [functions.corrigir-dre-ia]
 verify_jwt = false
