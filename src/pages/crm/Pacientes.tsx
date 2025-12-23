@@ -211,7 +211,7 @@ export default function Pacientes() {
       <PageHeader
         title="Pacientes"
         description="Gerencie os pacientes e clientes da clínica"
-        icon={Users}
+        icon={<Users className="h-6 w-6 text-primary" />}
         actions={
           <Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-2" />
