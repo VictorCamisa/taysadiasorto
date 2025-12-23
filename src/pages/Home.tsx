@@ -36,20 +36,20 @@ const modules: ModuleCardProps[] = [
     features: ["Dashboard", "Lançamentos", "DRE", "Orçamento", "Estoque"]
   },
   {
-    title: "CRM",
-    description: "Ficha 360° do paciente, anamnese, prontuários e follow-up",
+    title: "Comercial",
+    description: "Pipeline de vendas, agenda, ficha 360° do paciente e follow-up",
     icon: Users,
     href: "/crm",
-    status: "coming-soon",
+    status: "active",
     color: "module-crm",
-    features: ["Ficha 360°", "Anamnese", "Prontuários", "Contratos"]
+    features: ["Pipeline", "Agenda", "Ficha 360°", "Pós-venda"]
   },
   {
     title: "Administrativo",
     description: "Gestão de usuários, permissões, LGPD e conformidade",
     icon: Building2,
     href: "/admin",
-    status: "coming-soon",
+    status: "active",
     color: "module-admin",
     features: ["Usuários", "Permissões", "LGPD", "Documentos"]
   },
@@ -167,7 +167,7 @@ export default function Home() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Módulos</p>
-              <p className="text-lg font-semibold">1 Ativo</p>
+              <p className="text-lg font-semibold">3 Ativos</p>
             </div>
           </CardContent>
         </Card>
@@ -179,7 +179,7 @@ export default function Home() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Próximos</p>
-              <p className="text-lg font-semibold">3 Módulos</p>
+              <p className="text-lg font-semibold">1 Módulo</p>
             </div>
           </CardContent>
         </Card>
