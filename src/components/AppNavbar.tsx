@@ -226,14 +226,14 @@ function MobileModuleSection({
 export function AppNavbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  return <header className="sticky top-0 z-50 glass-navbar">
+  return <header className="sticky top-0 z-50 bg-black border-b border-amber-500/20">
       <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-3 md:px-6">
         {/* Brand */}
-        <NavLink to="/" end className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-accent/50 transition-all duration-300">
+        <NavLink to="/" end className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-amber-500/10 transition-all duration-300">
           
           <div className="hidden sm:block">
-            <p className="font-semibold leading-none text-foreground text-2xl">Taysa Dias</p>
-            <p className="text-xs text-muted-foreground mt-0.5 font-mono">Gestão Clínica</p>
+            <p className="font-semibold leading-none text-amber-400 text-2xl">Taysa Dias</p>
+            <p className="text-xs text-amber-200/60 mt-0.5 font-mono">Gestão Clínica</p>
           </div>
         </NavLink>
 
