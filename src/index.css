@@ -227,35 +227,62 @@
 @layer utilities {
   /* Glass/Vibrancy effect */
   .glass {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    background-color: rgb(var(--card) / 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgb(var(--border) / 0.5);
   }
   
   .glass-subtle {
-    @apply bg-card/60 backdrop-blur-lg border border-border/30;
+    background-color: rgb(var(--card) / 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgb(var(--border) / 0.3);
   }
   
   /* Hover effects */
   .hover-lift {
-    @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md;
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
   
   .hover-scale {
-    @apply transition-transform duration-200 ease-out hover:scale-[1.02];
+    @apply transition-transform duration-200 ease-out;
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.02);
   }
   
   /* Active state */
   .active-scale {
-    @apply active:scale-[0.98] transition-transform duration-100;
+    @apply transition-transform duration-100;
+  }
+  
+  .active-scale:active {
+    transform: scale(0.98);
   }
   
   /* Gradient text */
   .text-gradient {
-    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+    background: linear-gradient(to right, rgb(var(--primary)), rgb(var(--accent)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   
   /* macOS window title bar style */
   .window-header {
-    @apply flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-muted/30;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgb(var(--border) / 0.5);
+    background-color: rgb(var(--muted) / 0.3);
   }
   
   /* Scrollbar styling */
