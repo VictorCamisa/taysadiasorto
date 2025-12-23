@@ -101,10 +101,10 @@ export const useOrcamentoData = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
-      toast.success("Orçamento criado com sucesso!");
+      toast.success("Budget criado com sucesso!");
     },
     onError: (error) => {
-      toast.error("Erro ao criar orçamento: " + error.message);
+      toast.error("Erro ao criar budget: " + error.message);
     },
   });
 
@@ -138,10 +138,10 @@ export const useOrcamentoData = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
-      toast.success("Orçamento excluído com sucesso!");
+      toast.success("Budget excluído com sucesso!");
     },
     onError: (error) => {
-      toast.error("Erro ao excluir orçamento: " + error.message);
+      toast.error("Erro ao excluir budget: " + error.message);
     },
   });
 
