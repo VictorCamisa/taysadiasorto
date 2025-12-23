@@ -226,12 +226,12 @@ export function FloatingDock() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="h-full w-64 bg-sidebar shadow-2xl flex flex-col border-r border-sidebar-border/50 overflow-hidden">
-          {/* Header - Premium branding */}
-          <div className="p-5 border-b border-sidebar-border/50 flex items-center justify-between bg-gradient-to-r from-sidebar to-sidebar-accent/20">
+        <div className="h-full w-64 bg-sidebar/95 backdrop-blur-xl shadow-xl flex flex-col border-r border-sidebar-border/30 overflow-hidden">
+          {/* Header - Minimal branding */}
+          <div className="p-5 border-b border-sidebar-border/30 flex items-center justify-between">
             <NavLink to="/" className="flex items-center gap-3 group">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg group-hover:shadow-primary/20 transition-all duration-300 group-hover:scale-105">
-                <span className="text-primary-foreground font-bold text-base">TD</span>
+              <div className="h-9 w-9 rounded-lg bg-foreground/5 flex items-center justify-center border border-border/30 group-hover:border-border/50 transition-all duration-300">
+                <span className="text-foreground/70 font-semibold text-sm">TD</span>
               </div>
               <div>
                 <span className="font-semibold text-sidebar-foreground text-sm group-hover:text-sidebar-primary transition-colors">Taysa Dias</span>
