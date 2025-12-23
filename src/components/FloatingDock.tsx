@@ -66,7 +66,7 @@ const modules: ModuleGroup[] = [
       { title: "Estoque", url: "/financeiro/estoque", icon: Package },
       { title: "Fornecedores", url: "/financeiro/fornecedores", icon: Users },
       { title: "DRE", url: "/financeiro/dre", icon: BarChart3 },
-      { title: "Orçamento", url: "/financeiro/orcamento", icon: Target },
+      { title: "Budget", url: "/financeiro/orcamento", icon: Target },
       { title: "Relatórios", url: "/financeiro/relatorios", icon: FileBarChart },
     ]
   },
