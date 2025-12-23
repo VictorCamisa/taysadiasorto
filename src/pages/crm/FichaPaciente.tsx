@@ -25,6 +25,7 @@ import {
 import { useFichaPacienteData, Anamnese, Prontuario } from "@/components/crm/hooks/useFichaPacienteData";
 import { AnamneseForm } from "@/components/crm/AnamneseForm";
 import { ProntuarioForm } from "@/components/crm/ProntuarioForm";
+import { AtendimentosTimeline } from "@/components/crm/AtendimentosTimeline";
 import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -235,8 +236,9 @@ export default function FichaPaciente() {
 
       {/* Tabs */}
       <Tabs defaultValue="resumo" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="anamneses">Anamneses</TabsTrigger>
           <TabsTrigger value="prontuarios">Prontuários</TabsTrigger>
           <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
@@ -353,6 +355,22 @@ export default function FichaPaciente() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Timeline Tab */}
+        <TabsContent value="timeline" className="space-y-4">
+          <AtendimentosTimeline
+            anamneses={anamneses}
+            prontuarios={prontuarios}
+            onSelectAnamnese={(anamnese) => {
+              setSelectedAnamnese(anamnese);
+              setAnamneseFormOpen(true);
+            }}
+            onSelectProntuario={(prontuario) => {
+              setSelectedProntuario(prontuario);
+              setProntuarioFormOpen(true);
+            }}
+          />
         </TabsContent>
 
         {/* Anamneses Tab */}
