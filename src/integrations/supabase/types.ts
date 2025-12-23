@@ -1257,6 +1257,7 @@ export type Database = {
           descricao: string | null
           forma_pagamento_id: string | null
           id: string
+          observacoes: string | null
           origem_id: string | null
           parcela_atual: number | null
           status: string
@@ -1278,6 +1279,7 @@ export type Database = {
           descricao?: string | null
           forma_pagamento_id?: string | null
           id?: string
+          observacoes?: string | null
           origem_id?: string | null
           parcela_atual?: number | null
           status: string
@@ -1299,6 +1301,7 @@ export type Database = {
           descricao?: string | null
           forma_pagamento_id?: string | null
           id?: string
+          observacoes?: string | null
           origem_id?: string | null
           parcela_atual?: number | null
           status?: string
