@@ -34,24 +34,24 @@ export function Layout({ children }: LayoutProps) {
       {/* Floating Dock Navigation */}
       <FloatingDock />
 
-      {/* Top bar - minimal macOS style */}
+      {/* Top bar - Corporate style */}
       <header 
         className={cn(
-          "sticky top-0 z-40 transition-all duration-300 ease-out",
-          isPinned ? "pl-[252px]" : "pl-4"
+          "sticky top-0 z-40 transition-all duration-300 ease-out bg-card border-b border-border",
+          isPinned ? "pl-60" : "pl-0"
         )}
       >
-        <div className="glass border-b border-border/30 rounded-b-xl mx-3 mt-0 shadow-sm">
-          <div className="flex items-center justify-between gap-4 px-4 py-2.5">
-            {/* Left side - can add breadcrumbs or search later */}
-            <div className="flex-1" />
-            
-            {/* Right side - actions */}
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <div className="h-5 w-px bg-border/50" />
-              <UserAuthMenu />
-            </div>
+        <div className="flex items-center justify-between gap-4 px-6 py-3">
+          {/* Left side - Page context */}
+          <div className="flex-1">
+            {/* Can add breadcrumbs here if needed */}
+          </div>
+          
+          {/* Right side - actions */}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <div className="h-5 w-px bg-border" />
+            <UserAuthMenu />
           </div>
         </div>
       </header>
@@ -63,7 +63,7 @@ export function Layout({ children }: LayoutProps) {
           isAssistenteIA
             ? "flex flex-col min-h-0 p-0"
             : "p-6",
-          isPinned ? "pl-[264px]" : "pl-6"
+          isPinned ? "pl-[calc(15rem+1.5rem)]" : "pl-6"
         )}
       >
         <div className={cn(

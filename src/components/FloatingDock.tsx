@@ -200,15 +200,15 @@ export function FloatingDock() {
         )}
         onMouseEnter={handleMouseEnter}
       >
-        <div className="glass rounded-r-xl py-4 px-1.5 shadow-lg cursor-pointer hover:bg-card/90 transition-colors">
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <div className="bg-sidebar rounded-r-lg py-4 px-1.5 shadow-lg cursor-pointer hover:bg-sidebar/90 transition-colors border-r border-t border-b border-sidebar-border">
+          <ChevronRight className="h-4 w-4 text-sidebar-foreground/70" />
         </div>
       </div>
 
       {/* Backdrop overlay */}
       {isOpen && !isPinned && (
         <div 
-          className="fixed inset-0 z-40 bg-background/20 backdrop-blur-[2px] transition-opacity duration-300"
+          className="fixed inset-0 z-40 bg-foreground/10 backdrop-blur-[2px] transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -217,24 +217,24 @@ export function FloatingDock() {
       <nav
         ref={dockRef}
         className={cn(
-          "fixed left-3 top-3 bottom-3 z-50 transition-all duration-300 ease-out",
+          "fixed left-0 top-0 bottom-0 z-50 transition-all duration-300 ease-out",
           isOpen 
             ? "translate-x-0 opacity-100" 
-            : "-translate-x-[calc(100%+12px)] opacity-0"
+            : "-translate-x-full opacity-0"
         )}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="h-full w-64 glass rounded-2xl shadow-xl flex flex-col overflow-hidden">
+        <div className="h-full w-60 bg-sidebar shadow-xl flex flex-col border-r border-sidebar-border">
           {/* Header */}
-          <div className="p-4 border-b border-border/30 flex items-center justify-between">
+          <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
             <NavLink to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-success flex items-center justify-center shadow-sm">
+              <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">TD</span>
               </div>
               <div>
-                <span className="font-semibold text-foreground text-sm">Taysa Dias</span>
-                <p className="text-xs text-muted-foreground">Gestão Clínica</p>
+                <span className="font-semibold text-sidebar-foreground text-sm">Taysa Dias</span>
+                <p className="text-[11px] text-sidebar-foreground/60">Gestão Clínica</p>
               </div>
             </NavLink>
             <Tooltip>
@@ -242,45 +242,44 @@ export function FloatingDock() {
                 <button
                   onClick={togglePin}
                   className={cn(
-                    "p-2 rounded-lg transition-all duration-200 active-scale",
+                    "p-2 rounded-md transition-all duration-200",
                     isPinned 
-                      ? "bg-primary/10 text-primary" 
-                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                      ? "bg-sidebar-accent text-sidebar-primary" 
+                      : "hover:bg-sidebar-accent/50 text-sidebar-foreground/50 hover:text-sidebar-foreground"
                   )}
                 >
                   {isPinned ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right" className="glass">
+              <TooltipContent side="right">
                 {isPinned ? "Desafixar menu" : "Fixar menu aberto"}
               </TooltipContent>
             </Tooltip>
           </div>
 
           {/* Home Link */}
-          <div className="px-2 pt-2">
+          <div className="px-3 pt-3">
             <NavLink
               to="/"
               end
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                "relative group active-scale",
-                "hover:bg-muted/80 text-foreground/80 hover:text-foreground"
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground"
               )}
-              activeClassName="bg-primary text-primary-foreground shadow-sm"
+              activeClassName="bg-sidebar-primary text-sidebar-primary-foreground"
             >
-              <Home className="h-[18px] w-[18px]" />
+              <Home className="h-4 w-4" />
               <span>Início</span>
             </NavLink>
           </div>
 
           {/* Navigation - Modules */}
-          <div className="flex-1 p-2 overflow-y-auto scrollbar-thin">
-            <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="flex-1 px-3 py-3 overflow-y-auto scrollbar-thin">
+            <p className="px-3 py-2 text-[10px] font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
               Módulos
             </p>
             
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {modules.map((module) => {
                 const isActive = isModuleActive(module);
                 const isExpanded = expandedModule === module.title;
@@ -295,22 +294,22 @@ export function FloatingDock() {
                         <TooltipTrigger asChild>
                           <div
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium",
-                              "text-muted-foreground/50 cursor-not-allowed"
+                              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium",
+                              "text-sidebar-foreground/30 cursor-not-allowed"
                             )}
                           >
                             <div 
-                              className="w-1 h-5 rounded-full opacity-30"
+                              className="w-1 h-4 rounded-full opacity-30"
                               style={{ backgroundColor: `hsl(var(--${module.color}))` }}
                             />
-                            <Icon className="h-[18px] w-[18px]" />
+                            <Icon className="h-4 w-4" />
                             <span className="flex-1">{module.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-sidebar-accent text-sidebar-foreground/50">
                               Em breve
                             </span>
                           </div>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="glass">
+                        <TooltipContent side="right">
                           Módulo em desenvolvimento
                         </TooltipContent>
                       </Tooltip>
@@ -318,22 +317,21 @@ export function FloatingDock() {
                       <button
                         onClick={() => toggleModule(module.title)}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                          "relative group active-scale",
+                          "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                           isActive 
-                            ? "bg-muted text-foreground" 
-                            : "hover:bg-muted/80 text-foreground/80 hover:text-foreground"
+                            ? "bg-sidebar-accent text-sidebar-foreground" 
+                            : "hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground"
                         )}
                       >
                         <div 
-                          className="w-1 h-5 rounded-full"
+                          className="w-1 h-4 rounded-full"
                           style={{ backgroundColor: `hsl(var(--${module.color}))` }}
                         />
-                        <Icon className="h-[18px] w-[18px]" />
+                        <Icon className="h-4 w-4" />
                         <span className="flex-1 text-left">{module.title}</span>
                         <ChevronDown 
                           className={cn(
-                            "h-4 w-4 transition-transform duration-200",
+                            "h-3.5 w-3.5 transition-transform duration-200",
                             isExpanded && "rotate-180"
                           )}
                         />
@@ -342,7 +340,7 @@ export function FloatingDock() {
 
                     {/* Module Items */}
                     {isExpanded && !isComingSoon && (
-                      <div className="mt-1 ml-4 pl-3 border-l border-border/50 space-y-0.5">
+                      <div className="mt-1 ml-4 pl-3 border-l border-sidebar-border/50 space-y-0.5">
                         {module.items.map((item) => {
                           const ItemIcon = item.icon;
                           const isItemActive = location.pathname === item.url;
@@ -353,15 +351,14 @@ export function FloatingDock() {
                               to={item.url}
                               end={item.url === "/financeiro"}
                               className={cn(
-                                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
-                                "relative group active-scale",
-                                !isItemActive && "hover:bg-muted/60 text-foreground/70 hover:text-foreground"
+                                "flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-colors",
+                                !isItemActive && "hover:bg-sidebar-accent/30 text-sidebar-foreground/60 hover:text-sidebar-foreground"
                               )}
-                              activeClassName="bg-primary/10 text-primary font-medium"
+                              activeClassName="bg-sidebar-primary/15 text-sidebar-primary font-medium"
                               onMouseEnter={() => setHoveredIndex(item.url)}
                               onMouseLeave={() => setHoveredIndex(null)}
                             >
-                              <ItemIcon className="h-4 w-4" />
+                              <ItemIcon className="h-3.5 w-3.5" />
                               <span className="truncate">{item.title}</span>
                             </NavLink>
                           );
@@ -374,8 +371,8 @@ export function FloatingDock() {
             </div>
 
             {/* Global Items */}
-            <div className="mt-4 pt-4 border-t border-border/30">
-              <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="mt-4 pt-4 border-t border-sidebar-border/50">
+              <p className="px-3 py-2 text-[10px] font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
                 Sistema
               </p>
               <div className="space-y-0.5">
@@ -388,13 +385,12 @@ export function FloatingDock() {
                       key={item.url}
                       to={item.url}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                        "relative group active-scale",
-                        !isActive && "hover:bg-muted/80 text-foreground/80 hover:text-foreground"
+                        "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                        !isActive && "hover:bg-sidebar-accent/50 text-sidebar-foreground/60 hover:text-sidebar-foreground"
                       )}
-                      activeClassName="bg-primary text-primary-foreground shadow-sm"
+                      activeClassName="bg-sidebar-primary text-sidebar-primary-foreground"
                     >
-                      <Icon className="h-[18px] w-[18px]" />
+                      <Icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   );
@@ -404,14 +400,14 @@ export function FloatingDock() {
           </div>
 
           {/* Footer */}
-          <div className="p-3 border-t border-border/30">
+          <div className="p-3 border-t border-sidebar-border">
             {!isPinned ? (
-              <p className="text-[11px] text-muted-foreground text-center flex items-center justify-center gap-1.5">
+              <p className="text-[10px] text-sidebar-foreground/40 text-center flex items-center justify-center gap-1.5">
                 <Pin className="h-3 w-3" />
                 Clique para manter aberto
               </p>
             ) : (
-              <p className="text-[11px] text-muted-foreground text-center">
+              <p className="text-[10px] text-sidebar-foreground/40 text-center">
                 Menu fixado
               </p>
             )}
