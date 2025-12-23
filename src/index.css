@@ -3,170 +3,158 @@
 @tailwind components;
 @tailwind utilities;
 
-/* SGCTD Design System - macOS + Wellness */
+/* SGCTD Design System - Corporate Professional Blue/Gray */
 
 @layer base {
   :root {
     /* Core Colors - Light Theme (HSL format) */
-    --background: 0 0% 97%;
-    --foreground: 240 6% 10%;
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
     
     /* Surface Colors */
     --card: 0 0% 100%;
-    --card-foreground: 240 6% 10%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 6% 10%;
+    --popover-foreground: 222 47% 11%;
     
-    /* Brand Colors - macOS Blue */
-    --primary: 211 100% 50%;
+    /* Brand Colors - Corporate Blue */
+    --primary: 217 91% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
     
     /* Semantic Colors */
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 211 100% 50%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 217 91% 45%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 4 90% 58%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
     /* Utility */
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 211 100% 50%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 45%;
     
-    /* Chart Colors - Vibrant macOS palette */
-    --chart-1: 211 100% 50%;
-    --chart-2: 158 64% 45%;
-    --chart-3: 35 100% 50%;
-    --chart-4: 280 59% 55%;
-    --chart-5: 4 90% 58%;
+    /* Chart Colors - Professional palette */
+    --chart-1: 217 91% 45%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 172 66% 50%;
+    --chart-4: 262 83% 58%;
+    --chart-5: 0 84% 60%;
     
-    /* Sidebar - Clean white */
-    --sidebar: 0 0% 100%;
-    --sidebar-foreground: 240 6% 10%;
-    --sidebar-primary: 211 100% 50%;
+    /* Sidebar - Professional gray */
+    --sidebar: 222 47% 11%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 217 91% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 211 100% 50%;
+    --sidebar-accent: 220 14% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 6% 90%;
-    --sidebar-ring: 211 100% 50%;
+    --sidebar-border: 220 13% 20%;
+    --sidebar-ring: 217 91% 55%;
     
     /* Status Colors */
-    --success: 158 64% 45%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 35 100% 50%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 211 100% 50%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
     
-    /* Wellness Colors - Mint/Sage palette */
-    --wellness-mint: 158 64% 52%;
-    --wellness-sage: 147 39% 60%;
-    --wellness-cream: 48 100% 97%;
-    --wellness-teal: 173 58% 45%;
-    
-    /* Module Colors */
-    --module-financeiro: 158 64% 45%;
-    --module-crm: 211 100% 50%;
-    --module-admin: 280 59% 55%;
-    --module-bi: 35 100% 50%;
+    /* Module Colors - Professional corporate */
+    --module-financeiro: 142 71% 45%;
+    --module-crm: 199 89% 48%;
+    --module-admin: 262 83% 58%;
+    --module-bi: 217 91% 45%;
     
     /* Typography */
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'SF Mono', 'Monaco', 'Menlo', monospace;
     
-    /* Radius - macOS uses subtle rounding */
-    --radius: 0.75rem;
+    /* Radius - Professional subtle rounding */
+    --radius: 0.5rem;
     
-    /* Shadows - Soft, layered macOS shadows */
-    --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
-    --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.04);
-    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.05), 0 1px 3px -1px hsl(0 0% 0% / 0.03);
-    --shadow: 0 4px 12px -4px hsl(0 0% 0% / 0.08), 0 2px 4px -2px hsl(0 0% 0% / 0.04);
-    --shadow-md: 0 8px 24px -6px hsl(0 0% 0% / 0.1), 0 4px 8px -4px hsl(0 0% 0% / 0.05);
-    --shadow-lg: 0 12px 40px -8px hsl(0 0% 0% / 0.12), 0 6px 12px -6px hsl(0 0% 0% / 0.06);
-    --shadow-xl: 0 20px 60px -12px hsl(0 0% 0% / 0.15), 0 8px 16px -8px hsl(0 0% 0% / 0.08);
-    --shadow-2xl: 0 32px 80px -16px hsl(0 0% 0% / 0.2);
+    /* Shadows - Corporate clean shadows */
+    --shadow-2xs: 0 1px 2px 0 hsl(222 47% 11% / 0.03);
+    --shadow-xs: 0 1px 3px 0 hsl(222 47% 11% / 0.04);
+    --shadow-sm: 0 1px 2px -1px hsl(222 47% 11% / 0.05), 0 1px 3px 0 hsl(222 47% 11% / 0.03);
+    --shadow: 0 4px 6px -1px hsl(222 47% 11% / 0.06), 0 2px 4px -2px hsl(222 47% 11% / 0.04);
+    --shadow-md: 0 10px 15px -3px hsl(222 47% 11% / 0.08), 0 4px 6px -4px hsl(222 47% 11% / 0.05);
+    --shadow-lg: 0 20px 25px -5px hsl(222 47% 11% / 0.1), 0 8px 10px -6px hsl(222 47% 11% / 0.06);
+    --shadow-xl: 0 25px 50px -12px hsl(222 47% 11% / 0.18);
+    --shadow-2xl: 0 32px 64px -12px hsl(222 47% 11% / 0.24);
   }
 
   .dark {
     /* Core Colors - Dark Theme (HSL format) */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    --background: 222 47% 6%;
+    --foreground: 220 14% 96%;
     
     /* Surface Colors */
-    --card: 240 6% 10%;
-    --card-foreground: 0 0% 100%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 0 0% 100%;
+    --card: 222 47% 9%;
+    --card-foreground: 220 14% 96%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 220 14% 96%;
     
-    /* Brand Colors - macOS Blue (darker variant) */
-    --primary: 211 100% 52%;
+    /* Brand Colors - Corporate Blue (darker variant) */
+    --primary: 217 91% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 222 47% 14%;
+    --secondary-foreground: 220 14% 96%;
     
     /* Semantic Colors */
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 4% 60%;
-    --accent: 211 100% 52%;
+    --muted: 222 47% 14%;
+    --muted-foreground: 220 9% 55%;
+    --accent: 217 91% 55%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 4 90% 61%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
     /* Utility */
-    --border: 240 4% 22%;
-    --input: 240 4% 22%;
-    --ring: 211 100% 52%;
+    --border: 222 47% 18%;
+    --input: 222 47% 18%;
+    --ring: 217 91% 55%;
     
     /* Chart Colors - Vibrant for dark mode */
-    --chart-1: 211 100% 52%;
-    --chart-2: 158 64% 50%;
-    --chart-3: 38 100% 52%;
-    --chart-4: 280 59% 65%;
-    --chart-5: 4 90% 61%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 199 89% 55%;
+    --chart-3: 172 66% 55%;
+    --chart-4: 262 83% 65%;
+    --chart-5: 0 84% 65%;
     
     /* Sidebar */
-    --sidebar: 240 6% 10%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 211 100% 52%;
+    --sidebar: 222 47% 6%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 211 100% 52%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 4% 22%;
-    --sidebar-ring: 211 100% 52%;
+    --sidebar-accent: 222 47% 14%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 222 47% 18%;
+    --sidebar-ring: 217 91% 60%;
     
     /* Status Colors */
-    --success: 158 64% 50%;
+    --success: 142 71% 50%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 100% 52%;
+    --warning: 38 92% 55%;
     --warning-foreground: 0 0% 100%;
-    --info: 211 100% 52%;
+    --info: 199 89% 55%;
     --info-foreground: 0 0% 100%;
     
-    /* Wellness Colors - Mint/Sage palette (dark mode adjusted) */
-    --wellness-mint: 158 64% 48%;
-    --wellness-sage: 147 39% 50%;
-    --wellness-cream: 48 30% 15%;
-    --wellness-teal: 173 58% 40%;
-    
     /* Module Colors (dark mode) */
-    --module-financeiro: 158 64% 50%;
-    --module-crm: 211 100% 52%;
-    --module-admin: 280 59% 65%;
-    --module-bi: 38 100% 52%;
+    --module-financeiro: 142 71% 50%;
+    --module-crm: 199 89% 55%;
+    --module-admin: 262 83% 65%;
+    --module-bi: 217 91% 60%;
     
     /* Shadows - Subtle for dark mode */
     --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
     --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.25);
-    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3), 0 1px 3px -1px hsl(0 0% 0% / 0.2);
-    --shadow: 0 4px 12px -4px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.25);
-    --shadow-md: 0 8px 24px -6px hsl(0 0% 0% / 0.5), 0 4px 8px -4px hsl(0 0% 0% / 0.3);
-    --shadow-lg: 0 12px 40px -8px hsl(0 0% 0% / 0.6), 0 6px 12px -6px hsl(0 0% 0% / 0.35);
-    --shadow-xl: 0 20px 60px -12px hsl(0 0% 0% / 0.7), 0 8px 16px -8px hsl(0 0% 0% / 0.4);
-    --shadow-2xl: 0 32px 80px -16px hsl(0 0% 0% / 0.8);
+    --shadow-sm: 0 1px 2px -1px hsl(0 0% 0% / 0.3), 0 1px 3px 0 hsl(0 0% 0% / 0.2);
+    --shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.35), 0 2px 4px -2px hsl(0 0% 0% / 0.25);
+    --shadow-md: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
+    --shadow-lg: 0 20px 25px -5px hsl(0 0% 0% / 0.5), 0 8px 10px -6px hsl(0 0% 0% / 0.35);
+    --shadow-xl: 0 25px 50px -12px hsl(0 0% 0% / 0.6);
+    --shadow-2xl: 0 32px 64px -12px hsl(0 0% 0% / 0.7);
   }
 
   @theme inline {
@@ -209,12 +197,6 @@
     --color-info: hsl(var(--info));
     --color-info-foreground: hsl(var(--info-foreground));
     
-    /* Wellness Colors */
-    --color-wellness-mint: hsl(var(--wellness-mint));
-    --color-wellness-sage: hsl(var(--wellness-sage));
-    --color-wellness-cream: hsl(var(--wellness-cream));
-    --color-wellness-teal: hsl(var(--wellness-teal));
-    
     /* Module Colors */
     --color-module-financeiro: hsl(var(--module-financeiro));
     --color-module-crm: hsl(var(--module-crm));
@@ -253,47 +235,47 @@
   }
 }
 
-/* macOS + Wellness Utility Classes */
+/* Corporate Professional Utility Classes */
 @layer utilities {
-  /* Glass/Vibrancy effect */
+  /* Glass/Vibrancy effect - Corporate style */
   .glass {
-    background-color: hsl(var(--card) / 0.8);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid hsl(var(--border) / 0.5);
+    background-color: hsl(var(--card) / 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--border) / 0.6);
   }
   
   .glass-subtle {
-    background-color: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border) / 0.3);
+    background-color: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.4);
   }
   
-  /* Wellness glass with subtle tint */
-  .glass-wellness {
-    background: linear-gradient(135deg, hsl(var(--wellness-mint) / 0.05), hsl(var(--card) / 0.8));
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid hsl(var(--wellness-mint) / 0.2);
+  /* Professional glass with subtle blue tint */
+  .glass-corporate {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.02), hsl(var(--card) / 0.95));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--primary) / 0.1);
   }
   
-  /* Hover effects */
+  /* Hover effects - Professional subtle */
   .hover-lift {
     @apply transition-all duration-200 ease-out;
   }
   
   .hover-lift:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     box-shadow: var(--shadow-md);
   }
   
   .hover-scale {
-    @apply transition-transform duration-200 ease-out;
+    @apply transition-transform duration-150 ease-out;
   }
   
   .hover-scale:hover {
-    transform: scale(1.02);
+    transform: scale(1.01);
   }
   
   /* Active state */
@@ -302,40 +284,40 @@
   }
   
   .active-scale:active {
-    transform: scale(0.98);
+    transform: scale(0.99);
   }
   
-  /* Gradient text */
+  /* Gradient text - Corporate */
   .text-gradient {
-    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--wellness-mint)));
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--info)));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
   
-  /* Wellness gradient backgrounds */
-  .bg-gradient-wellness {
-    background: linear-gradient(135deg, hsl(var(--wellness-mint) / 0.1), hsl(var(--wellness-sage) / 0.05));
+  /* Corporate gradient backgrounds */
+  .bg-gradient-corporate {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.05), hsl(var(--info) / 0.03));
   }
   
   .bg-gradient-module {
-    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--muted) / 0.5));
+    background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted) / 0.3));
   }
   
-  /* macOS window title bar style */
-  .window-header {
+  /* Corporate section header */
+  .section-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid hsl(var(--border) / 0.5);
-    background-color: hsl(var(--muted) / 0.3);
+    border-bottom: 1px solid hsl(var(--border));
+    background-color: hsl(var(--muted) / 0.2);
   }
   
-  /* Scrollbar styling */
+  /* Scrollbar styling - Professional */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
   }
   
   .scrollbar-thin::-webkit-scrollbar {
@@ -348,12 +330,12 @@
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
+    background: hsl(var(--muted-foreground) / 0.25);
     border-radius: 3px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
+    background: hsl(var(--muted-foreground) / 0.4);
   }
   
   /* Module indicator colors */
@@ -371,5 +353,14 @@
   
   .module-indicator-bi {
     background-color: hsl(var(--module-bi));
+  }
+  
+  /* Professional card styles */
+  .card-professional {
+    @apply bg-card border border-border rounded-lg shadow-sm;
+  }
+  
+  .card-professional:hover {
+    @apply shadow-md border-primary/20;
   }
 }
