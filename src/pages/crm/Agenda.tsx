@@ -106,8 +106,8 @@ export default function Agenda() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Agenda de Consultas"
-        description="Visualize e gerencie os agendamentos de pacientes"
+        title="Agenda"
+        description="Visualize e gerencie os agendamentos de procedimentos"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

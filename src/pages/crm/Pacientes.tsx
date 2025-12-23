@@ -210,7 +210,7 @@ export default function Pacientes() {
     <div className="space-y-6">
       <PageHeader
         title="Pacientes"
-        description="Gerencie os pacientes da clínica"
+        description="Gerencie os pacientes e clientes da clínica"
         icon={Users}
         actions={
           <Button onClick={handleNew}>
