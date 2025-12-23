@@ -23,6 +23,8 @@ import {
   Calendar,
   Heart,
   XCircle,
+  Lock,
+  History,
   type LucideIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -88,7 +90,10 @@ const modules: ModuleGroup[] = [
     status: "active",
     basePath: "/admin",
     items: [
-      { title: "Usuários", url: "/admin", icon: Users },
+      { title: "Usuários", url: "/admin?tab=usuarios", icon: Users },
+      { title: "LGPD", url: "/admin?tab=lgpd", icon: Lock },
+      { title: "Documentos", url: "/admin?tab=documentos", icon: FileText },
+      { title: "Auditoria", url: "/admin?tab=auditoria", icon: History },
     ]
   },
   {
