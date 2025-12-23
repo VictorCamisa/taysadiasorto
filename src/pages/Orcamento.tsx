@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Edit, Trash2, Eye, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Loader2, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,10 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useOrcamentoData, type Orcamento } from "@/hooks/useOrcamentoData";
 import { OrcamentoForm } from "@/components/orcamento/OrcamentoForm";
 import { OrcamentoItensEditor } from "@/components/orcamento/OrcamentoItensEditor";
+import { PageHeader } from "@/components/PageHeader";
 
 const statusColors: Record<string, string> = {
   rascunho: "bg-muted text-muted-foreground",
-  ativo: "bg-chart-2/20 text-chart-2",
+  ativo: "bg-[rgb(var(--success))]/10 text-[rgb(var(--success))]",
   encerrado: "bg-muted text-muted-foreground",
 };
 
@@ -62,20 +63,19 @@ export default function OrcamentoPage() {
   const formatDate = (date: string) => format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Orçamento</h1>
-          <p className="text-muted-foreground">
-            Planejamento financeiro e controle orçamentário
-          </p>
-        </div>
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Orçamento
-        </Button>
-      </div>
+      <PageHeader
+        title="Orçamento"
+        description="Planejamento financeiro e controle orçamentário"
+        icon={Target}
+        actions={
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Orçamento
+          </Button>
+        }
+      />
 
       {/* Lista de Orçamentos */}
       <Card>
