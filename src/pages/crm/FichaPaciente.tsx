@@ -27,6 +27,7 @@ import { AnamneseForm } from "@/components/crm/AnamneseForm";
 import { ProntuarioForm } from "@/components/crm/ProntuarioForm";
 import { AtendimentosTimeline } from "@/components/crm/AtendimentosTimeline";
 import { HistoricoInteracoes } from "@/components/crm/HistoricoInteracoes";
+import { ConsentimentosPaciente } from "@/components/crm/ConsentimentosPaciente";
 import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -237,12 +238,13 @@ export default function FichaPaciente() {
 
       {/* Tabs */}
       <Tabs defaultValue="resumo" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
           <TabsTrigger value="contatos">Contatos</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="anamneses">Anamneses</TabsTrigger>
           <TabsTrigger value="prontuarios">Prontuários</TabsTrigger>
+          <TabsTrigger value="lgpd">LGPD</TabsTrigger>
           <TabsTrigger value="dados">Dados</TabsTrigger>
         </TabsList>
 
@@ -593,6 +595,11 @@ export default function FichaPaciente() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* LGPD Tab */}
+        <TabsContent value="lgpd">
+          {id && <ConsentimentosPaciente pacienteId={id} />}
         </TabsContent>
 
         {/* Dados Pessoais Tab */}

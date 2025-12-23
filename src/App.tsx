@@ -5,9 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Layout } from "./components/Layout";
+import { AuthProvider } from "./hooks/useAuth";
 
 // Home / Landing
 import Home from "./pages/Home";
+
+// Auth
+import Auth from "./pages/Auth";
 
 // Módulo Financeiro
 import Dashboard from "./pages/Dashboard";
@@ -23,7 +27,6 @@ import RelatoriosEstoque from "./pages/RelatoriosEstoque";
 import Orcamento from "./pages/Orcamento";
 
 // Módulo CRM
-import CRMPlaceholder from "./pages/crm/CRMPlaceholder";
 import Pacientes from "./pages/crm/Pacientes";
 import FichaPaciente from "./pages/crm/FichaPaciente";
 import Pipeline from "./pages/crm/Pipeline";
@@ -32,7 +35,7 @@ import Agendamentos from "./pages/crm/Agendamentos";
 import PosVenda from "./pages/crm/PosVenda";
 import LeadsPerdidos from "./pages/crm/LeadsPerdidos";
 
-// Módulos Placeholder
+// Módulo Admin
 import Admin from "./pages/admin/Admin";
 import BIPlaceholder from "./pages/bi/BIPlaceholder";
 
@@ -46,56 +49,61 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Layout>
-            <Routes>
-              {/* Home / Landing SGCTD */}
-              <Route path="/" element={<Home />} />
-              
-              {/* Módulo Financeiro */}
-              <Route path="/financeiro" element={<Dashboard />} />
-              <Route path="/financeiro/diario-caixa" element={<DiarioCaixa />} />
-              <Route path="/financeiro/lancamentos" element={<Lancamentos />} />
-              <Route path="/financeiro/contas-pagar" element={<ContasPagar />} />
-              <Route path="/financeiro/tratamentos" element={<Tratamentos />} />
-              <Route path="/financeiro/estoque" element={<Estoque />} />
-              <Route path="/financeiro/fornecedores" element={<Fornecedores />} />
-              <Route path="/financeiro/dre" element={<DRE />} />
-              <Route path="/financeiro/orcamento" element={<Orcamento />} />
-              <Route path="/financeiro/relatorios" element={<Relatorios />} />
-              <Route path="/financeiro/relatorios-estoque" element={<RelatoriosEstoque />} />
-              
-              {/* Módulo CRM / Comercial */}
-              <Route path="/crm" element={<Pipeline />} />
-              <Route path="/crm/pipeline" element={<Pipeline />} />
-              <Route path="/crm/agenda" element={<Agenda />} />
-              <Route path="/crm/agendamentos" element={<Agendamentos />} />
-              <Route path="/crm/pos-venda" element={<PosVenda />} />
-              <Route path="/crm/perdidos" element={<LeadsPerdidos />} />
-              <Route path="/crm/pacientes" element={<Pacientes />} />
-              <Route path="/crm/pacientes/:id" element={<FichaPaciente />} />
-              
-              {/* Módulo Administrativo (Placeholder) */}
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/*" element={<Admin />} />
-              
-              {/* Módulo BI (Placeholder) */}
-              <Route path="/bi" element={<BIPlaceholder />} />
-              <Route path="/bi/*" element={<BIPlaceholder />} />
-              
-              {/* Global */}
-              <Route path="/assistente-ia" element={<AssistenteIA />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
-              
-              {/* 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Layout>
+              <Routes>
+                {/* Home / Landing SGCTD */}
+                <Route path="/" element={<Home />} />
+                
+                {/* Auth */}
+                <Route path="/auth" element={<Auth />} />
+                
+                {/* Módulo Financeiro */}
+                <Route path="/financeiro" element={<Dashboard />} />
+                <Route path="/financeiro/diario-caixa" element={<DiarioCaixa />} />
+                <Route path="/financeiro/lancamentos" element={<Lancamentos />} />
+                <Route path="/financeiro/contas-pagar" element={<ContasPagar />} />
+                <Route path="/financeiro/tratamentos" element={<Tratamentos />} />
+                <Route path="/financeiro/estoque" element={<Estoque />} />
+                <Route path="/financeiro/fornecedores" element={<Fornecedores />} />
+                <Route path="/financeiro/dre" element={<DRE />} />
+                <Route path="/financeiro/orcamento" element={<Orcamento />} />
+                <Route path="/financeiro/relatorios" element={<Relatorios />} />
+                <Route path="/financeiro/relatorios-estoque" element={<RelatoriosEstoque />} />
+                
+                {/* Módulo CRM / Comercial */}
+                <Route path="/crm" element={<Pipeline />} />
+                <Route path="/crm/pipeline" element={<Pipeline />} />
+                <Route path="/crm/agenda" element={<Agenda />} />
+                <Route path="/crm/agendamentos" element={<Agendamentos />} />
+                <Route path="/crm/pos-venda" element={<PosVenda />} />
+                <Route path="/crm/perdidos" element={<LeadsPerdidos />} />
+                <Route path="/crm/pacientes" element={<Pacientes />} />
+                <Route path="/crm/pacientes/:id" element={<FichaPaciente />} />
+                
+                {/* Módulo Administrativo */}
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/*" element={<Admin />} />
+                
+                {/* Módulo BI (Placeholder) */}
+                <Route path="/bi" element={<BIPlaceholder />} />
+                <Route path="/bi/*" element={<BIPlaceholder />} />
+                
+                {/* Global */}
+                <Route path="/assistente-ia" element={<AssistenteIA />} />
+                <Route path="/configuracoes" element={<Configuracoes />} />
+                
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
