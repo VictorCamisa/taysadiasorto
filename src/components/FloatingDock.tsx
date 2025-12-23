@@ -85,9 +85,11 @@ const modules: ModuleGroup[] = [
     title: "Administrativo",
     icon: Building2,
     color: "module-admin",
-    status: "coming-soon",
+    status: "active",
     basePath: "/admin",
-    items: []
+    items: [
+      { title: "Usuários", url: "/admin", icon: Users },
+    ]
   },
   {
     title: "Business Intelligence",
