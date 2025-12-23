@@ -154,6 +154,7 @@ export type Database = {
           data_atualizacao: string | null
           data_criacao: string | null
           id: string
+          natureza_dre: string | null
           nome_analitico: string | null
           nome_sintetico: string
           tipo: string
@@ -162,6 +163,7 @@ export type Database = {
           data_atualizacao?: string | null
           data_criacao?: string | null
           id?: string
+          natureza_dre?: string | null
           nome_analitico?: string | null
           nome_sintetico: string
           tipo: string
@@ -170,6 +172,7 @@ export type Database = {
           data_atualizacao?: string | null
           data_criacao?: string | null
           id?: string
+          natureza_dre?: string | null
           nome_analitico?: string | null
           nome_sintetico?: string
           tipo?: string
@@ -1602,6 +1605,10 @@ export type Database = {
       }
     }
     Functions: {
+      obter_custo_tratamento: {
+        Args: { p_tratamento_id: string }
+        Returns: number
+      }
       recalcular_saldo_conta: { Args: { p_conta_id: string }; Returns: number }
       uuid_default: { Args: never; Returns: string }
     }

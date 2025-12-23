@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Filter, Pencil, Trash2 } from "lucide-react";
+import { Plus, Filter, Pencil, Trash2, RefreshCw, Calculator } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import {
@@ -453,6 +453,7 @@ const Lancamentos = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pago">Pago</SelectItem>
+                      <SelectItem value="recebido">Recebido</SelectItem>
                       <SelectItem value="pendente">Pendente</SelectItem>
                       <SelectItem value="cancelado">Cancelado</SelectItem>
                     </SelectContent>
@@ -609,67 +610,85 @@ const Lancamentos = () => {
                 <TableHead>Tratamento</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Forma Pgto</TableHead>
-                <TableHead>Conta</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
+                <TableHead className="text-right">Custo</TableHead>
+                <TableHead className="text-right">Margem</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {lancamentos.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                     Nenhum lançamento encontrado no período
                   </TableCell>
                 </TableRow>
               ) : (
-                lancamentos.map((lanc: any) => (
-                  <TableRow key={lanc.id} className="hover:bg-muted/50">
-                    <TableCell>
-                      {format(new Date(lanc.data_lancamento), "dd/MM/yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getTipoColor(lanc.tipo)}>
-                        {lanc.tipo}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {lanc.clientes_fornecedores?.nome || lanc.descricao || "-"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {lanc.tratamentos?.nome || "-"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {lanc.categorias?.nome_sintetico || "-"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {lanc.formas_pagamento?.nome || "-"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {lanc.contas_financeiras?.nome || "-"}
-                    </TableCell>
-                    <TableCell className={`text-right font-medium ${lanc.tipo === 'receita' ? 'text-green-600' : 'text-destructive'}`}>
-                      {lanc.tipo === 'receita' ? '+' : '-'}{formatCurrency(Number(lanc.valor || 0))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(lanc)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(lanc.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                lancamentos.map((lanc: any) => {
+                  const custo = Number(lanc.custo_material || 0);
+                  const valor = Number(lanc.valor || 0);
+                  const margem = lanc.tipo === 'receita' ? valor - custo : 0;
+                  const percentMargem = valor > 0 && lanc.tipo === 'receita' ? (margem / valor) * 100 : 0;
+
+                  return (
+                    <TableRow key={lanc.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        {format(new Date(lanc.data_lancamento), "dd/MM/yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getTipoColor(lanc.tipo)}>
+                          {lanc.tipo}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {lanc.clientes_fornecedores?.nome || lanc.descricao || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {lanc.tratamentos?.nome || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {lanc.categorias?.nome_sintetico || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {lanc.formas_pagamento?.nome || "-"}
+                      </TableCell>
+                      <TableCell className={`text-right font-medium ${lanc.tipo === 'receita' ? 'text-green-600' : 'text-destructive'}`}>
+                        {lanc.tipo === 'receita' ? '+' : '-'}{formatCurrency(valor)}
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-orange-600">
+                        {lanc.tipo === 'receita' && custo > 0 ? formatCurrency(custo) : '-'}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {lanc.tipo === 'receita' && lanc.tratamento_id ? (
+                          <span className={margem >= 0 ? 'text-green-600' : 'text-destructive'}>
+                            {formatCurrency(margem)}
+                            <span className="text-muted-foreground ml-1">({percentMargem.toFixed(0)}%)</span>
+                          </span>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(lanc)}
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(lanc.id)}
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
