@@ -2,20 +2,25 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Eye, UserX, UserCheck } from "lucide-react";
+import { Plus, Pencil, UserX, UserCheck, FileText, ClipboardList } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useMutation } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { usePacientesData, type Paciente } from "@/components/crm/hooks/usePacientesData";
 import { PacientesKPIs } from "@/components/crm/PacientesKPIs";
 import { PacientesFilters } from "@/components/crm/PacientesFilters";
 import { PacienteForm } from "@/components/crm/PacienteForm";
+import { AnamneseForm } from "@/components/crm/AnamneseForm";
 import { PageHeader } from "@/components/PageHeader";
 import { Users } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Tables } from "@/integrations/supabase/types";
+
+type Anamnese = Tables<"anamneses">;
 
 export default function Pacientes() {
   const { pacientes, refetch, isLoading, kpis } = usePacientesData();
@@ -26,6 +31,28 @@ export default function Pacientes() {
   const [selectedPaciente, setSelectedPaciente] = useState<Paciente | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pacienteToToggle, setPacienteToToggle] = useState<Paciente | null>(null);
+  
+  // Anamnese states
+  const [anamneseFormOpen, setAnamneseFormOpen] = useState(false);
+  const [anamneseListOpen, setAnamneseListOpen] = useState(false);
+  const [selectedAnamnese, setSelectedAnamnese] = useState<Anamnese | null>(null);
+  const [pacienteAnamnese, setPacienteAnamnese] = useState<Paciente | null>(null);
+
+  // Fetch anamneses for selected patient
+  const { data: anamneses = [], refetch: refetchAnamneses } = useQuery({
+    queryKey: ["anamneses", pacienteAnamnese?.id],
+    queryFn: async () => {
+      if (!pacienteAnamnese?.id) return [];
+      const { data, error } = await supabase
+        .from("anamneses")
+        .select("*")
+        .eq("paciente_id", pacienteAnamnese.id)
+        .order("data_anamnese", { ascending: false });
+      if (error) throw error;
+      return data as Anamnese[];
+    },
+    enabled: !!pacienteAnamnese?.id,
+  });
 
   const filteredPacientes = useMemo(() => {
     return pacientes.filter((p) => {
@@ -101,6 +128,37 @@ export default function Pacientes() {
     },
   });
 
+  const saveAnamnese = useMutation({
+    mutationFn: async (anamnese: Partial<Anamnese> & { paciente_id: string }) => {
+      if (selectedAnamnese?.id) {
+        const { id, created_at, updated_at, ...payload } = anamnese as Anamnese;
+        const { error } = await supabase
+          .from("anamneses")
+          .update(payload)
+          .eq("id", selectedAnamnese.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("anamneses")
+          .insert(anamnese);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      refetchAnamneses();
+      setAnamneseFormOpen(false);
+      setSelectedAnamnese(null);
+      toast({ title: "Anamnese salva com sucesso!" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao salvar anamnese",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEdit = (paciente: Paciente) => {
     setSelectedPaciente(paciente);
     setFormOpen(true);
@@ -120,6 +178,21 @@ export default function Pacientes() {
     if (pacienteToToggle) {
       toggleAtivoMutation.mutate(pacienteToToggle);
     }
+  };
+
+  const handleOpenAnamneses = (paciente: Paciente) => {
+    setPacienteAnamnese(paciente);
+    setAnamneseListOpen(true);
+  };
+
+  const handleNewAnamnese = () => {
+    setSelectedAnamnese(null);
+    setAnamneseFormOpen(true);
+  };
+
+  const handleEditAnamnese = (anamnese: Anamnese) => {
+    setSelectedAnamnese(anamnese);
+    setAnamneseFormOpen(true);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -219,6 +292,14 @@ export default function Pacientes() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => handleOpenAnamneses(paciente)}
+                            title="Anamneses"
+                          >
+                            <ClipboardList className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleEdit(paciente)}
                             title="Editar"
                           >
@@ -283,6 +364,68 @@ export default function Pacientes() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de lista de anamneses */}
+      <Dialog open={anamneseListOpen} onOpenChange={setAnamneseListOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Anamneses - {pacienteAnamnese?.nome}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button onClick={handleNewAnamnese}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Anamnese
+              </Button>
+            </div>
+            {anamneses.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhuma anamnese registrada para este paciente
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {anamneses.map((anamnese) => (
+                  <Card key={anamnese.id} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleEditAnamnese(anamnese)}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">
+                              Anamnese de {formatDate(anamnese.data_anamnese)}
+                            </p>
+                            {anamnese.queixa_principal && (
+                              <p className="text-sm text-muted-foreground truncate max-w-md">
+                                {anamnese.queixa_principal}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Formulário de anamnese */}
+      {pacienteAnamnese && (
+        <AnamneseForm
+          open={anamneseFormOpen}
+          onOpenChange={setAnamneseFormOpen}
+          anamnese={selectedAnamnese}
+          pacienteId={pacienteAnamnese.id}
+          pacienteNome={pacienteAnamnese.nome}
+          onSave={saveAnamnese.mutate}
+          isLoading={saveAnamnese.isPending}
+        />
+      )}
     </div>
   );
 }
