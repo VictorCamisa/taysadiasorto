@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -29,44 +29,70 @@ export function AdvancedKPICard({
   target,
 }: AdvancedKPICardProps) {
   const variantStyles = {
-    default: "text-primary",
-    success: "text-[rgb(var(--success))]",
-    warning: "text-[rgb(var(--warning))]",
-    danger: "text-destructive",
+    default: "bg-primary/10 text-primary",
+    success: "bg-[hsl(145,60%,45%)]/10 text-[hsl(145,60%,45%)]",
+    warning: "bg-[hsl(38,85%,55%)]/10 text-[hsl(38,85%,55%)]",
+    danger: "bg-destructive/10 text-destructive",
   };
 
-  const trendColor = trend && trend > 0 ? "text-[rgb(var(--success))]" : "text-destructive";
+  const trendColor = trend && trend > 0 
+    ? "text-[hsl(145,60%,45%)]" 
+    : "text-destructive";
   const TrendIcon = trend && trend > 0 ? TrendingUp : TrendingDown;
 
   return (
-    <Card className="hover-lift">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <Icon className={cn("h-5 w-5", variantStyles[variant])} />
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold">{value}</div>
-        
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
+    <Card className="group relative overflow-hidden border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent pointer-events-none" />
+      
+      <CardContent className="pt-6 relative">
+        {/* Header with icon and title */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
+              {title}
+            </p>
+            {description && (
+              <p className="text-xs text-muted-foreground/70">{description}</p>
+            )}
+          </div>
+          <div className={cn(
+            "p-2.5 rounded-xl transition-colors duration-300",
+            variantStyles[variant]
+          )}>
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
 
+        {/* Value - Large and bold */}
+        <div className="text-3xl font-bold tracking-tight text-foreground mb-3">
+          {value}
+        </div>
+
+        {/* Trend indicator */}
         {trend !== undefined && (
-          <div className={cn("flex items-center gap-1 text-sm font-medium mt-2", trendColor)}>
-            <TrendIcon className="h-4 w-4" />
+          <div className={cn(
+            "inline-flex items-center gap-1.5 text-sm font-semibold px-2.5 py-1 rounded-full",
+            trend > 0 ? "bg-[hsl(145,60%,45%)]/10" : "bg-destructive/10",
+            trendColor
+          )}>
+            <TrendIcon className="h-3.5 w-3.5" />
             <span>{formatNumber(Math.abs(trend), 1)}%</span>
-            {trendLabel && <span className="text-muted-foreground ml-1">{trendLabel}</span>}
+            {trendLabel && (
+              <span className="text-muted-foreground font-normal text-xs ml-1">
+                {trendLabel}
+              </span>
+            )}
           </div>
         )}
 
+        {/* Progress bar */}
         {showProgress && (
-          <div className="mt-3 space-y-2">
-            <Progress value={progressValue} className="h-2" />
+          <div className="mt-4 space-y-2">
+            <Progress value={progressValue} className="h-1.5" />
             {target && (
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{formatNumber(progressValue, 0)}%</span>
+                <span className="font-medium">{formatNumber(progressValue, 0)}%</span>
                 <span>Meta: {formatCurrency(target)}</span>
               </div>
             )}

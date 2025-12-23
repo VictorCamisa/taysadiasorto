@@ -226,38 +226,63 @@ function MobileModuleSection({
 export function AppNavbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  return <header className="sticky top-0 z-50 bg-gradient-to-r from-[hsl(160,45%,25%)] via-[hsl(160,40%,30%)] to-[hsl(170,35%,28%)] border-b border-white/10 shadow-lg">
+  
+  return (
+    <header className="sticky top-0 z-50 bg-gradient-to-r from-[hsl(220,15%,10%)] via-[hsl(220,12%,12%)] to-[hsl(220,15%,10%)] border-b border-primary/20 shadow-2xl">
       <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-3 md:px-6">
         {/* Brand */}
-        <NavLink to="/" end className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-white/10 transition-all duration-300">
-          
+        <NavLink to="/" end className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-primary/10 transition-all duration-300 group">
           <div className="hidden sm:block">
-            <p className="font-semibold leading-none text-white text-2xl">Taysa Dias</p>
-            <p className="text-xs text-white/70 mt-0.5 font-mono">Gestão Clínica</p>
+            <p className="font-bold leading-none text-2xl bg-gradient-to-r from-primary via-[hsl(45,85%,60%)] to-primary bg-clip-text text-transparent">
+              Taysa Dias
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 tracking-wider uppercase">
+              Gestão Clínica
+            </p>
           </div>
         </NavLink>
 
         {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-1">
           {/* Home */}
-          <NavLink to="/" end className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300", "text-white/70 hover:text-white hover:bg-white/10")} activeClassName="bg-white/20 text-white shadow-md">
+          <NavLink 
+            to="/" 
+            end 
+            className={cn(
+              "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300",
+              "text-muted-foreground hover:text-foreground hover:bg-primary/10"
+            )}
+            activeClassName="bg-primary/15 text-primary shadow-sm"
+          >
             <Home className="h-4 w-4" />
             <span>Início</span>
           </NavLink>
 
           {/* Module dropdowns */}
-          {modules.map(module => <ModuleDropdown key={module.basePath} module={module} />)}
+          {modules.map(module => (
+            <ModuleDropdownNew key={module.basePath} module={module} />
+          ))}
 
-          <div className="mx-3 h-6 w-px bg-white/20" />
+          <div className="mx-3 h-6 w-px bg-border" />
 
           {/* Global items */}
           {globalItems.map(item => {
-          const Icon = item.icon;
-          return <NavLink key={item.to} to={item.to} className={cn("inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300", "text-white/70 hover:text-white hover:bg-white/10")} activeClassName="bg-white/20 text-white shadow-md">
+            const Icon = item.icon;
+            return (
+              <NavLink 
+                key={item.to} 
+                to={item.to} 
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300",
+                  "text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                )}
+                activeClassName="bg-primary/15 text-primary shadow-sm"
+              >
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
-              </NavLink>;
-        })}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {/* Right actions */}
@@ -266,18 +291,25 @@ export function AppNavbar() {
           <div className="lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-xl text-white/70 hover:text-white hover:bg-white/10" aria-label="Abrir menu">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-xl text-muted-foreground hover:text-foreground hover:bg-primary/10" 
+                  aria-label="Abrir menu"
+                >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[320px] overflow-y-auto glass border-border/50">
+              <SheetContent side="left" className="w-[320px] overflow-y-auto bg-card border-border/50">
                 <SheetHeader>
                   <SheetTitle className="flex items-center gap-3 text-left">
                     <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
                       <Leaf className="h-5 w-5 text-primary-foreground" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">Taysa Dias</p>
+                      <p className="text-sm font-bold bg-gradient-to-r from-primary to-[hsl(45,85%,60%)] bg-clip-text text-transparent">
+                        Taysa Dias
+                      </p>
                       <p className="text-xs text-muted-foreground font-normal">Gestão Clínica</p>
                     </div>
                   </SheetTitle>
@@ -286,7 +318,15 @@ export function AppNavbar() {
                 <div className="mt-6 space-y-2">
                   {/* Home */}
                   <SheetClose asChild>
-                    <Link to="/" className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300", location.pathname === "/" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
+                    <Link 
+                      to="/" 
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
+                        location.pathname === "/" 
+                          ? "bg-primary text-primary-foreground" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      )}
+                    >
                       <Home className="h-4 w-4" />
                       <span>Início</span>
                     </Link>
@@ -295,21 +335,37 @@ export function AppNavbar() {
                   <Separator className="my-3 bg-border/50" />
 
                   {/* Modules */}
-                  {modules.map(module => <MobileModuleSection key={module.basePath} module={module} onClose={() => setMobileOpen(false)} />)}
+                  {modules.map(module => (
+                    <MobileModuleSection 
+                      key={module.basePath} 
+                      module={module} 
+                      onClose={() => setMobileOpen(false)} 
+                    />
+                  ))}
 
                   <Separator className="my-3 bg-border/50" />
 
                   {/* Global */}
                   {globalItems.map(item => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.to;
-                  return <SheetClose asChild key={item.to}>
-                        <Link to={item.to} className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300", isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50")}>
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.to;
+                    return (
+                      <SheetClose asChild key={item.to}>
+                        <Link 
+                          to={item.to} 
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
+                            isActive 
+                              ? "bg-primary text-primary-foreground" 
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          )}
+                        >
                           <Icon className="h-4 w-4" />
                           <span>{item.label}</span>
                         </Link>
-                      </SheetClose>;
-                })}
+                      </SheetClose>
+                    );
+                  })}
                 </div>
 
                 <Separator className="my-4 bg-border/50" />
@@ -323,11 +379,68 @@ export function AppNavbar() {
           </div>
 
           <div className="hidden lg:flex items-center gap-3">
-            <ThemeToggle className="text-white/70 hover:text-white hover:bg-white/10" />
-            <div className="h-6 w-px bg-white/20" />
-            <UserAuthMenu className="text-white/70 hover:text-white" />
+            <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-primary/10" />
+            <div className="h-6 w-px bg-border" />
+            <UserAuthMenu className="text-muted-foreground hover:text-foreground" />
           </div>
         </div>
       </div>
-    </header>;
+    </header>
+  );
+}
+
+// Updated dropdown for new theme
+function ModuleDropdownNew({ module }: { module: NavModule }) {
+  const location = useLocation();
+  const isActive = location.pathname.startsWith(module.basePath);
+  const Icon = module.icon;
+  
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button 
+          className={cn(
+            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300",
+            isActive 
+              ? "bg-primary/15 text-primary shadow-sm" 
+              : "text-muted-foreground hover:text-foreground hover:bg-primary/10"
+          )}
+        >
+          <Icon className="h-4 w-4" />
+          <span>{module.label}</span>
+          <ChevronDown className={cn(
+            "h-3.5 w-3.5 transition-transform duration-200",
+            isActive ? "opacity-80" : "opacity-60"
+          )} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="start" 
+        className="w-56 p-2 bg-popover rounded-xl border-border/50 shadow-xl" 
+        sideOffset={8}
+      >
+        {module.items.map(item => {
+          const ItemIcon = item.icon;
+          const isItemActive = location.pathname === item.to || 
+            (item.to.includes("?") && location.pathname + location.search === item.to);
+          
+          return (
+            <DropdownMenuItem 
+              key={item.to} 
+              asChild 
+              className={cn(
+                "rounded-lg px-3 py-2.5 cursor-pointer transition-all duration-200",
+                isItemActive && "bg-primary/10 text-primary"
+              )}
+            >
+              <Link to={item.to} className="flex items-center gap-3">
+                <ItemIcon className="h-4 w-4" />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
