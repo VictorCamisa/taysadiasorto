@@ -184,6 +184,42 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          acao: string
+          created_at: string | null
+          dados_anteriores: Json | null
+          dados_novos: Json | null
+          id: string
+          ip_address: string | null
+          registro_id: string | null
+          tabela: string
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string | null
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          id?: string
+          ip_address?: string | null
+          registro_id?: string | null
+          tabela: string
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string | null
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          id?: string
+          ip_address?: string | null
+          registro_id?: string | null
+          tabela?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           created_at: string | null
@@ -526,6 +562,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      documentos_legais: {
+        Row: {
+          arquivo_url: string | null
+          created_at: string | null
+          data_vigencia: string | null
+          descricao: string | null
+          id: string
+          tipo: string
+          titulo: string
+          updated_at: string | null
+          vigente: boolean | null
+        }
+        Insert: {
+          arquivo_url?: string | null
+          created_at?: string | null
+          data_vigencia?: string | null
+          descricao?: string | null
+          id?: string
+          tipo: string
+          titulo: string
+          updated_at?: string | null
+          vigente?: boolean | null
+        }
+        Update: {
+          arquivo_url?: string | null
+          created_at?: string | null
+          data_vigencia?: string | null
+          descricao?: string | null
+          id?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+          vigente?: boolean | null
+        }
+        Relationships: []
       }
       estoque_compras: {
         Row: {
@@ -1336,6 +1408,87 @@ export type Database = {
         }
         Relationships: []
       }
+      lgpd_consentimentos: {
+        Row: {
+          aceito: boolean
+          created_at: string | null
+          data_aceite: string | null
+          data_revogacao: string | null
+          id: string
+          ip_address: string | null
+          paciente_id: string
+          termo_id: string
+        }
+        Insert: {
+          aceito?: boolean
+          created_at?: string | null
+          data_aceite?: string | null
+          data_revogacao?: string | null
+          id?: string
+          ip_address?: string | null
+          paciente_id: string
+          termo_id: string
+        }
+        Update: {
+          aceito?: boolean
+          created_at?: string | null
+          data_aceite?: string | null
+          data_revogacao?: string | null
+          id?: string
+          ip_address?: string | null
+          paciente_id?: string
+          termo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lgpd_consentimentos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lgpd_consentimentos_termo_id_fkey"
+            columns: ["termo_id"]
+            isOneToOne: false
+            referencedRelation: "lgpd_termos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lgpd_termos: {
+        Row: {
+          conteudo: string
+          created_at: string | null
+          id: string
+          tipo: string
+          titulo: string
+          updated_at: string | null
+          versao: string
+          vigente: boolean | null
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string | null
+          id?: string
+          tipo: string
+          titulo: string
+          updated_at?: string | null
+          versao: string
+          vigente?: boolean | null
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string | null
+          id?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+          versao?: string
+          vigente?: boolean | null
+        }
+        Relationships: []
+      }
       materiais: {
         Row: {
           custo_unitario: number | null
@@ -1565,6 +1718,48 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          ativo: boolean | null
+          cargo: string | null
+          created_at: string | null
+          crm: string | null
+          email: string | null
+          especialidade: string | null
+          foto_url: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cargo?: string | null
+          created_at?: string | null
+          crm?: string | null
+          email?: string | null
+          especialidade?: string | null
+          foto_url?: string | null
+          id: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cargo?: string | null
+          created_at?: string | null
+          crm?: string | null
+          email?: string | null
+          especialidade?: string | null
+          foto_url?: string | null
+          id?: string
+          nome?: string
           telefone?: string | null
           updated_at?: string | null
         }
@@ -1960,6 +2155,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       financeiro_categorias_dropdown: {
@@ -1995,6 +2211,14 @@ export type Database = {
       }
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       obter_custo_tratamento: {
         Args: { p_tratamento_id: string }
         Returns: number
@@ -2004,6 +2228,7 @@ export type Database = {
     }
     Enums: {
       activity_type: "call" | "email" | "meeting" | "note"
+      app_role: "admin" | "medico" | "estagiario" | "recepcionista"
       appointment_type: "consultation" | "procedure" | "return"
       categoria_tipo: "receita" | "despesa"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
@@ -2141,6 +2366,7 @@ export const Constants = {
   public: {
     Enums: {
       activity_type: ["call", "email", "meeting", "note"],
+      app_role: ["admin", "medico", "estagiario", "recepcionista"],
       appointment_type: ["consultation", "procedure", "return"],
       categoria_tipo: ["receita", "despesa"],
       lead_status: ["new", "contacted", "qualified", "converted", "lost"],
