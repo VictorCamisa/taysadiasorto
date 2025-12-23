@@ -37,7 +37,7 @@ import LeadsPerdidos from "./pages/crm/LeadsPerdidos";
 
 // Módulo Admin
 import Admin from "./pages/admin/Admin";
-import BIPlaceholder from "./pages/bi/BIPlaceholder";
+import BusinessIntelligence from "./pages/bi/BusinessIntelligence";
 
 // Global
 import AssistenteIA from "./pages/AssistenteIA";
@@ -89,9 +89,9 @@ const App = () => (
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/*" element={<Admin />} />
                 
-                {/* Módulo BI (Placeholder) */}
-                <Route path="/bi" element={<BIPlaceholder />} />
-                <Route path="/bi/*" element={<BIPlaceholder />} />
+                {/* Módulo BI */}
+                <Route path="/bi" element={<BusinessIntelligence />} />
+                <Route path="/bi/*" element={<BusinessIntelligence />} />
                 
                 {/* Global */}
                 <Route path="/assistente-ia" element={<AssistenteIA />} />
