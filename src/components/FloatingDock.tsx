@@ -20,6 +20,9 @@ import {
   UserCircle,
   CalendarDays,
   Kanban,
+  Calendar,
+  Heart,
+  XCircle,
   type LucideIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -72,6 +75,9 @@ const modules: ModuleGroup[] = [
     items: [
       { title: "Pipeline de Vendas", url: "/crm/pipeline", icon: Kanban },
       { title: "Agenda", url: "/crm/agenda", icon: CalendarDays },
+      { title: "Agendamentos", url: "/crm/agendamentos", icon: Calendar },
+      { title: "Pós-venda", url: "/crm/pos-venda", icon: Heart },
+      { title: "Leads Perdidos", url: "/crm/perdidos", icon: XCircle },
       { title: "Pacientes", url: "/crm/pacientes", icon: Users },
     ]
   },

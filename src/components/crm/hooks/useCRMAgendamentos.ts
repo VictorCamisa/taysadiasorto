@@ -243,7 +243,8 @@ export function useAgendamentoMutations() {
   });
 
   const updateAgendamento = useMutation({
-    mutationFn: async ({ id, ...data }: Partial<Tables<"crm_agendamentos">> & { id: string }) => {
+    mutationFn: async (updateData: { id: string; status?: string; motivo_cancelamento?: string; valor_previsto?: number; data_agendamento?: string; observacoes?: string; data_ultimo_contato?: string; proxima_acao?: string; data_proxima_acao?: string; responsavel?: string }) => {
+      const { id, ...data } = updateData;
       const { error } = await supabase
         .from("crm_agendamentos")
         .update(data)
