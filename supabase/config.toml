@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.corrigir-dre-ia]
 verify_jwt = false
+
+[functions.assistente-ia]
+verify_jwt = false

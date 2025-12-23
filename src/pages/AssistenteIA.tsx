@@ -1,7 +1,8 @@
 import { ChatInterface } from "@/components/assistente/ChatInterface";
 import { useChatConversations } from "@/hooks/useChatConversations";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const CHAT_URL = `https://ynstyufdfrctktsgwxwv.supabase.co/functions/v1/assistente-ia`;
 
 const AssistenteIA = () => {
   const {
@@ -34,31 +35,86 @@ const AssistenteIA = () => {
       // Add user message
       await addMessage(conversationId, "user", content);
 
-      // Call N8N webhook
+      // Build conversation history
       const conversationHistory = messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       }));
 
-      const { data, error } = await supabase.functions.invoke("chat-n8n", {
-        body: {
+      // Call AI function with streaming
+      const response = await fetch(CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           message: content,
           conversationHistory,
-        },
+        }),
       });
 
-      if (error) {
-        console.error("Edge function error:", error);
-        throw error;
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast.error("Limite de requisições excedido. Aguarde um momento.");
+          return;
+        }
+        if (response.status === 402) {
+          toast.error("Créditos de IA esgotados.");
+          return;
+        }
+        throw new Error(`HTTP error: ${response.status}`);
       }
 
-      const responseText = data?.response || data?.output || data?.message || "Desculpe, não consegui processar sua solicitação.";
+      if (!response.body) {
+        throw new Error("No response body");
+      }
+
+      // Process streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantResponse = "";
+      let textBuffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        textBuffer += decoder.decode(value, { stream: true });
+
+        // Process line-by-line
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              assistantResponse += delta;
+            }
+          } catch {
+            // Incomplete JSON, put back and wait for more data
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
 
       // Add assistant message
-      await addMessage(conversationId, "assistant", responseText);
+      if (assistantResponse) {
+        await addMessage(conversationId, "assistant", assistantResponse);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Erro ao enviar mensagem");
+      toast.error("Erro ao enviar mensagem. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
