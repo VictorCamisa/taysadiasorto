@@ -31,7 +31,6 @@ import Orcamento from "./pages/Orcamento";
 import Pacientes from "./pages/crm/Pacientes";
 import FichaPaciente from "./pages/crm/FichaPaciente";
 import Pipeline from "./pages/crm/Pipeline";
-import Agenda from "./pages/crm/Agenda";
 import Agendamentos from "./pages/crm/Agendamentos";
 import PosVenda from "./pages/crm/PosVenda";
 import LeadsPerdidos from "./pages/crm/LeadsPerdidos";
@@ -85,7 +84,6 @@ const App = () => (
                         {/* Módulo CRM / Comercial */}
                         <Route path="/crm" element={<Pipeline />} />
                         <Route path="/crm/pipeline" element={<Pipeline />} />
-                        <Route path="/crm/agenda" element={<Agenda />} />
                         <Route path="/crm/agendamentos" element={<Agendamentos />} />
                         <Route path="/crm/pos-venda" element={<PosVenda />} />
                         <Route path="/crm/perdidos" element={<LeadsPerdidos />} />

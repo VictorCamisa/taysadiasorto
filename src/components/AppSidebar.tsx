@@ -76,7 +76,6 @@ const modules: NavModule[] = [
     basePath: "/crm",
     items: [
       { label: "Pipeline", to: "/crm/pipeline", icon: Kanban },
-      { label: "Agenda", to: "/crm/agenda", icon: CalendarDays },
       { label: "Agendamentos", to: "/crm/agendamentos", icon: Calendar },
       { label: "Pós-venda", to: "/crm/pos-venda", icon: Heart },
       { label: "Leads Perdidos", to: "/crm/perdidos", icon: XCircle },
