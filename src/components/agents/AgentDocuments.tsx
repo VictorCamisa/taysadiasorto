@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { FileText, Plus, Trash2, Link, Type, Loader2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { useState, useRef } from "react";
+import { FileText, Plus, Trash2, Link, Type, Loader2, CheckCircle, XCircle, Clock, Upload, RefreshCw, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -21,10 +21,18 @@ import { cn } from "@/lib/utils";
 
 interface AgentDocumentsProps {
   documents: AIAgentDocument[];
-  onAddDocument: (input: { name: string; type: string; content: string; source_url?: string }) => Promise<unknown>;
+  onAddDocument: (input: { 
+    name: string; 
+    type: string; 
+    content?: string; 
+    source_url?: string;
+    file?: File;
+  }) => Promise<unknown>;
   onDeleteDocument: (id: string) => void;
+  onReprocessDocument?: (id: string) => Promise<unknown>;
   isLoading: boolean;
   isAdding: boolean;
+  isReprocessing?: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -34,36 +42,59 @@ const STATUS_CONFIG = {
   error: { icon: XCircle, label: "Erro", className: "text-destructive" },
 };
 
+const TYPE_ICONS = {
+  text: Type,
+  url: Link,
+  pdf: FileUp,
+};
+
 export function AgentDocuments({
   documents,
   onAddDocument,
   onDeleteDocument,
+  onReprocessDocument,
   isLoading,
   isAdding,
+  isReprocessing,
 }: AgentDocumentsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [docType, setDocType] = useState<"text" | "url">("text");
+  const [docType, setDocType] = useState<"text" | "url" | "pdf">("text");
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [url, setUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAdd = async () => {
     if (!name.trim()) return;
 
     if (docType === "text" && !content.trim()) return;
     if (docType === "url" && !url.trim()) return;
+    if (docType === "pdf" && !file) return;
 
     await onAddDocument({
       name: name.trim(),
       type: docType,
-      content: docType === "text" ? content : "",
+      content: docType === "text" ? content : undefined,
       source_url: docType === "url" ? url : undefined,
+      file: docType === "pdf" ? file! : undefined,
     });
 
     setName("");
     setContent("");
     setUrl("");
+    setFile(null);
     setIsOpen(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      if (!name.trim()) {
+        setName(selectedFile.name.replace(/\.[^/.]+$/, ""));
+      }
+    }
   };
 
   if (isLoading) {
@@ -82,7 +113,7 @@ export function AgentDocuments({
         <div>
           <h3 className="font-medium">Base de Conhecimento</h3>
           <p className="text-sm text-muted-foreground">
-            Documentos que o agente pode consultar
+            Documentos que o agente pode consultar (texto, URLs ou PDFs)
           </p>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -100,8 +131,8 @@ export function AgentDocuments({
               </DialogDescription>
             </DialogHeader>
 
-            <Tabs value={docType} onValueChange={(v) => setDocType(v as "text" | "url")}>
-              <TabsList className="grid grid-cols-2 w-full">
+            <Tabs value={docType} onValueChange={(v) => setDocType(v as "text" | "url" | "pdf")}>
+              <TabsList className="grid grid-cols-3 w-full">
                 <TabsTrigger value="text" className="gap-2">
                   <Type className="h-4 w-4" />
                   Texto
@@ -109,6 +140,10 @@ export function AgentDocuments({
                 <TabsTrigger value="url" className="gap-2">
                   <Link className="h-4 w-4" />
                   URL
+                </TabsTrigger>
+                <TabsTrigger value="pdf" className="gap-2">
+                  <FileUp className="h-4 w-4" />
+                  PDF
                 </TabsTrigger>
               </TabsList>
 
@@ -148,6 +183,49 @@ export function AgentDocuments({
                     </p>
                   </div>
                 </TabsContent>
+
+                <TabsContent value="pdf" className="mt-0">
+                  <div className="space-y-2">
+                    <Label>Arquivo PDF</Label>
+                    <div 
+                      className={cn(
+                        "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+                        file ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                      )}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                      {file ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <FileUp className="h-5 w-5 text-primary" />
+                          <span className="text-sm font-medium">{file.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
+                            Clique para selecionar ou arraste um arquivo PDF
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Máximo 50MB
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      O texto será extraído automaticamente e processado para RAG
+                    </p>
+                  </div>
+                </TabsContent>
               </div>
             </Tabs>
 
@@ -155,7 +233,16 @@ export function AgentDocuments({
               <Button variant="outline" onClick={() => setIsOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleAdd} disabled={isAdding || !name.trim()}>
+              <Button 
+                onClick={handleAdd} 
+                disabled={
+                  isAdding || 
+                  !name.trim() ||
+                  (docType === "text" && !content.trim()) ||
+                  (docType === "url" && !url.trim()) ||
+                  (docType === "pdf" && !file)
+                }
+              >
                 {isAdding ? "Adicionando..." : "Adicionar"}
               </Button>
             </DialogFooter>
@@ -180,13 +267,14 @@ export function AgentDocuments({
           {documents.map((doc) => {
             const StatusIcon = STATUS_CONFIG[doc.status as keyof typeof STATUS_CONFIG]?.icon || Clock;
             const statusConfig = STATUS_CONFIG[doc.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+            const TypeIcon = TYPE_ICONS[doc.type as keyof typeof TYPE_ICONS] || FileText;
 
             return (
               <Card key={doc.id}>
                 <CardContent className="p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <TypeIcon className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -201,17 +289,36 @@ export function AgentDocuments({
                           {statusConfig.label}
                           {doc.chunk_count > 0 && ` • ${doc.chunk_count} chunks`}
                         </span>
+                        {doc.error_message && (
+                          <span className="text-xs text-destructive truncate max-w-[200px]" title={doc.error_message}>
+                            {doc.error_message}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => onDeleteDocument(doc.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    {doc.status === 'error' && onReprocessDocument && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => onReprocessDocument(doc.id)}
+                        disabled={isReprocessing}
+                        title="Reprocessar documento"
+                      >
+                        <RefreshCw className={cn("h-4 w-4", isReprocessing && "animate-spin")} />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => onDeleteDocument(doc.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );

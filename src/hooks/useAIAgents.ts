@@ -203,8 +203,31 @@ export function useAIAgentDocuments(agentId: string | null) {
   });
 
   const addDocumentMutation = useMutation({
-    mutationFn: async (input: { name: string; type: string; content: string; source_url?: string }) => {
+    mutationFn: async (input: { 
+      name: string; 
+      type: string; 
+      content?: string; 
+      source_url?: string;
+      file?: File;
+    }) => {
       if (!agentId) throw new Error("No agent selected");
+
+      let filePath: string | null = null;
+
+      // If it's a PDF file, upload to storage first
+      if (input.type === 'pdf' && input.file) {
+        const fileExt = input.file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        filePath = `${agentId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('agent-documents')
+          .upload(filePath, input.file);
+
+        if (uploadError) {
+          throw new Error(`Erro ao fazer upload: ${uploadError.message}`);
+        }
+      }
 
       const { data, error } = await supabase
         .from("ai_agent_documents")
@@ -212,22 +235,52 @@ export function useAIAgentDocuments(agentId: string | null) {
           agent_id: agentId,
           name: input.name,
           type: input.type,
-          content: input.content,
+          content: input.content || null,
           source_url: input.source_url || null,
+          file_path: filePath,
           status: "pending",
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Trigger automatic processing
+      try {
+        await supabase.functions.invoke('process-document', {
+          body: { documentId: data.id }
+        });
+      } catch (procError) {
+        console.error('Error triggering document processing:', procError);
+        // Don't fail the mutation, processing will be retried or shown as error
+      }
+
       return data as AIAgentDocument;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ai-agent-documents", agentId] });
-      toast.success("Documento adicionado!");
+      toast.success("Documento adicionado! Processando...");
     },
     onError: (error) => {
       toast.error("Erro ao adicionar documento: " + error.message);
+    },
+  });
+
+  const reprocessDocumentMutation = useMutation({
+    mutationFn: async (documentId: string) => {
+      const { data, error } = await supabase.functions.invoke('process-document', {
+        body: { documentId }
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai-agent-documents", agentId] });
+      toast.success("Reprocessamento iniciado!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao reprocessar: " + error.message);
     },
   });
 
@@ -247,7 +300,10 @@ export function useAIAgentDocuments(agentId: string | null) {
     isLoading: documentsQuery.isLoading,
     addDocument: addDocumentMutation.mutateAsync,
     deleteDocument: deleteDocumentMutation.mutateAsync,
+    reprocessDocument: reprocessDocumentMutation.mutateAsync,
     isAdding: addDocumentMutation.isPending,
+    isReprocessing: reprocessDocumentMutation.isPending,
+    refetch: documentsQuery.refetch,
   };
 }
 
