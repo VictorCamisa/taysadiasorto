@@ -161,7 +161,38 @@ serve(async (req) => {
       case "fetch_chats": {
         const { instanceName } = params;
         // Evolution API v2: POST /chat/findChats/{instanceName} with empty body or filters
-        result = await evolutionFetch(`/chat/findChats/${instanceName}`, "POST", {});
+        const chats = await evolutionFetch(`/chat/findChats/${instanceName}`, "POST", {});
+        
+        // Tentar buscar contatos para obter nomes reais
+        let contacts: Record<string, { pushName?: string; profilePictureUrl?: string }> = {};
+        try {
+          const contactsResponse = await evolutionFetch(`/chat/findContacts/${instanceName}`, "POST", {});
+          if (Array.isArray(contactsResponse)) {
+            for (const contact of contactsResponse) {
+              const jid = contact.id || contact.remoteJid;
+              if (jid) {
+                contacts[jid] = {
+                  pushName: contact.pushName || contact.name || contact.verifiedName || contact.notify,
+                  profilePictureUrl: contact.profilePictureUrl || contact.profilePicUrl,
+                };
+              }
+            }
+          }
+        } catch (e) {
+          console.log("Could not fetch contacts, using chat data only:", e);
+        }
+        
+        // Enriquecer chats com dados dos contatos
+        result = Array.isArray(chats) ? chats.map((chat: Record<string, unknown>) => {
+          const jid = (chat.id || chat.remoteJid) as string;
+          const contact = contacts[jid];
+          return {
+            ...chat,
+            pushName: chat.pushName || contact?.pushName || null,
+            profilePictureUrl: chat.profilePictureUrl || chat.profilePicUrl || contact?.profilePictureUrl || null,
+          };
+        }) : chats;
+        
         break;
       }
 
@@ -221,13 +252,33 @@ serve(async (req) => {
         const { instanceId, chats } = params;
         
         for (const chat of chats) {
-          const remoteJid = chat.id || chat.remoteJid;
+          const remoteJid = (chat.id || chat.remoteJid) as string;
           
-          // Extrair telefone do remoteJid (formato: 5511999999999@s.whatsapp.net)
-          const telefoneRaw = remoteJid.replace("@s.whatsapp.net", "").replace("@g.us", "").replace(/\D/g, "");
+          // Extrair telefone do remoteJid (formato: 5511999999999@s.whatsapp.net ou hash@lid)
+          const isLid = remoteJid.endsWith("@lid");
+          const telefoneRaw = remoteJid.replace("@s.whatsapp.net", "").replace("@g.us", "").replace("@lid", "").replace(/\D/g, "");
           
-          // Nome do contato - priorizar pushName que é o nome real do WhatsApp
-          const nome = chat.pushName || chat.name || chat.contact?.name || formatPhoneNumber(telefoneRaw);
+          // Nome do contato - priorizar:
+          // 1. pushName do chat (já enriquecido com dados dos contatos)
+          // 2. pushName da última mensagem recebida (não fromMe)
+          // 3. Nome ou notify do contato
+          // 4. Número formatado (se não for LID)
+          let nome = chat.pushName;
+          
+          // Se não tem pushName, tentar pegar da última mensagem recebida
+          if (!nome && chat.lastMessage && !chat.lastMessage.key?.fromMe) {
+            nome = chat.lastMessage.pushName;
+          }
+          
+          // Se ainda não tem nome, usar o número formatado ou um placeholder
+          if (!nome) {
+            if (isLid) {
+              // LID não tem número de telefone, usar placeholder com últimos dígitos do ID
+              nome = `Contato ${telefoneRaw.slice(-6)}`;
+            } else {
+              nome = formatPhoneNumber(telefoneRaw);
+            }
+          }
           
           // Extrair texto da última mensagem (pode vir em diferentes formatos)
           let ultimaMensagem = null;
@@ -249,9 +300,9 @@ serve(async (req) => {
             }
           }
           
-          // Tentar vincular com paciente pelo telefone
+          // Tentar vincular com paciente pelo telefone (somente se não for LID)
           let pacienteId = null;
-          if (telefoneRaw.length >= 9) {
+          if (!isLid && telefoneRaw.length >= 9) {
             const { data: paciente } = await supabase
               .from("pacientes")
               .select("id")
