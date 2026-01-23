@@ -1,4 +1,4 @@
-import { Building2, Users, Lock, FileText, History, ChevronRight, Home } from "lucide-react";
+import { Building2, Users, Lock, FileText, History, ChevronRight, Home, CheckSquare } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,6 +6,7 @@ import { UsuariosTab } from "@/components/admin/UsuariosTab";
 import { LgpdTab } from "@/components/admin/LgpdTab";
 import { DocumentosTab } from "@/components/admin/DocumentosTab";
 import { AuditoriaTab } from "@/components/admin/AuditoriaTab";
+import { ChecklistsTab } from "@/components/admin/ChecklistsTab";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import {
   Breadcrumb,
@@ -55,10 +56,14 @@ function AdminContent() {
       />
 
       <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="usuarios" className="gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Usuários</span>
+          </TabsTrigger>
+          <TabsTrigger value="checklists" className="gap-2">
+            <CheckSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">Checklists</span>
           </TabsTrigger>
           <TabsTrigger value="lgpd" className="gap-2">
             <Lock className="h-4 w-4" />
@@ -76,6 +81,10 @@ function AdminContent() {
 
         <TabsContent value="usuarios">
           <UsuariosTab />
+        </TabsContent>
+
+        <TabsContent value="checklists">
+          <ChecklistsTab />
         </TabsContent>
 
         <TabsContent value="lgpd">

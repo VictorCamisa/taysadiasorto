@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   User,
   ArrowRight,
@@ -21,6 +23,8 @@ import {
   ChevronRight,
   XCircle,
   RotateCcw,
+  Lock,
+  CheckCircle2,
 } from "lucide-react";
 import {
   CRMAgendamento,
@@ -33,6 +37,7 @@ import {
   PRIORIDADE_LABELS,
   Prioridade,
 } from "./hooks/useCRMAgendamentos";
+import { useChecklistWithProgress } from "./hooks/usePipelineChecklist";
 import { cn } from "@/lib/utils";
 
 interface CardActionsModalProps {
@@ -53,6 +58,13 @@ export function CardActionsModal({
   onQuickAction,
 }: CardActionsModalProps) {
   const navigate = useNavigate();
+  const currentStatus = agendamento.status as AgendamentoStatus;
+  
+  // Buscar checklist da etapa atual
+  const { items, completedItems, totalItems, progressPercent, isComplete } = useChecklistWithProgress(
+    agendamento.id,
+    currentStatus
+  );
 
   const getInitials = (nome: string) => {
     return nome
@@ -71,7 +83,6 @@ export function CardActionsModal({
     }).format(value);
   };
 
-  const currentStatus = agendamento.status as AgendamentoStatus;
   const currentIndex = PIPELINE_COLUMNS.indexOf(currentStatus);
   const prioridade = (agendamento.prioridade || "medio") as Prioridade;
 
@@ -84,6 +95,9 @@ export function CardActionsModal({
   const prevStatus = currentIndex > 0 
     ? PIPELINE_COLUMNS[currentIndex - 1] 
     : null;
+
+  // Verificar se pode avançar (checklist completo ou sem itens)
+  const canAdvance = totalItems === 0 || isComplete;
 
   const handleOpenFicha = () => {
     if (agendamento.paciente_id) {
@@ -123,10 +137,13 @@ export function CardActionsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
         {/* Header com tratamento */}
-        <div className="bg-primary px-4 py-3">
+        <div className="bg-primary px-4 py-3 flex items-center justify-between">
           <p className="text-base font-semibold text-primary-foreground">
             {agendamento.tratamento?.nome || "Sem procedimento"}
           </p>
+          {isComplete && totalItems > 0 && (
+            <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
+          )}
         </div>
 
         {/* Info do paciente */}
@@ -177,6 +194,28 @@ export function CardActionsModal({
             <DollarSign className="h-5 w-5" />
             {formatCurrency(Number(agendamento.valor_previsto))}
           </div>
+
+          {/* Checklist Progress */}
+          {items.length > 0 && (
+            <div className="space-y-2 p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Checklist da etapa</span>
+                <span className={cn(
+                  "font-semibold",
+                  isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+                )}>
+                  {completedItems}/{totalItems}
+                </span>
+              </div>
+              <Progress value={progressPercent} className="h-2" />
+              {!isComplete && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Complete o checklist para avançar
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <Separator />
@@ -239,15 +278,36 @@ export function CardActionsModal({
           </p>
 
           {nextStatus && (
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 h-11 text-primary hover:text-primary hover:bg-primary/10"
-              onClick={() => handleTransition(nextStatus)}
-            >
-              <ArrowRight className="h-4 w-4" />
-              <span>Avançar para {STATUS_LABELS[nextStatus]}</span>
-              <span className="ml-auto">{STATUS_ICONS[nextStatus]}</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start gap-3 h-11",
+                      canAdvance 
+                        ? "text-primary hover:text-primary hover:bg-primary/10"
+                        : "text-muted-foreground opacity-60 cursor-not-allowed"
+                    )}
+                    onClick={() => canAdvance && handleTransition(nextStatus)}
+                    disabled={!canAdvance}
+                  >
+                    {canAdvance ? (
+                      <ArrowRight className="h-4 w-4" />
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
+                    <span>Avançar para {STATUS_LABELS[nextStatus]}</span>
+                    <span className="ml-auto">{STATUS_ICONS[nextStatus]}</span>
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {!canAdvance && (
+                <TooltipContent>
+                  Complete o checklist antes de avançar
+                </TooltipContent>
+              )}
+            </Tooltip>
           )}
 
           {prevStatus && (

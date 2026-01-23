@@ -2056,6 +2056,93 @@ export type Database = {
         }
         Relationships: []
       }
+      pipeline_checklist_items: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          etapa: string
+          id: string
+          obrigatorio: boolean
+          ordem: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          etapa: string
+          id?: string
+          obrigatorio?: boolean
+          ordem?: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          etapa?: string
+          id?: string
+          obrigatorio?: boolean
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pipeline_checklist_progress: {
+        Row: {
+          agendamento_id: string
+          checklist_item_id: string
+          concluido: boolean
+          concluido_em: string | null
+          concluido_por: string | null
+          created_at: string
+          id: string
+          observacao: string | null
+          updated_at: string
+        }
+        Insert: {
+          agendamento_id: string
+          checklist_item_id: string
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agendamento_id?: string
+          checklist_item_id?: string
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_checklist_progress_agendamento_id_fkey"
+            columns: ["agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "crm_agendamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_checklist_progress_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_checklist_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ativo: boolean | null
