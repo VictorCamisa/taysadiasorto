@@ -174,30 +174,28 @@ export function CardOportunidade({
         </div>
       </div>
 
-      {/* Hover Actions */}
-      <div className="absolute inset-x-0 bottom-0 translate-y-full pt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-10">
-        <div className="flex gap-1 bg-popover border border-border rounded-md shadow-lg p-1 mx-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 flex-1 text-xs gap-1"
-            onClick={handleWhatsApp}
-            disabled={!agendamento.paciente?.telefone}
-          >
-            <MessageSquare className="h-3 w-3" />
-            WhatsApp
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 flex-1 text-xs gap-1"
-            onClick={handleLigacao}
-            disabled={!agendamento.paciente?.telefone}
-          >
-            <Phone className="h-3 w-3" />
-            Ligar
-          </Button>
-        </div>
+      {/* Hover Actions - Inside card */}
+      <div className="flex gap-1 mt-2 pt-2 border-t border-border/30 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 flex-1 text-[10px] gap-1 px-2"
+          onClick={handleWhatsApp}
+          disabled={!agendamento.paciente?.telefone}
+        >
+          <MessageSquare className="h-3 w-3" />
+          WhatsApp
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 flex-1 text-[10px] gap-1 px-2"
+          onClick={handleLigacao}
+          disabled={!agendamento.paciente?.telefone}
+        >
+          <Phone className="h-3 w-3" />
+          Ligar
+        </Button>
       </div>
     </div>
   );
