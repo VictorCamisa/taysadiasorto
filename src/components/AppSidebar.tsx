@@ -80,7 +80,7 @@ const modules: NavModule[] = [
       { label: "Pipeline", to: "/crm/pipeline", icon: Kanban },
       { label: "Agendamentos", to: "/crm/agendamentos", icon: Calendar },
       { label: "Pós-venda", to: "/crm/pos-venda", icon: Heart },
-      { label: "Leads Perdidos", to: "/crm/perdidos", icon: XCircle },
+      { label: "Leads", to: "/crm/leads", icon: Users },
       { label: "Pacientes", to: "/crm/pacientes", icon: Users },
     ],
   },
