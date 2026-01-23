@@ -182,28 +182,32 @@ export function PipelineKanban({
       <div
         key={status}
         className={cn(
-          "flex-shrink-0",
-          isAuxiliary ? "w-56" : "w-64"
+          "flex-shrink-0 w-72",
+          isAuxiliary && "w-64"
         )}
         onDragOver={(e) => handleDragOver(e, status)}
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, status)}
       >
-        <Card
+        <div
           className={cn(
-            "h-full transition-colors bg-muted/30 border-border/50",
-            isDragOver && "ring-2 ring-primary ring-offset-2 ring-offset-background",
-            isAuxiliary && "opacity-70"
+            "h-full rounded-xl border border-border/40 bg-muted/20 transition-all",
+            isDragOver && "ring-2 ring-primary/60 bg-primary/5",
+            isAuxiliary && "opacity-80"
           )}
         >
-          <CardHeader className="pb-2 space-y-1">
+          {/* Column Header */}
+          <div className="px-3 py-2.5 border-b border-border/30">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-base">{STATUS_ICONS[status]}</span>
-                <CardTitle className="text-sm font-medium">
+                <span className="text-sm font-medium text-foreground">
                   {STATUS_LABELS[status]}
-                </CardTitle>
-                <Badge variant="secondary" className="text-xs">
+                </span>
+                <Badge 
+                  variant="secondary" 
+                  className="h-5 min-w-5 px-1.5 text-[10px] font-semibold justify-center"
+                >
                   {columnAgendamentos.length}
                 </Badge>
               </div>
@@ -213,10 +217,10 @@ export function PipelineKanban({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-6 w-6"
                       onClick={onNewAgendamento}
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Nova Oportunidade</TooltipContent>
@@ -224,48 +228,48 @@ export function PipelineKanban({
               )}
             </div>
             {columnTotal > 0 && (
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+              <p className="text-xs text-accent font-medium mt-1">
                 {formatCurrency(columnTotal)}
               </p>
             )}
-          </CardHeader>
-          <CardContent className="p-2">
-            <ScrollArea className={cn(
-              isAuxiliary ? "h-[calc(100vh-380px)]" : "h-[calc(100vh-340px)]"
-            )}>
-              <div className="space-y-2 pr-2">
-                {columnAgendamentos.map((agendamento) => (
-                  <div
-                    key={agendamento.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, agendamento.id)}
-                    onDragEnd={handleDragEnd}
-                    className={cn(
-                      "transition-opacity",
-                      draggedId === agendamento.id && "opacity-50"
-                    )}
-                  >
-                    <CardOportunidade
-                      agendamento={agendamento}
-                      onEdit={() => onEditAgendamento?.(agendamento)}
-                      onQuickAction={(action) => handleQuickAction(agendamento.id, action)}
-                      onClick={() => handleCardClick(agendamento)}
-                    />
-                  </div>
-                ))}
+          </div>
 
-                {columnAgendamentos.length === 0 && (
-                  <div className="py-8 text-center text-sm text-muted-foreground">
-                    <p>Nenhum item</p>
-                    {status === "lead" && (
-                      <p className="text-xs mt-1">Arraste leads para cá</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+          {/* Cards Container */}
+          <ScrollArea className={cn(
+            "px-2 py-2",
+            isAuxiliary ? "h-[calc(100vh-400px)]" : "h-[calc(100vh-320px)]"
+          )}>
+            <div className="space-y-2 pb-8">
+              {columnAgendamentos.map((agendamento) => (
+                <div
+                  key={agendamento.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, agendamento.id)}
+                  onDragEnd={handleDragEnd}
+                  className={cn(
+                    "transition-all duration-200",
+                    draggedId === agendamento.id && "opacity-40 scale-95"
+                  )}
+                >
+                  <CardOportunidade
+                    agendamento={agendamento}
+                    onEdit={() => onEditAgendamento?.(agendamento)}
+                    onQuickAction={(action) => handleQuickAction(agendamento.id, action)}
+                    onClick={() => handleCardClick(agendamento)}
+                  />
+                </div>
+              ))}
+
+              {columnAgendamentos.length === 0 && (
+                <div className="py-12 text-center">
+                  <p className="text-sm text-muted-foreground/60">
+                    Nenhum lead
+                  </p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       </div>
     );
   };
