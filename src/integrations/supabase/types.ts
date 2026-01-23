@@ -2139,16 +2139,44 @@ export type Database = {
           ativo: boolean | null
           cep: string | null
           cidade: string | null
+          contato_emergencia_parentesco: string | null
+          contato_emergencia_telefone: string | null
           cpf: string | null
           created_at: string | null
           data_nascimento: string | null
           email: string | null
           endereco: string | null
+          endereco_profissional: string | null
           estado: string | null
+          estado_civil: string | null
           foto_url: string | null
           id: string
+          indicado_por: string | null
+          instagram: string | null
+          nacionalidade: string | null
+          naturalidade: string | null
           nome: string
           observacoes: string | null
+          primeiro_atendimento: string | null
+          profissao: string | null
+          responsavel_cep: string | null
+          responsavel_cpf: string | null
+          responsavel_data_nascimento: string | null
+          responsavel_email: string | null
+          responsavel_endereco: string | null
+          responsavel_estado_civil: string | null
+          responsavel_nacionalidade: string | null
+          responsavel_naturalidade: string | null
+          responsavel_nome: string | null
+          responsavel_parentesco: string | null
+          responsavel_profissao: string | null
+          responsavel_rg: string | null
+          responsavel_rg_orgao: string | null
+          responsavel_sexo: string | null
+          responsavel_telefone: string | null
+          rg: string | null
+          rg_orgao_expedidor: string | null
+          sexo: string | null
           telefone: string | null
           updated_at: string | null
         }
@@ -2156,16 +2184,44 @@ export type Database = {
           ativo?: boolean | null
           cep?: string | null
           cidade?: string | null
+          contato_emergencia_parentesco?: string | null
+          contato_emergencia_telefone?: string | null
           cpf?: string | null
           created_at?: string | null
           data_nascimento?: string | null
           email?: string | null
           endereco?: string | null
+          endereco_profissional?: string | null
           estado?: string | null
+          estado_civil?: string | null
           foto_url?: string | null
           id?: string
+          indicado_por?: string | null
+          instagram?: string | null
+          nacionalidade?: string | null
+          naturalidade?: string | null
           nome: string
           observacoes?: string | null
+          primeiro_atendimento?: string | null
+          profissao?: string | null
+          responsavel_cep?: string | null
+          responsavel_cpf?: string | null
+          responsavel_data_nascimento?: string | null
+          responsavel_email?: string | null
+          responsavel_endereco?: string | null
+          responsavel_estado_civil?: string | null
+          responsavel_nacionalidade?: string | null
+          responsavel_naturalidade?: string | null
+          responsavel_nome?: string | null
+          responsavel_parentesco?: string | null
+          responsavel_profissao?: string | null
+          responsavel_rg?: string | null
+          responsavel_rg_orgao?: string | null
+          responsavel_sexo?: string | null
+          responsavel_telefone?: string | null
+          rg?: string | null
+          rg_orgao_expedidor?: string | null
+          sexo?: string | null
           telefone?: string | null
           updated_at?: string | null
         }
@@ -2173,16 +2229,44 @@ export type Database = {
           ativo?: boolean | null
           cep?: string | null
           cidade?: string | null
+          contato_emergencia_parentesco?: string | null
+          contato_emergencia_telefone?: string | null
           cpf?: string | null
           created_at?: string | null
           data_nascimento?: string | null
           email?: string | null
           endereco?: string | null
+          endereco_profissional?: string | null
           estado?: string | null
+          estado_civil?: string | null
           foto_url?: string | null
           id?: string
+          indicado_por?: string | null
+          instagram?: string | null
+          nacionalidade?: string | null
+          naturalidade?: string | null
           nome?: string
           observacoes?: string | null
+          primeiro_atendimento?: string | null
+          profissao?: string | null
+          responsavel_cep?: string | null
+          responsavel_cpf?: string | null
+          responsavel_data_nascimento?: string | null
+          responsavel_email?: string | null
+          responsavel_endereco?: string | null
+          responsavel_estado_civil?: string | null
+          responsavel_nacionalidade?: string | null
+          responsavel_naturalidade?: string | null
+          responsavel_nome?: string | null
+          responsavel_parentesco?: string | null
+          responsavel_profissao?: string | null
+          responsavel_rg?: string | null
+          responsavel_rg_orgao?: string | null
+          responsavel_sexo?: string | null
+          responsavel_telefone?: string | null
+          rg?: string | null
+          rg_orgao_expedidor?: string | null
+          sexo?: string | null
           telefone?: string | null
           updated_at?: string | null
         }
