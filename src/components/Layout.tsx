@@ -26,7 +26,10 @@ export function Layout({ children }: LayoutProps) {
   const isHome = location.pathname === "/";
 
   return (
-    <div className="min-h-screen flex w-full overflow-hidden relative">
+    <div className={cn(
+      "flex w-full overflow-hidden relative",
+      isFullHeightPage ? "h-screen" : "min-h-screen"
+    )}>
       {/* Adaptive Background */}
       <div className="fixed inset-0 -z-10">
         {/* Light Mode Background */}
@@ -45,7 +48,10 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Main Area */}
-      <div className="flex-1 flex flex-col min-h-screen min-w-0">
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0",
+        isFullHeightPage ? "h-full overflow-hidden" : "min-h-screen"
+      )}>
         {/* Mobile Top Bar */}
         <TopBar />
 
