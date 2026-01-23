@@ -9,7 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Filter, TrendingUp, Users, Calendar, DollarSign, Target, Clock } from "lucide-react";
+import { Plus, Filter, TrendingUp, Users, Calendar, DollarSign, Target, Clock, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { PipelineKanban } from "@/components/crm/PipelineKanban";
 import { OportunidadeForm } from "@/components/crm/OportunidadeForm";
@@ -26,6 +27,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 export default function Pipeline() {
+  const navigate = useNavigate();
   const [selectedTratamento, setSelectedTratamento] = useState<string>("all");
   const [selectedOrigem, setSelectedOrigem] = useState<string>("all");
   const [selectedPrioridade, setSelectedPrioridade] = useState<string>("all");
@@ -251,10 +253,16 @@ export default function Pipeline() {
           )}
         </div>
 
-        <Button onClick={handleNewAgendamento}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Oportunidade
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/crm/whatsapp")}>
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Visualização WhatsApp
+          </Button>
+          <Button onClick={handleNewAgendamento}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Oportunidade
+          </Button>
+        </div>
       </div>
 
       {/* Kanban Board */}
