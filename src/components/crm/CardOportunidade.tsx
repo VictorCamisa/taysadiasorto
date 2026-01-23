@@ -2,12 +2,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, CheckCircle2, Clock, DollarSign, Edit, MessageSquare, Phone } from "lucide-react";
+import { Calendar, CheckCircle2, Circle, Clock, DollarSign, Edit, MessageSquare, Phone } from "lucide-react";
 import {
   CRMAgendamento,
   PRIORIDADE_COLORS,
@@ -16,7 +14,7 @@ import {
   Prioridade,
   AgendamentoStatus,
 } from "./hooks/useCRMAgendamentos";
-import { useChecklistWithProgress, useChecklistProgressMutations } from "./hooks/usePipelineChecklist";
+import { useChecklistWithProgress } from "./hooks/usePipelineChecklist";
 import { cn } from "@/lib/utils";
 
 interface CardOportunidadeProps {
@@ -32,11 +30,10 @@ export function CardOportunidade({
   onQuickAction,
   onClick,
 }: CardOportunidadeProps) {
-  const { items, completedItems, totalItems, progressPercent, isComplete } = useChecklistWithProgress(
+  const { completedItems, totalItems, isComplete } = useChecklistWithProgress(
     agendamento.id,
     agendamento.status as AgendamentoStatus
   );
-  const { toggleProgress } = useChecklistProgressMutations();
 
   const getInitials = (nome: string) => {
     return nome
@@ -91,15 +88,6 @@ export function CardOportunidade({
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     onEdit();
-  };
-
-  const handleChecklistToggle = (e: React.MouseEvent, checklistItemId: string, currentValue: boolean) => {
-    e.stopPropagation();
-    toggleProgress.mutate({
-      agendamentoId: agendamento.id,
-      checklistItemId,
-      concluido: !currentValue,
-    });
   };
 
   return (
@@ -159,64 +147,50 @@ export function CardOportunidade({
           </Tooltip>
         </div>
 
-        {/* Origin Badge */}
-        {agendamento.origem && (
-          <Badge variant="outline" className="text-xs">
-            {agendamento.origem.nome}
-          </Badge>
-        )}
+        {/* Origin Badge + Checklist Indicator Row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {agendamento.origem && (
+            <Badge variant="outline" className="text-xs">
+              {agendamento.origem.nome}
+            </Badge>
+          )}
+          
+          {/* Compact Checklist Indicator */}
+          {totalItems > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge 
+                  variant="secondary" 
+                  className={cn(
+                    "text-xs gap-1 cursor-pointer",
+                    isComplete 
+                      ? "bg-[hsl(145,60%,45%)]/15 text-[hsl(145,60%,45%)] border-[hsl(145,60%,45%)]/30" 
+                      : "bg-warning/15 text-warning border-warning/30"
+                  )}
+                >
+                  {isComplete ? (
+                    <CheckCircle2 className="h-3 w-3" />
+                  ) : (
+                    <Circle className="h-3 w-3" />
+                  )}
+                  {completedItems}/{totalItems}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isComplete 
+                  ? "Checklist completo - pode avançar" 
+                  : `Clique para ver checklist (${completedItems}/${totalItems})`
+                }
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
 
         {/* Value - Highlighted */}
         {Number(agendamento.valor_previsto) > 0 && (
           <div className="flex items-center gap-1.5 text-base font-bold text-primary">
             <DollarSign className="h-4 w-4" />
             {formatCurrency(Number(agendamento.valor_previsto))}
-          </div>
-        )}
-
-        {/* Checklist Progress */}
-        {items.length > 0 && (
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Checklist</span>
-              <span className={cn(
-                "font-medium",
-                isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
-              )}>
-                {completedItems}/{totalItems}
-              </span>
-            </div>
-            <Progress 
-              value={progressPercent} 
-              className="h-1.5"
-            />
-            
-            {/* Checklist Items - Expandable */}
-            <div className="space-y-1 pt-1">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-2 text-xs"
-                  onClick={(e) => handleChecklistToggle(e, item.id, item.progress?.concluido || false)}
-                >
-                  <Checkbox
-                    checked={item.progress?.concluido || false}
-                    className="h-3.5 w-3.5"
-                  />
-                  <span className={cn(
-                    "flex-1 truncate",
-                    item.progress?.concluido 
-                      ? "text-muted-foreground line-through" 
-                      : item.obrigatorio 
-                        ? "text-foreground" 
-                        : "text-muted-foreground"
-                  )}>
-                    {item.titulo}
-                    {!item.obrigatorio && <span className="text-muted-foreground/60 ml-1">(opcional)</span>}
-                  </span>
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
