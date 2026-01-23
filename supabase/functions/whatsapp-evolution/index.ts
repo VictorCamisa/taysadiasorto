@@ -399,6 +399,7 @@ serve(async (req) => {
           .not("telefone", "is", null);
         
         const pacientesByPhone: Record<string, { id: string; nome: string }> = {};
+        const pacientesByName: Record<string, { id: string; nome: string; telefone: string }> = {};
         if (pacientesDB) {
           for (const p of pacientesDB) {
             if (p.telefone) {
@@ -411,9 +412,30 @@ serve(async (req) => {
                 pacientesByPhone[cleaned] = { id: p.id, nome: p.nome };
               }
             }
+            // Indexar também pelo nome (lowercase para comparação)
+            const nomeLower = p.nome.toLowerCase().trim();
+            pacientesByName[nomeLower] = { id: p.id, nome: p.nome, telefone: p.telefone || "" };
           }
         }
         console.log("Pacientes indexed by phone:", Object.keys(pacientesByPhone).length);
+        console.log("Pacientes indexed by name:", Object.keys(pacientesByName).length);
+        
+        // Também buscar conversas existentes que já têm paciente vinculado para copiar
+        const { data: existingConversas } = await supabase
+          .from("whatsapp_conversas")
+          .select("remote_jid, paciente_id, nome_contato")
+          .not("paciente_id", "is", null);
+        
+        const conversasByName: Record<string, string> = {}; // nome_contato -> paciente_id
+        if (existingConversas) {
+          for (const conv of existingConversas) {
+            if (conv.nome_contato && conv.paciente_id) {
+              const nomeLower = conv.nome_contato.toLowerCase().trim();
+              conversasByName[nomeLower] = conv.paciente_id;
+            }
+          }
+        }
+        console.log("Existing conversas with paciente:", Object.keys(conversasByName).length);
         
         for (const chat of chats) {
           const remoteJid = chat.remoteJid as string;
@@ -469,7 +491,7 @@ serve(async (req) => {
             }
           }
           
-          // Tentar vincular com paciente pelo telefone (busca em memória)
+          // ESTRATÉGIA 1: Tentar vincular com paciente pelo telefone
           let pacienteId = null;
           let pacienteNome = null;
           if (telefoneRaw.length >= 9) {
@@ -478,7 +500,36 @@ serve(async (req) => {
             if (match) {
               pacienteId = match.id;
               pacienteNome = match.nome;
-              console.log(`Match found: ${telefoneRaw} -> ${pacienteNome}`);
+              console.log(`Match by phone: ${telefoneRaw} -> ${pacienteNome}`);
+            }
+          }
+          
+          // ESTRATÉGIA 2: Se não achou por telefone, tentar por nome do contato
+          if (!pacienteId && nome) {
+            const nomeLower = nome.toLowerCase().trim();
+            // Primeiro, verificar se existe conversa com mesmo nome já vinculada
+            if (conversasByName[nomeLower]) {
+              pacienteId = conversasByName[nomeLower];
+              console.log(`Match by existing conversa name: ${nome} -> ${pacienteId}`);
+            }
+            // Segundo, tentar match direto com nome do paciente
+            if (!pacienteId && pacientesByName[nomeLower]) {
+              pacienteId = pacientesByName[nomeLower].id;
+              pacienteNome = pacientesByName[nomeLower].nome;
+              console.log(`Match by patient name: ${nome} -> ${pacienteNome}`);
+            }
+          }
+          
+          // ESTRATÉGIA 3: Para LIDs, tentar buscar por partes do nome
+          if (!pacienteId && isLid && nome && nome.length > 3) {
+            const firstName = nome.split(" ")[0].toLowerCase().trim();
+            for (const [pName, pData] of Object.entries(pacientesByName)) {
+              if (pName.startsWith(firstName) || pName.includes(firstName)) {
+                pacienteId = pData.id;
+                pacienteNome = pData.nome;
+                console.log(`Match by partial name: ${nome} -> ${pacienteNome}`);
+                break;
+              }
             }
           }
           
