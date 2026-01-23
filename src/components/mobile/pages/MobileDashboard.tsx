@@ -1,11 +1,9 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { MobileHeader } from "@/components/mobile/MobileHeader";
-import { MobileModuleNav } from "@/components/mobile/MobileModuleNav";
-import { MobileKPICard, MobileKPIGrid } from "@/components/mobile/MobileKPICard";
-import { MobileCard, MobileCardHeader, MobileCardContent, MobileListItem } from "@/components/mobile/MobileCard";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -20,18 +18,28 @@ import {
   CreditCard,
   FileText,
   Package,
-  Users,
   BarChart3,
   Target,
-  FileBarChart,
   Calendar,
-  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet,
+  type LucideIcon,
 } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { startOfMonth, endOfMonth, subMonths, startOfYear } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, startOfYear, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
-const financeiroNavItems = [
+interface NavItem {
+  label: string;
+  to: string;
+  icon?: LucideIcon;
+}
+
+const financeiroNavItems: NavItem[] = [
   { label: "Dashboard", to: "/financeiro" },
   { label: "Diário", to: "/financeiro/diario-caixa", icon: FileText },
   { label: "Lançamentos", to: "/financeiro/lancamentos", icon: DollarSign },
@@ -40,8 +48,90 @@ const financeiroNavItems = [
   { label: "DRE", to: "/financeiro/dre", icon: BarChart3 },
 ];
 
+interface KPICardProps {
+  title: string;
+  value: string;
+  subtitle?: string;
+  icon: LucideIcon;
+  trend?: number;
+  variant?: "default" | "success" | "danger" | "warning";
+  onClick?: () => void;
+}
+
+function KPICard({ title, value, subtitle, icon: Icon, trend, variant = "default", onClick }: KPICardProps) {
+  const variantStyles = {
+    default: "bg-card/80 border-border/30",
+    success: "bg-primary/5 border-primary/20",
+    danger: "bg-destructive/5 border-destructive/20",
+    warning: "bg-accent/30 border-accent/40",
+  };
+  
+  const iconStyles = {
+    default: "bg-muted/50 text-muted-foreground",
+    success: "bg-primary/10 text-primary",
+    danger: "bg-destructive/10 text-destructive",
+    warning: "bg-accent/50 text-accent-foreground",
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "p-4 rounded-2xl border transition-all",
+        variantStyles[variant],
+        onClick && "active:scale-[0.98] cursor-pointer"
+      )}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", iconStyles[variant])}>
+          <Icon className="h-5 w-5" />
+        </div>
+        {trend !== undefined && (
+          <Badge variant="outline" className={cn(
+            "text-xs font-medium",
+            trend >= 0 ? "text-primary border-primary/30" : "text-destructive border-destructive/30"
+          )}>
+            {trend >= 0 ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
+            {Math.abs(trend)}%
+          </Badge>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mb-0.5">{title}</p>
+      <p className="text-xl font-bold text-foreground">{value}</p>
+      {subtitle && <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>}
+    </div>
+  );
+}
+
+interface ListItemProps {
+  title: string;
+  subtitle?: string;
+  value: string;
+  valueColor?: "default" | "success" | "danger";
+}
+
+function ListItem({ title, subtitle, value, valueColor = "default" }: ListItemProps) {
+  const valueStyles = {
+    default: "text-foreground",
+    success: "text-primary",
+    danger: "text-destructive",
+  };
+
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-border/30 last:border-0">
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-foreground truncate">{title}</p>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+      <p className={cn("font-semibold shrink-0 ml-3", valueStyles[valueColor])}>{value}</p>
+    </div>
+  );
+}
+
 export function MobileDashboard() {
+  const navigate = useNavigate();
   const [period, setPeriod] = useState("month");
+  const [activeNav, setActiveNav] = useState("/financeiro");
   
   const getPeriodDates = (p: string) => {
     const now = new Date();
@@ -61,143 +151,219 @@ export function MobileDashboard() {
 
   const { start, end } = getPeriodDates(period);
   
-  const { kpis, charts } = useDashboardData({
+  const dashboardData = useDashboardData({
     startDate: start,
     endDate: end,
     tratamentoIds: [],
     origemIds: [],
   });
+  const { kpis, charts } = dashboardData;
+  const isLoading = !kpis || kpis.receitaTotal === undefined;
+
+  const periodLabel = useMemo(() => {
+    const labels: Record<string, string> = {
+      month: format(start, "MMMM yyyy", { locale: ptBR }),
+      quarter: "Últimos 3 meses",
+      semester: "Últimos 6 meses",
+      year: `Ano ${format(start, "yyyy")}`,
+    };
+    return labels[period] || "";
+  }, [period, start]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Header */}
-      <MobileHeader 
-        title="Dashboard"
-        showBack
-        backTo="/"
-      />
-
-      {/* Module Nav */}
-      <MobileModuleNav items={financeiroNavItems} />
-
-      {/* Content */}
-      <div className="flex-1 px-4 py-4 pb-24 space-y-5 overflow-y-auto">
-        {/* Period Selector */}
-        <div className="flex items-center gap-3">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border/40">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-10 w-10 rounded-xl shrink-0"
+            onClick={() => navigate("/")}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-semibold text-foreground">Financeiro</h1>
+            <p className="text-xs text-muted-foreground capitalize">{periodLabel}</p>
+          </div>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[160px] h-10 rounded-xl">
-              <SelectValue />
+            <SelectTrigger className="w-auto h-9 rounded-xl px-3 gap-1.5 border-border/50">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent align="end">
               <SelectItem value="month">Mês Atual</SelectItem>
-              <SelectItem value="quarter">Últimos 3 Meses</SelectItem>
-              <SelectItem value="semester">Últimos 6 Meses</SelectItem>
-              <SelectItem value="year">Ano Atual</SelectItem>
+              <SelectItem value="quarter">3 Meses</SelectItem>
+              <SelectItem value="semester">6 Meses</SelectItem>
+              <SelectItem value="year">Ano</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
+        {/* Module Nav */}
+        <div className="px-4 pb-3 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2">
+            {financeiroNavItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all",
+                  "active:scale-95",
+                  activeNav === item.to
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/50 text-muted-foreground"
+                )}
+                onClick={() => setActiveNav(item.to)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="flex-1 px-4 py-4 pb-28 space-y-5 overflow-y-auto">
         {/* Main KPIs */}
-        <MobileKPIGrid>
-          <MobileKPICard
-            title="Receita"
-            value={formatCurrency(kpis.receitaTotal)}
-            icon={TrendingUp}
-            variant="success"
-          />
-          <MobileKPICard
-            title="Despesas"
-            value={formatCurrency(kpis.despesaTotal)}
-            icon={TrendingDown}
-            variant="danger"
-          />
-          <MobileKPICard
-            title="Lucro"
-            value={formatCurrency(kpis.lucroLiquido)}
-            icon={DollarSign}
-            variant={kpis.lucroLiquido >= 0 ? "success" : "danger"}
-          />
-          <MobileKPICard
-            title="Ticket Médio"
-            value={formatCurrency(kpis.ticketMedio)}
-            icon={Target}
-          />
-        </MobileKPIGrid>
+        <div className="grid grid-cols-2 gap-3">
+          {isLoading ? (
+            <>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="p-4 rounded-2xl bg-card/80 border border-border/30">
+                  <Skeleton className="h-10 w-10 rounded-xl mb-3" />
+                  <Skeleton className="h-3 w-16 mb-1" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <KPICard
+                title="Receita"
+                value={formatCurrency(kpis.receitaTotal)}
+                icon={TrendingUp}
+                variant="success"
+              />
+              <KPICard
+                title="Despesas"
+                value={formatCurrency(kpis.despesaTotal)}
+                icon={TrendingDown}
+                variant="danger"
+              />
+              <KPICard
+                title="Lucro Líquido"
+                value={formatCurrency(kpis.lucroLiquido)}
+                icon={Wallet}
+                variant={kpis.lucroLiquido >= 0 ? "success" : "danger"}
+              />
+              <KPICard
+                title="Ticket Médio"
+                value={formatCurrency(kpis.ticketMedio)}
+                icon={Target}
+              />
+            </>
+          )}
+        </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
           {[
             { label: "Novo Lançamento", icon: DollarSign, to: "/financeiro/lancamentos" },
             { label: "Ver DRE", icon: BarChart3, to: "/financeiro/dre" },
-            { label: "Relatórios", icon: FileBarChart, to: "/financeiro/relatorios" },
+            { label: "Relatórios", icon: FileText, to: "/financeiro/relatorios" },
           ].map((action) => (
             <Link
               key={action.to}
               to={action.to}
               className={cn(
-                "flex flex-col items-center gap-2 p-4 rounded-xl",
-                "bg-card border border-border/40",
+                "flex items-center gap-2 px-4 py-2.5 rounded-xl shrink-0",
+                "bg-primary/10 border border-primary/20",
                 "active:scale-95 transition-all"
               )}
             >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <action.icon className="h-5 w-5 text-primary" />
-              </div>
-              <span className="text-xs text-center text-muted-foreground">{action.label}</span>
+              <action.icon className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">{action.label}</span>
             </Link>
           ))}
         </div>
 
         {/* Top Tratamentos */}
-        <MobileCard>
-          <MobileCardHeader
-            title="Top Tratamentos"
-            subtitle="Mais vendidos no período"
-            icon={TrendingUp}
-          />
-          <MobileCardContent noPadding>
-            {charts.topTratamentosReceita.slice(0, 5).map((item: any) => (
-              <MobileListItem
-                key={item.nome}
-                title={item.nome}
-                subtitle={`${item.quantidade || 0} vendas`}
-                value={formatCurrency(item.valor || 0)}
-                showChevron={false}
-              />
-            ))}
-            {charts.topTratamentosReceita.length === 0 && (
+        <div className="rounded-2xl bg-card/80 border border-border/30 overflow-hidden">
+          <div className="flex items-center gap-3 p-4 border-b border-border/30">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Top Tratamentos</h3>
+              <p className="text-xs text-muted-foreground">Mais vendidos no período</p>
+            </div>
+          </div>
+          <div className="px-4">
+            {isLoading ? (
+              <div className="py-4 space-y-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="flex justify-between">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-5 w-20" />
+                  </div>
+                ))}
+              </div>
+            ) : charts.topTratamentosReceita.length > 0 ? (
+              charts.topTratamentosReceita.slice(0, 5).map((item: any) => (
+                <ListItem
+                  key={item.nome}
+                  title={item.nome}
+                  subtitle={`${item.quantidade || 0} vendas`}
+                  value={formatCurrency(item.valor || 0)}
+                  valueColor="success"
+                />
+              ))
+            ) : (
               <div className="py-8 text-center text-muted-foreground text-sm">
                 Nenhum tratamento no período
               </div>
             )}
-          </MobileCardContent>
-        </MobileCard>
+          </div>
+        </div>
 
         {/* Revenue by Origin */}
-        <MobileCard>
-          <MobileCardHeader
-            title="Receita por Origem"
-            subtitle="Distribuição do período"
-            icon={Users}
-          />
-          <MobileCardContent noPadding>
-            {Object.entries(charts.receitaPorOrigem || {}).slice(0, 5).map(([nome, valor]: [string, any]) => (
-              <MobileListItem
-                key={nome}
-                title={nome}
-                value={formatCurrency(valor || 0)}
-                showChevron={false}
-              />
-            ))}
-            {Object.keys(charts.receitaPorOrigem || {}).length === 0 && (
+        <div className="rounded-2xl bg-card/80 border border-border/30 overflow-hidden">
+          <div className="flex items-center gap-3 p-4 border-b border-border/30">
+            <div className="w-9 h-9 rounded-lg bg-accent/50 flex items-center justify-center">
+              <BarChart3 className="h-4 w-4 text-foreground" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Por Origem</h3>
+              <p className="text-xs text-muted-foreground">Receita por canal</p>
+            </div>
+          </div>
+          <div className="px-4">
+            {isLoading ? (
+              <div className="py-4 space-y-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="flex justify-between">
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-5 w-20" />
+                  </div>
+                ))}
+              </div>
+            ) : Object.keys(charts.receitaPorOrigem || {}).length > 0 ? (
+              Object.entries(charts.receitaPorOrigem || {}).slice(0, 5).map(([nome, valor]: [string, any]) => (
+                <ListItem
+                  key={nome}
+                  title={nome}
+                  value={formatCurrency(valor || 0)}
+                />
+              ))
+            ) : (
               <div className="py-8 text-center text-muted-foreground text-sm">
                 Nenhuma origem no período
               </div>
             )}
-          </MobileCardContent>
-        </MobileCard>
-      </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
