@@ -1,11 +1,11 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, CheckCircle2, Circle, Clock, DollarSign, Edit, MessageSquare, Phone } from "lucide-react";
+import { CheckCircle2, Circle, Edit, MessageSquare, Phone } from "lucide-react";
 import {
   CRMAgendamento,
   PRIORIDADE_COLORS,
@@ -49,16 +49,9 @@ export function CardOportunidade({
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    try {
-      return format(new Date(dateString), "dd/MM HH:mm", { locale: ptBR });
-    } catch {
-      return null;
-    }
   };
 
   const getTimeInStage = () => {
@@ -90,178 +83,133 @@ export function CardOportunidade({
     onEdit();
   };
 
+  const hasValue = Number(agendamento.valor_previsto) > 0;
+
   return (
     <Card
-      className="cursor-pointer hover:shadow-lg transition-all group overflow-hidden border-0 shadow-md"
+      className="cursor-pointer hover:ring-1 hover:ring-primary/50 transition-all group bg-card border-border/50"
       onClick={onClick}
     >
-      {/* Treatment Header - Prominent Display */}
-      <div className="bg-primary px-3 py-2 flex items-center justify-between">
-        <p className="text-sm font-semibold text-primary-foreground truncate flex-1">
-          {agendamento.tratamento?.nome || "Sem procedimento"}
-        </p>
-        {isComplete && (
-          <CheckCircle2 className="h-4 w-4 text-primary-foreground ml-2 shrink-0" />
-        )}
-      </div>
-
-      <CardContent className="p-3 space-y-2.5">
-        {/* Header with Avatar and Patient Info */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <Avatar className="h-10 w-10 shrink-0 border-2 border-primary/20">
-              <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                {agendamento.paciente?.nome
-                  ? getInitials(agendamento.paciente.nome)
-                  : "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate">
-                {agendamento.paciente?.nome || "Paciente"}
-              </p>
-              {agendamento.paciente?.telefone && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {agendamento.paciente.telefone}
-                </p>
-              )}
-            </div>
+      <div className="p-3 space-y-2">
+        {/* Row 1: Avatar + Name + Priority */}
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-medium">
+              {agendamento.paciente?.nome
+                ? getInitials(agendamento.paciente.nome)
+                : "?"}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate leading-tight">
+              {agendamento.paciente?.nome || "Paciente"}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {agendamento.tratamento?.nome || "Sem procedimento"}
+            </p>
           </div>
 
-          {/* Temperature Badge */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge
-                variant="secondary"
+              <div
                 className={cn(
-                  "text-base shrink-0 h-8 w-8 rounded-full flex items-center justify-center p-0",
+                  "h-6 w-6 rounded-full flex items-center justify-center text-sm shrink-0",
                   PRIORIDADE_COLORS[prioridade]
                 )}
               >
                 {PRIORIDADE_ICONS[prioridade]}
-              </Badge>
+              </div>
             </TooltipTrigger>
-            <TooltipContent>
-              Lead {PRIORIDADE_LABELS[prioridade]}
+            <TooltipContent side="left">
+              {PRIORIDADE_LABELS[prioridade]}
             </TooltipContent>
           </Tooltip>
         </div>
 
-        {/* Origin Badge + Checklist Indicator Row */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {agendamento.origem && (
-            <Badge variant="outline" className="text-xs">
-              {agendamento.origem.nome}
-            </Badge>
-          )}
-          
-          {/* Compact Checklist Indicator */}
-          {totalItems > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge 
-                  variant="secondary" 
-                  className={cn(
-                    "text-xs gap-1 cursor-pointer",
-                    isComplete 
-                      ? "bg-[hsl(145,60%,45%)]/15 text-[hsl(145,60%,45%)] border-[hsl(145,60%,45%)]/30" 
-                      : "bg-warning/15 text-warning border-warning/30"
-                  )}
-                >
-                  {isComplete ? (
-                    <CheckCircle2 className="h-3 w-3" />
-                  ) : (
-                    <Circle className="h-3 w-3" />
-                  )}
-                  {completedItems}/{totalItems}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isComplete 
-                  ? "Checklist completo - pode avançar" 
-                  : `Clique para ver checklist (${completedItems}/${totalItems})`
-                }
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-
-        {/* Value - Highlighted */}
-        {Number(agendamento.valor_previsto) > 0 && (
-          <div className="flex items-center gap-1.5 text-base font-bold text-primary">
-            <DollarSign className="h-4 w-4" />
-            {formatCurrency(Number(agendamento.valor_previsto))}
+        {/* Row 2: Value + Checklist + Time */}
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            {hasValue && (
+              <span className="font-semibold text-primary">
+                {formatCurrency(Number(agendamento.valor_previsto))}
+              </span>
+            )}
+            
+            {agendamento.origem && (
+              <span className="text-muted-foreground truncate">
+                {agendamento.origem.nome}
+              </span>
+            )}
           </div>
-        )}
 
-        {/* Meta info */}
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          {agendamento.data_agendamento && (
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5" />
-              {formatDate(agendamento.data_agendamento)}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Checklist Badge */}
+            {totalItems > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={cn(
+                      "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium",
+                      isComplete 
+                        ? "bg-[hsl(145,60%,45%)]/15 text-[hsl(145,60%,45%)]" 
+                        : "bg-warning/15 text-warning"
+                    )}
+                  >
+                    {isComplete ? (
+                      <CheckCircle2 className="h-3 w-3" />
+                    ) : (
+                      <Circle className="h-3 w-3" />
+                    )}
+                    {completedItems}/{totalItems}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isComplete ? "Checklist completo" : "Clique para ver checklist"}
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            <span className="text-muted-foreground/70">
+              {getTimeInStage()}
             </span>
-          )}
-          {agendamento.duracao_minutos && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              {agendamento.duracao_minutos}min
-            </span>
-          )}
+          </div>
         </div>
 
-        {/* Time in stage */}
-        <p className="text-xs text-muted-foreground">
-          há {getTimeInStage()}
-        </p>
+        {/* Row 3: Quick Actions - Only on hover */}
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mb-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={handleWhatsApp}
+            disabled={!agendamento.paciente?.telefone}
+          >
+            <MessageSquare className="h-3 w-3 mr-1" />
+            WhatsApp
+          </Button>
 
-        {/* Quick Actions - Only visible on hover */}
-        <div className="flex gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={handleWhatsApp}
-                disabled={!agendamento.paciente?.telefone}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>WhatsApp</TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={handleLigacao}
+            disabled={!agendamento.paciente?.telefone}
+          >
+            <Phone className="h-3 w-3 mr-1" />
+            Ligar
+          </Button>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={handleLigacao}
-                disabled={!agendamento.paciente?.telefone}
-              >
-                <Phone className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Ligar</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 ml-auto"
-                onClick={handleEdit}
-              >
-                <Edit className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Editar</TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs ml-auto"
+            onClick={handleEdit}
+          >
+            <Edit className="h-3 w-3" />
+          </Button>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }

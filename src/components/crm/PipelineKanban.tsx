@@ -183,7 +183,7 @@ export function PipelineKanban({
         key={status}
         className={cn(
           "flex-shrink-0",
-          isAuxiliary ? "w-60" : "w-72"
+          isAuxiliary ? "w-56" : "w-64"
         )}
         onDragOver={(e) => handleDragOver(e, status)}
         onDragLeave={handleDragLeave}
@@ -191,9 +191,9 @@ export function PipelineKanban({
       >
         <Card
           className={cn(
-            "h-full transition-colors",
-            isDragOver && "ring-2 ring-primary ring-offset-2",
-            isAuxiliary && "opacity-80"
+            "h-full transition-colors bg-muted/30 border-border/50",
+            isDragOver && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+            isAuxiliary && "opacity-70"
           )}
         >
           <CardHeader className="pb-2 space-y-1">
