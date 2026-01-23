@@ -269,10 +269,23 @@ serve(async (req) => {
       // Enviar mensagem de texto
       case "send_message": {
         const { instanceName, remoteJid, message } = params;
-        result = await evolutionFetch(`/message/sendText/${instanceName}`, "POST", {
-          number: remoteJid.replace("@s.whatsapp.net", ""),
-          text: message,
-        });
+        
+        // Verificar se é LID ou número normal
+        const isLid = remoteJid.endsWith("@lid");
+        
+        if (isLid) {
+          // Para LID, usar o remoteJid completo
+          result = await evolutionFetch(`/message/sendText/${instanceName}`, "POST", {
+            number: remoteJid,
+            text: message,
+          });
+        } else {
+          // Para número normal, remover o sufixo
+          result = await evolutionFetch(`/message/sendText/${instanceName}`, "POST", {
+            number: remoteJid.replace("@s.whatsapp.net", "").replace("@g.us", ""),
+            text: message,
+          });
+        }
         
         // Salvar mensagem no banco
         const { data: conversa } = await supabase
@@ -308,7 +321,8 @@ serve(async (req) => {
         const { instanceId, chats } = params;
         
         for (const chat of chats) {
-          const remoteJid = (chat.id || chat.remoteJid) as string;
+          // IMPORTANTE: Usar remoteJid como prioridade, não o id interno da Evolution
+          const remoteJid = (chat.remoteJid || chat.id) as string;
           
           // Extrair telefone do remoteJid (formato: 5511999999999@s.whatsapp.net ou hash@lid)
           const isLid = remoteJid.endsWith("@lid");
