@@ -46,8 +46,8 @@ interface ChatListProps {
 }
 
 export function ChatList({ instance, selectedConversa, onSelectConversa }: ChatListProps) {
-  // Mostrar TODAS as conversas, não apenas com paciente vinculado
-  const { conversas, loading, syncChats } = useWhatsAppConversas(instance?.id || null, false);
+  // Mostrar apenas conversas com paciente vinculado (CRM)
+  const { conversas, loading, syncChats } = useWhatsAppConversas(instance?.id || null, true);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
