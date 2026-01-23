@@ -11,6 +11,9 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 // Auth
 import Auth from "./pages/Auth";
 
+// Home
+import Home from "./pages/Home";
+
 // Módulo Financeiro
 import Dashboard from "./pages/Dashboard";
 import DiarioCaixa from "./pages/DiarioCaixa";
@@ -63,8 +66,8 @@ const App = () => (
                   <ProtectedRoute>
                     <Layout>
                       <Routes>
-                        {/* Home redireciona para financeiro */}
-                        <Route path="/" element={<Dashboard />} />
+                        {/* Home */}
+                        <Route path="/" element={<Home />} />
                         
                         {/* Módulo Financeiro */}
                         <Route path="/financeiro" element={<Dashboard />} />
