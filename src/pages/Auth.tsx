@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { LogIn, UserPlus, Loader2, Clock, CheckCircle } from "lucide-react";
+import logoTaysa from "@/assets/logo-dra-taysa.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -145,12 +146,17 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">SGCTD</CardTitle>
-            <CardDescription>
-              Sistema de Gestão de Clínicas e Tratamentos Dermocosméticos
-            </CardDescription>
+        <Card className="border-border/50 shadow-lg">
+          <CardHeader className="text-center pb-2 pt-8">
+            <div className="flex justify-center mb-4">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-primary/5 border border-primary/10">
+                <img 
+                  src={logoTaysa} 
+                  alt="Dra. Taysa Dias" 
+                  className="h-20 w-auto drop-shadow-md"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
