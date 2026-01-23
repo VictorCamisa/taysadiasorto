@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { RefreshCw, Search, MessageCircle, Plus, UserPlus } from "lucide-react";
+import { RefreshCw, Search, MessageCircle, Plus, UserPlus, Target } from "lucide-react";
 import { useWhatsAppConversas, WhatsAppConversa, WhatsAppInstance } from "@/hooks/useWhatsAppData";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,23 @@ interface Paciente {
   foto_url: string | null;
 }
 
+interface PipelineStatus {
+  paciente_id: string;
+  status: string;
+  tratamento_nome: string | null;
+  origem_nome: string | null;
+}
+
+const STATUS_CONFIG: Record<string, { label: string; colorClass: string }> = {
+  lead: { label: "Lead", colorClass: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+  em_negociacao: { label: "Negociação", colorClass: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
+  orcamento_enviado: { label: "Orçamento", colorClass: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
+  agendado: { label: "Agendado", colorClass: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
+  confirmado: { label: "Confirmado", colorClass: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20" },
+  realizado: { label: "Realizado", colorClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
+  perdido: { label: "Perdido", colorClass: "bg-red-500/10 text-red-600 border-red-500/20" },
+};
+
 interface ChatListProps {
   instance: WhatsAppInstance | null;
   selectedConversa: WhatsAppConversa | null;
@@ -36,6 +53,50 @@ export function ChatList({ instance, selectedConversa, onSelectConversa }: ChatL
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [pacienteSearch, setPacienteSearch] = useState("");
   const [loadingPacientes, setLoadingPacientes] = useState(false);
+  const [pipelineStatuses, setPipelineStatuses] = useState<Map<string, PipelineStatus>>(new Map());
+
+  // Fetch pipeline status for all patients in conversas
+  useEffect(() => {
+    const fetchPipelineStatuses = async () => {
+      const pacienteIds = conversas
+        .map(c => c.paciente_id)
+        .filter((id): id is string => !!id);
+      
+      if (pacienteIds.length === 0) return;
+
+      try {
+        const { data } = await supabase
+          .from("crm_agendamentos")
+          .select(`
+            paciente_id,
+            status,
+            tratamento:tratamentos(nome),
+            origem:origens(nome)
+          `)
+          .in("paciente_id", pacienteIds)
+          .not("status", "in", '("perdido","realizado")')
+          .order("created_at", { ascending: false });
+
+        const statusMap = new Map<string, PipelineStatus>();
+        (data || []).forEach((item: any) => {
+          // Keep only the most recent one per patient
+          if (!statusMap.has(item.paciente_id)) {
+            statusMap.set(item.paciente_id, {
+              paciente_id: item.paciente_id,
+              status: item.status,
+              tratamento_nome: item.tratamento?.nome || null,
+              origem_nome: item.origem?.nome || null,
+            });
+          }
+        });
+        setPipelineStatuses(statusMap);
+      } catch (error) {
+        console.error("Error fetching pipeline statuses:", error);
+      }
+    };
+
+    fetchPipelineStatuses();
+  }, [conversas]);
 
   // Fetch pacientes com telefone que não têm conversa ativa
   const fetchPacientesDisponiveis = async () => {
@@ -283,6 +344,8 @@ export function ChatList({ instance, selectedConversa, onSelectConversa }: ChatL
             {filteredConversas.map((conversa) => {
               const name = conversa.paciente?.nome || conversa.nome_contato || conversa.remote_jid.split("@")[0];
               const isSelected = selectedConversa?.id === conversa.id;
+              const pipelineStatus = conversa.paciente_id ? pipelineStatuses.get(conversa.paciente_id) : null;
+              const statusConfig = pipelineStatus ? STATUS_CONFIG[pipelineStatus.status] : null;
               
               return (
                 <div
@@ -311,8 +374,25 @@ export function ChatList({ instance, selectedConversa, onSelectConversa }: ChatL
                       </span>
                     </div>
                     
+                    {/* Pipeline Status Badge */}
+                    {statusConfig && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Badge 
+                          variant="outline" 
+                          className={cn("text-[10px] px-1.5 py-0 h-4 font-normal border", statusConfig.colorClass)}
+                        >
+                          {statusConfig.label}
+                        </Badge>
+                        {pipelineStatus?.tratamento_nome && (
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            • {pipelineStatus.tratamento_nome}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="flex items-center justify-between gap-2 mt-0.5">
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground truncate">
                         {conversa.ultima_mensagem || "Iniciar conversa..."}
                       </p>
                       {conversa.nao_lidas > 0 && (
