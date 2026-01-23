@@ -33,7 +33,7 @@ import FichaPaciente from "./pages/crm/FichaPaciente";
 import Pipeline from "./pages/crm/Pipeline";
 import Agendamentos from "./pages/crm/Agendamentos";
 import PosVenda from "./pages/crm/PosVenda";
-import LeadsPerdidos from "./pages/crm/LeadsPerdidos";
+import Leads from "./pages/crm/Leads";
 
 // Módulo Admin
 import Admin from "./pages/admin/Admin";
@@ -86,7 +86,7 @@ const App = () => (
                         <Route path="/crm/pipeline" element={<Pipeline />} />
                         <Route path="/crm/agendamentos" element={<Agendamentos />} />
                         <Route path="/crm/pos-venda" element={<PosVenda />} />
-                        <Route path="/crm/perdidos" element={<LeadsPerdidos />} />
+                        <Route path="/crm/leads" element={<Leads />} />
                         <Route path="/crm/pacientes" element={<Pacientes />} />
                         <Route path="/crm/pacientes/:id" element={<FichaPaciente />} />
                         
