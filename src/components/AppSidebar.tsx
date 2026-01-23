@@ -265,15 +265,28 @@ export function AppSidebar() {
       >
         {/* Header */}
         <div className={cn(
-          "flex items-center justify-between h-16 px-5",
+          "flex items-center justify-between h-20 px-5",
           "border-b border-border/40 dark:border-border/20"
         )}>
           <Link to="/" className="flex items-center gap-3 group">
-            <img 
-              src={logoTaysa} 
-              alt="Dra. Taysa Dias" 
-              className="h-12 w-auto opacity-90 group-hover:opacity-100 transition-opacity duration-300 dark:brightness-150 dark:contrast-125"
-            />
+            <div className={cn(
+              "p-2 rounded-xl transition-all duration-300",
+              "bg-gradient-to-br from-primary/10 via-transparent to-accent/10",
+              "dark:from-primary/20 dark:via-transparent dark:to-accent/20",
+              "group-hover:from-primary/15 group-hover:to-accent/15",
+              "dark:group-hover:from-primary/30 dark:group-hover:to-accent/30"
+            )}>
+              <img 
+                src={logoTaysa} 
+                alt="Dra. Taysa Dias" 
+                className={cn(
+                  "h-14 w-auto transition-all duration-300",
+                  "drop-shadow-sm",
+                  "dark:brightness-125 dark:contrast-110 dark:saturate-110",
+                  "group-hover:scale-[1.02]"
+                )}
+              />
+            </div>
           </Link>
           <Button
             variant="ghost"
