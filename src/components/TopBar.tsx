@@ -239,11 +239,17 @@ export function TopBar() {
           )}>
             <SheetHeader className="border-b border-border/40 p-5">
               <SheetTitle className="text-left">
-                <img 
-                  src={logoTaysa} 
-                  alt="Dra. Taysa Dias" 
-                  className="h-10 w-auto dark:brightness-150 dark:contrast-125"
-                />
+                <div className={cn(
+                  "inline-block p-2 rounded-xl",
+                  "bg-gradient-to-br from-primary/10 via-transparent to-accent/10",
+                  "dark:from-primary/20 dark:via-transparent dark:to-accent/20"
+                )}>
+                  <img 
+                    src={logoTaysa} 
+                    alt="Dra. Taysa Dias" 
+                    className="h-12 w-auto drop-shadow-sm dark:brightness-125 dark:contrast-110 dark:saturate-110"
+                  />
+                </div>
               </SheetTitle>
             </SheetHeader>
 
@@ -328,11 +334,23 @@ export function TopBar() {
 
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <img 
-            src={logoTaysa} 
-            alt="Dra. Taysa Dias" 
-            className="h-8 w-auto dark:brightness-150 dark:contrast-125"
-          />
+          <div className={cn(
+            "p-1.5 rounded-lg transition-all duration-300",
+            "bg-gradient-to-br from-primary/10 via-transparent to-accent/10",
+            "dark:from-primary/20 dark:via-transparent dark:to-accent/20",
+            "group-hover:from-primary/15 group-hover:to-accent/15"
+          )}>
+            <img 
+              src={logoTaysa} 
+              alt="Dra. Taysa Dias" 
+              className={cn(
+                "h-10 w-auto transition-all duration-300",
+                "drop-shadow-sm",
+                "dark:brightness-125 dark:contrast-110 dark:saturate-110",
+                "group-hover:scale-[1.02]"
+              )}
+            />
+          </div>
         </Link>
 
         {/* Actions */}
