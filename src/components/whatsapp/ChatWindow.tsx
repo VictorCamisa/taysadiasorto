@@ -137,6 +137,28 @@ export function ChatWindow({ instance, conversa, onTogglePatientPanel, showPatie
   }
 
   const name = conversa.paciente?.nome || conversa.nome_contato || conversa.remote_jid.split("@")[0];
+  
+  // Formatar telefone para exibição - extrair do remote_jid se for número válido
+  const getPhoneDisplay = () => {
+    const jid = conversa.remote_jid;
+    if (jid.endsWith("@lid")) {
+      return null; // LID não tem telefone visível
+    }
+    const phone = jid.replace("@s.whatsapp.net", "").replace("@g.us", "");
+    // Se parece com um número de telefone (só dígitos)
+    if (/^\d{10,13}$/.test(phone)) {
+      // Formatar: 55 11 99999-9999
+      if (phone.length === 13) {
+        return `+${phone.slice(0, 2)} ${phone.slice(2, 4)} ${phone.slice(4, 9)}-${phone.slice(9)}`;
+      } else if (phone.length === 12) {
+        return `+${phone.slice(0, 2)} ${phone.slice(2, 4)} ${phone.slice(4, 8)}-${phone.slice(8)}`;
+      }
+      return phone;
+    }
+    return null;
+  };
+  
+  const phoneDisplay = getPhoneDisplay();
   const messageGroups = groupMessagesByDate(mensagens);
 
   return (
@@ -156,7 +178,7 @@ export function ChatWindow({ instance, conversa, onTogglePatientPanel, showPatie
           <div>
             <h3 className="font-medium text-sm">{name}</h3>
             <p className="text-xs text-muted-foreground">
-              {conversa.paciente ? "Paciente vinculado" : conversa.remote_jid.replace("@s.whatsapp.net", "")}
+              {conversa.paciente ? "Paciente vinculado" : (phoneDisplay || "Contato WhatsApp")}
             </p>
           </div>
         </div>
