@@ -182,8 +182,8 @@ export function PipelineKanban({
       <div
         key={status}
         className={cn(
-          "flex-shrink-0 w-72",
-          isAuxiliary && "w-64"
+          "flex-shrink-0 w-80",
+          isAuxiliary && "w-72"
         )}
         onDragOver={(e) => handleDragOver(e, status)}
         onDragLeave={handleDragLeave}

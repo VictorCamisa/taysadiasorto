@@ -92,7 +92,7 @@ export function CardOportunidade({
     <div
       onClick={onClick}
       className={cn(
-        "group relative bg-card rounded-lg border border-border/60 p-3 cursor-pointer",
+        "group relative bg-card rounded-lg border border-border/60 p-3 cursor-pointer overflow-hidden",
         "hover:border-primary/40 hover:shadow-md transition-all duration-200",
         "border-l-[3px]",
         getPriorityBorderColor()
