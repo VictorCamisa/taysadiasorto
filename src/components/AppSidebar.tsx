@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { NavLink } from "@/components/NavLink";
+import logoTaysa from "@/assets/logo-dra-taysa.png";
 import {
   Home,
   DollarSign,
@@ -33,6 +34,7 @@ import {
   Camera,
   Pill,
   Stethoscope,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -85,6 +87,7 @@ const modules: NavModule[] = [
     items: [
       { label: "Pipeline", to: "/crm/pipeline", icon: Kanban },
       { label: "Agendamentos", to: "/crm/agendamentos", icon: Calendar },
+      { label: "WhatsApp", to: "/crm/whatsapp", icon: MessageCircle },
       { label: "Pós-venda", to: "/crm/pos-venda", icon: Heart },
       { label: "Leads", to: "/crm/leads", icon: Users },
       { label: "Pacientes", to: "/crm/pacientes", icon: Users },
@@ -266,19 +269,11 @@ export function AppSidebar() {
           "border-b border-border/40 dark:border-border/20"
         )}>
           <Link to="/" className="flex items-center gap-3 group">
-            <div className={cn(
-              "h-10 w-10 rounded-xl flex items-center justify-center",
-              "bg-gradient-to-br from-primary to-primary/80",
-              "shadow-lg shadow-primary/20 dark:shadow-primary/30",
-              "group-hover:shadow-xl group-hover:shadow-primary/30 dark:group-hover:shadow-primary/40",
-              "transition-all duration-300"
-            )}>
-              <span className="text-lg font-bold text-primary-foreground">TD</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base font-semibold text-foreground">Clínica</span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Sistema de Gestão</span>
-            </div>
+            <img 
+              src={logoTaysa} 
+              alt="Dra. Taysa Dias" 
+              className="h-12 w-auto opacity-90 group-hover:opacity-100 transition-opacity duration-300 dark:brightness-150 dark:contrast-125"
+            />
           </Link>
           <Button
             variant="ghost"
@@ -385,7 +380,7 @@ export function AppSidebar() {
             "border border-border/30 dark:border-border/10"
           )}>
             <p className="text-[10px] text-muted-foreground text-center">
-              © 2024 TD Clínica
+              © 2024 Dra. Taysa Dias
             </p>
           </div>
         </div>

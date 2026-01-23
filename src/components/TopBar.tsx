@@ -1,4 +1,4 @@
-import { Menu } from "lucide-react";
+import { Menu, MessageCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserAuthMenu } from "@/components/UserAuthMenu";
@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import logoTaysa from "@/assets/logo-dra-taysa.png";
 import {
   Home,
   DollarSign,
@@ -81,6 +82,7 @@ const modules: NavModule[] = [
     items: [
       { label: "Pipeline", to: "/crm/pipeline", icon: Kanban },
       { label: "Agendamentos", to: "/crm/agendamentos", icon: Calendar },
+      { label: "WhatsApp", to: "/crm/whatsapp", icon: MessageCircle },
       { label: "Pós-venda", to: "/crm/pos-venda", icon: Heart },
       { label: "Leads Perdidos", to: "/crm/perdidos", icon: XCircle },
       { label: "Pacientes", to: "/crm/pacientes", icon: Users },
@@ -236,14 +238,12 @@ export function TopBar() {
             "backdrop-blur-2xl"
           )}>
             <SheetHeader className="border-b border-border/40 p-5">
-              <SheetTitle className="text-left flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-                  <span className="text-lg font-bold text-primary-foreground">TD</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-base font-semibold">Clínica</span>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Sistema de Gestão</span>
-                </div>
+              <SheetTitle className="text-left">
+                <img 
+                  src={logoTaysa} 
+                  alt="Dra. Taysa Dias" 
+                  className="h-10 w-auto dark:brightness-150 dark:contrast-125"
+                />
               </SheetTitle>
             </SheetHeader>
 
@@ -328,10 +328,11 @@ export function TopBar() {
 
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-            <span className="text-base font-bold text-primary-foreground">TD</span>
-          </div>
-          <span className="text-base font-semibold text-foreground">Clínica</span>
+          <img 
+            src={logoTaysa} 
+            alt="Dra. Taysa Dias" 
+            className="h-8 w-auto dark:brightness-150 dark:contrast-125"
+          />
         </Link>
 
         {/* Actions */}
