@@ -46,7 +46,8 @@ interface ChatListProps {
 }
 
 export function ChatList({ instance, selectedConversa, onSelectConversa }: ChatListProps) {
-  const { conversas, loading, syncChats } = useWhatsAppConversas(instance?.id || null, true);
+  // Mostrar TODAS as conversas, não apenas com paciente vinculado
+  const { conversas, loading, syncChats } = useWhatsAppConversas(instance?.id || null, false);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
@@ -374,8 +375,8 @@ export function ChatList({ instance, selectedConversa, onSelectConversa }: ChatL
                       </span>
                     </div>
                     
-                    {/* Pipeline Status Badge */}
-                    {statusConfig && (
+                    {/* Pipeline Status Badge ou indicador sem paciente */}
+                    {statusConfig ? (
                       <div className="flex items-center gap-1.5 mt-1">
                         <Badge 
                           variant="outline" 
@@ -389,7 +390,16 @@ export function ChatList({ instance, selectedConversa, onSelectConversa }: ChatL
                           </span>
                         )}
                       </div>
-                    )}
+                    ) : !conversa.paciente_id ? (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Badge 
+                          variant="outline" 
+                          className="text-[10px] px-1.5 py-0 h-4 font-normal border border-muted-foreground/30 text-muted-foreground"
+                        >
+                          Sem paciente vinculado
+                        </Badge>
+                      </div>
+                    ) : null}
                     
                     <div className="flex items-center justify-between gap-2 mt-0.5">
                       <p className="text-xs text-muted-foreground truncate">
