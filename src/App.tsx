@@ -39,6 +39,16 @@ import Leads from "./pages/crm/Leads";
 import Admin from "./pages/admin/Admin";
 import BusinessIntelligence from "./pages/bi/BusinessIntelligence";
 
+// Módulo Gestão Operacional
+import GestaoOperacional from "./pages/gestao/GestaoOperacional";
+import PlanosTratamentoPage from "./pages/gestao/PlanosTratamentoPage";
+import ContratosPage from "./pages/gestao/ContratosPage";
+import AnamnesesPage from "./pages/gestao/AnamnesesPage";
+import ExamesPage from "./pages/gestao/ExamesPage";
+import FotosPage from "./pages/gestao/FotosPage";
+import ReceituariosPage from "./pages/gestao/ReceituariosPage";
+import ProntuariosPage from "./pages/gestao/ProntuariosPage";
+
 // Global
 import AssistenteIA from "./pages/AssistenteIA";
 import Configuracoes from "./pages/Configuracoes";
@@ -97,6 +107,16 @@ const App = () => (
                         {/* Módulo BI */}
                         <Route path="/bi" element={<BusinessIntelligence />} />
                         <Route path="/bi/*" element={<BusinessIntelligence />} />
+                        
+                        {/* Módulo Gestão Operacional */}
+                        <Route path="/gestao" element={<GestaoOperacional />} />
+                        <Route path="/gestao/planos-tratamento" element={<PlanosTratamentoPage />} />
+                        <Route path="/gestao/contratos" element={<ContratosPage />} />
+                        <Route path="/gestao/anamneses" element={<AnamnesesPage />} />
+                        <Route path="/gestao/exames" element={<ExamesPage />} />
+                        <Route path="/gestao/fotos" element={<FotosPage />} />
+                        <Route path="/gestao/receituarios" element={<ReceituariosPage />} />
+                        <Route path="/gestao/prontuarios" element={<ProntuariosPage />} />
                         
                         {/* Global */}
                         <Route path="/assistente-ia" element={<AssistenteIA />} />

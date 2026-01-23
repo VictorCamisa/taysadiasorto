@@ -9,6 +9,7 @@ import {
   TrendingUp,
   Shield,
   Zap,
+  ClipboardList,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,15 @@ const modules: ModuleCardProps[] = [
     features: ["LTV/CAC", "Marketing", "Projeções"],
     gradient: "from-amber-500/20 via-amber-500/5 to-transparent",
     accentColor: "text-amber-500 dark:text-amber-400",
+  },
+  {
+    title: "Gestão Operacional",
+    description: "Controle macro de todos os processos clínicos",
+    icon: ClipboardList,
+    href: "/gestao",
+    features: ["Contratos", "Anamneses", "Prontuários"],
+    gradient: "from-rose-500/20 via-rose-500/5 to-transparent",
+    accentColor: "text-rose-500 dark:text-rose-400",
   },
 ];
 
