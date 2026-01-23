@@ -23,14 +23,14 @@ export function Layout({ children }: LayoutProps) {
   const showModuleNav = shouldShowModuleNav(location.pathname);
 
   return (
-    <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
+    <div className="min-h-screen flex w-full bg-background overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:flex flex-shrink-0">
         <AppSidebar />
       </div>
 
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* Main Area - must shrink to fit available space */}
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
         {/* Mobile Top Bar */}
         <TopBar />
 
