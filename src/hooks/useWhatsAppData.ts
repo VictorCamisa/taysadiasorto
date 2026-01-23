@@ -434,15 +434,39 @@ export function useWhatsAppMensagens(conversaId: string | null, instanceId?: str
 
   const sendMessage = async (instanceName: string, remoteJid: string, message: string) => {
     try {
-      const { error } = await supabase.functions.invoke("whatsapp-evolution", {
-        body: { action: "send_message", instanceName, remoteJid, message },
+      // Adicionar mensagem otimista para feedback imediato
+      const optimisticMessage: WhatsAppMensagem = {
+        id: `temp-${Date.now()}`,
+        conversa_id: conversaId!,
+        message_id: `temp-${Date.now()}`,
+        from_me: true,
+        conteudo: message,
+        tipo: 'text',
+        media_url: null,
+        timestamp_msg: new Date().toISOString(),
+        status: 'sending',
+      };
+      
+      setMensagens(prev => [...prev, optimisticMessage]);
+
+      const { data, error } = await supabase.functions.invoke("whatsapp-evolution", {
+        body: { action: "send_message", instanceName, remoteJid, message, conversaId },
       });
 
       if (error) throw error;
 
-      // Não precisa mais chamar fetchMensagens pois o realtime vai atualizar
+      // Atualizar mensagem otimista com a real se retornada
+      if (data?.messageId) {
+        setMensagens(prev => prev.map(m => 
+          m.id === optimisticMessage.id 
+            ? { ...m, id: data.messageId, message_id: data.messageId, status: 'sent' }
+            : m
+        ));
+      }
     } catch (error: unknown) {
       console.error("Error sending message:", error);
+      // Remover mensagem otimista em caso de erro
+      setMensagens(prev => prev.filter(m => !m.id.startsWith('temp-')));
       toast({
         title: "Erro",
         description: "Não foi possível enviar a mensagem",
