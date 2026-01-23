@@ -18,6 +18,7 @@ import {
 import { CardOportunidade } from "./CardOportunidade";
 import { TransicaoModal } from "./TransicaoModal";
 import { InteracaoForm } from "./InteracaoForm";
+import { CardActionsModal } from "./CardActionsModal";
 import { cn } from "@/lib/utils";
 
 interface PipelineKanbanProps {
@@ -49,6 +50,11 @@ export function PipelineKanban({
     tipo: "whatsapp" | "ligacao";
   } | null>(null);
 
+  const [actionsModal, setActionsModal] = useState<{
+    open: boolean;
+    agendamento: CRMAgendamento;
+  } | null>(null);
+
   const getColumnAgendamentos = (status: AgendamentoStatus) => {
     return agendamentos.filter((a) => a.status === status);
   };
@@ -61,9 +67,16 @@ export function PipelineKanban({
   };
 
   const handleCardClick = (agendamento: CRMAgendamento) => {
-    if (agendamento.paciente_id) {
-      navigate(`/crm/pacientes/${agendamento.paciente_id}`);
-    }
+    setActionsModal({ open: true, agendamento });
+  };
+
+  const handleTransitionFromModal = (agendamento: CRMAgendamento, toStatus: AgendamentoStatus) => {
+    setTransicaoModal({
+      open: true,
+      agendamentoId: agendamento.id,
+      fromStatus: agendamento.status as AgendamentoStatus,
+      toStatus,
+    });
   };
 
   const handleDragStart = (e: React.DragEvent, agendamentoId: string) => {
@@ -256,6 +269,27 @@ export function PipelineKanban({
           defaultTipo={interacaoModal.tipo}
           title={interacaoModal.tipo === "whatsapp" ? "WhatsApp Enviado" : "Ligação Realizada"}
           description="Registre o que foi conversado."
+        />
+      )}
+
+      {/* Actions Modal */}
+      {actionsModal && (
+        <CardActionsModal
+          open={actionsModal.open}
+          onOpenChange={(open) => !open && setActionsModal(null)}
+          agendamento={actionsModal.agendamento}
+          onEdit={() => {
+            onEditAgendamento?.(actionsModal.agendamento);
+            setActionsModal(null);
+          }}
+          onTransition={(toStatus) => handleTransitionFromModal(actionsModal.agendamento, toStatus)}
+          onQuickAction={(action) => {
+            setInteracaoModal({
+              open: true,
+              agendamentoId: actionsModal.agendamento.id,
+              tipo: action,
+            });
+          }}
         />
       )}
     </>
