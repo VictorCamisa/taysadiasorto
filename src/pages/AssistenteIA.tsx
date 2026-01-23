@@ -1,132 +1,249 @@
-import { ChatInterface } from "@/components/assistente/ChatInterface";
-import { useChatConversations } from "@/hooks/useChatConversations";
-import { toast } from "sonner";
-
-const CHAT_URL = `https://ynstyufdfrctktsgwxwv.supabase.co/functions/v1/assistente-ia`;
+import { useState } from "react";
+import { Bot, Settings, MessageSquare, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
+import { AgentsList } from "@/components/agents/AgentsList";
+import { AgentForm } from "@/components/agents/AgentForm";
+import { AgentChat } from "@/components/agents/AgentChat";
+import { AgentDocuments } from "@/components/agents/AgentDocuments";
+import {
+  useAIAgents,
+  useAIAgentDocuments,
+  useAIAgentConversations,
+  useAIAgentMessages,
+  AIAgent,
+  AIAgentConversation,
+} from "@/hooks/useAIAgents";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const AssistenteIA = () => {
-  const {
-    conversations,
-    currentConversationId,
-    messages,
-    isLoading,
-    setIsLoading,
-    createConversation,
-    addMessage,
-    deleteConversation,
-    selectConversation,
-    startNewConversation,
-  } = useChatConversations();
+  const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
+  const [editingAgent, setEditingAgent] = useState<AIAgent | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("chat");
+  const [currentConversation, setCurrentConversation] = useState<AIAgentConversation | null>(null);
 
-  const handleSendMessage = async (content: string) => {
-    setIsLoading(true);
+  const { agents, isLoading, createAgent, updateAgent, deleteAgent, isCreating } = useAIAgents();
+  const { documents, addDocument, deleteDocument, isAdding } = useAIAgentDocuments(selectedAgent?.id || null);
+  const { conversations, createConversation, deleteConversation } = useAIAgentConversations(selectedAgent?.id || null);
+  const { messages, addMessage, isLoading: isLoadingMessages, refetch: refetchMessages } = useAIAgentMessages(currentConversation?.id || null);
 
-    try {
-      let conversationId = currentConversationId;
+  const handleSelectAgent = (agent: AIAgent) => {
+    setSelectedAgent(agent);
+    setCurrentConversation(null);
+    setActiveTab("chat");
+  };
 
-      // Create new conversation if needed
-      if (!conversationId) {
-        conversationId = await createConversation(content);
-        if (!conversationId) {
-          throw new Error("Failed to create conversation");
-        }
+  const handleCreateAgent = () => {
+    setEditingAgent(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditAgent = (agent: AIAgent) => {
+    setEditingAgent(agent);
+    setIsFormOpen(true);
+  };
+
+  const handleSaveAgent = async (data: any) => {
+    if (editingAgent) {
+      await updateAgent({ id: editingAgent.id, ...data });
+      if (selectedAgent?.id === editingAgent.id) {
+        setSelectedAgent({ ...selectedAgent, ...data });
       }
-
-      // Add user message
-      await addMessage(conversationId, "user", content);
-
-      // Build conversation history
-      const conversationHistory = messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
-
-      // Call AI function with streaming
-      const response = await fetch(CHAT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: content,
-          conversationHistory,
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          toast.error("Limite de requisições excedido. Aguarde um momento.");
-          return;
-        }
-        if (response.status === 402) {
-          toast.error("Créditos de IA esgotados.");
-          return;
-        }
-        throw new Error(`HTTP error: ${response.status}`);
-      }
-
-      if (!response.body) {
-        throw new Error("No response body");
-      }
-
-      // Process streaming response
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let assistantResponse = "";
-      let textBuffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        textBuffer += decoder.decode(value, { stream: true });
-
-        // Process line-by-line
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              assistantResponse += delta;
-            }
-          } catch {
-            // Incomplete JSON, put back and wait for more data
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
-        }
-      }
-
-      // Add assistant message
-      if (assistantResponse) {
-        await addMessage(conversationId, "assistant", assistantResponse);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("Erro ao enviar mensagem. Tente novamente.");
-    } finally {
-      setIsLoading(false);
+    } else {
+      const newAgent = await createAgent(data);
+      setSelectedAgent(newAgent);
     }
   };
 
+  const handleDeleteAgent = async () => {
+    if (deleteAgentId) {
+      await deleteAgent(deleteAgentId);
+      if (selectedAgent?.id === deleteAgentId) {
+        setSelectedAgent(null);
+      }
+      setDeleteAgentId(null);
+    }
+  };
+
+  const handleSelectConversation = (conv: AIAgentConversation) => {
+    setCurrentConversation(conv);
+  };
+
+  const handleCreateConversation = async () => {
+    const newConv = await createConversation("Nova Conversa");
+    setCurrentConversation(newConv);
+    return newConv;
+  };
+
+  const handleSendMessage = async (content: string) => {
+    if (!selectedAgent || !currentConversation) return;
+    
+    // Add user message
+    await addMessage({
+      role: "user",
+      content,
+      agent_id: selectedAgent.id,
+    });
+
+    // Refetch to get the assistant response saved by the edge function
+    setTimeout(() => refetchMessages(), 500);
+  };
+
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      <ChatInterface
-        messages={messages}
-        onSendMessage={handleSendMessage}
-        isLoading={isLoading}
+    <div className="flex flex-col h-[calc(100vh-8rem)]">
+      <PageHeader
+        title="Agentes de IA"
+        description="Crie e gerencie seus agentes de inteligência artificial"
       />
+
+      <div className="flex-1 flex gap-6 min-h-0 mt-6">
+        {/* Left sidebar - Agents list */}
+        <div className="w-80 flex-shrink-0">
+          <Card className="h-full">
+            <CardContent className="p-4 h-full overflow-auto">
+              <AgentsList
+                agents={agents}
+                selectedAgentId={selectedAgent?.id || null}
+                onSelectAgent={handleSelectAgent}
+                onCreateAgent={handleCreateAgent}
+                onEditAgent={handleEditAgent}
+                onDeleteAgent={(id) => setDeleteAgentId(id)}
+                isLoading={isLoading}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          {selectedAgent ? (
+            <Card className="h-full flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-border/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Bot className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold">{selectedAgent.name}</h2>
+                    <p className="text-sm text-muted-foreground">{selectedAgent.model}</p>
+                  </div>
+                </div>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList>
+                    <TabsTrigger value="chat" className="gap-2">
+                      <MessageSquare className="h-4 w-4" />
+                      Chat
+                    </TabsTrigger>
+                    <TabsTrigger value="documents" className="gap-2">
+                      <FileText className="h-4 w-4" />
+                      Documentos
+                    </TabsTrigger>
+                    <TabsTrigger value="settings" className="gap-2">
+                      <Settings className="h-4 w-4" />
+                      Config
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              <div className="flex-1 min-h-0">
+                {activeTab === "chat" && (
+                  <AgentChat
+                    agent={selectedAgent}
+                    conversations={conversations}
+                    currentConversation={currentConversation}
+                    messages={messages}
+                    onSelectConversation={handleSelectConversation}
+                    onCreateConversation={handleCreateConversation}
+                    onDeleteConversation={deleteConversation}
+                    onSendMessage={handleSendMessage}
+                    isLoadingMessages={isLoadingMessages}
+                  />
+                )}
+                {activeTab === "documents" && (
+                  <div className="p-6 overflow-auto h-full">
+                    <AgentDocuments
+                      documents={documents}
+                      onAddDocument={addDocument}
+                      onDeleteDocument={deleteDocument}
+                      isLoading={false}
+                      isAdding={isAdding}
+                    />
+                  </div>
+                )}
+                {activeTab === "settings" && (
+                  <div className="p-6 overflow-auto h-full">
+                    <AgentForm
+                      agent={selectedAgent}
+                      isOpen={true}
+                      onClose={() => setActiveTab("chat")}
+                      onSave={async (data) => {
+                        await handleSaveAgent(data);
+                        setActiveTab("chat");
+                      }}
+                      isSaving={false}
+                    />
+                  </div>
+                )}
+              </div>
+            </Card>
+          ) : (
+            <Card className="h-full flex items-center justify-center">
+              <div className="text-center">
+                <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Bot className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-xl font-semibold">Plataforma de Agentes IA</h2>
+                <p className="text-muted-foreground mt-2 max-w-md">
+                  Crie agentes de IA personalizados com memória, RAG e conexão com banco de dados
+                </p>
+                <div className="mt-6">
+                  <button
+                    onClick={handleCreateAgent}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    <Bot className="h-4 w-4" />
+                    Criar Primeiro Agente
+                  </button>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Agent Form Modal */}
+      <AgentForm
+        agent={editingAgent}
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingAgent(null);
+        }}
+        onSave={handleSaveAgent}
+        isSaving={isCreating}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteAgentId} onOpenChange={() => setDeleteAgentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Agente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Todas as conversas e documentos do agente serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAgent} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
