@@ -257,10 +257,25 @@ export function useWhatsAppConversas(instanceId: string | null, onlyCRM: boolean
               .single();
             
             if (newConversa) {
-              // Evitar duplicatas: só adicionar se não existir
               setConversas(prev => {
+                // Evitar duplicatas por ID
                 if (prev.some(c => c.id === newConversa.id)) {
-                  return prev; // Já existe, ignorar
+                  return prev;
+                }
+                // Evitar duplicatas por paciente_id - substituir se for mais recente
+                if (newConversa.paciente_id) {
+                  const existingIndex = prev.findIndex(c => c.paciente_id === newConversa.paciente_id);
+                  if (existingIndex !== -1) {
+                    const existing = prev[existingIndex];
+                    const existingDate = existing.ultima_mensagem_at ? new Date(existing.ultima_mensagem_at).getTime() : 0;
+                    const newDate = newConversa.ultima_mensagem_at ? new Date(newConversa.ultima_mensagem_at).getTime() : 0;
+                    if (newDate > existingDate) {
+                      const updated = [...prev];
+                      updated[existingIndex] = newConversa;
+                      return updated;
+                    }
+                    return prev; // Manter a existente que é mais recente
+                  }
                 }
                 return [newConversa, ...prev];
               });
@@ -278,7 +293,32 @@ export function useWhatsAppConversas(instanceId: string | null, onlyCRM: boolean
             
             if (updatedConversa) {
               setConversas(prev => {
-                const filtered = prev.filter(c => c.id !== updatedConversa.id);
+                // Remover a conversa atualizada e também outras do mesmo paciente se for a mais recente
+                let filtered = prev.filter(c => c.id !== updatedConversa.id);
+                
+                if (updatedConversa.paciente_id) {
+                  const samePacienteConversas = filtered.filter(c => c.paciente_id === updatedConversa.paciente_id);
+                  const updatedDate = updatedConversa.ultima_mensagem_at ? new Date(updatedConversa.ultima_mensagem_at).getTime() : 0;
+                  
+                  // Verificar se a atualizada é a mais recente do paciente
+                  const isNewest = samePacienteConversas.every(c => {
+                    const cDate = c.ultima_mensagem_at ? new Date(c.ultima_mensagem_at).getTime() : 0;
+                    return updatedDate >= cDate;
+                  });
+                  
+                  if (isNewest) {
+                    // Remover outras conversas do mesmo paciente
+                    filtered = filtered.filter(c => c.paciente_id !== updatedConversa.paciente_id);
+                  } else {
+                    // Não adicionar a atualizada, manter a mais recente que já existe
+                    return filtered.sort((a, b) => {
+                      const dateA = a.ultima_mensagem_at ? new Date(a.ultima_mensagem_at).getTime() : 0;
+                      const dateB = b.ultima_mensagem_at ? new Date(b.ultima_mensagem_at).getTime() : 0;
+                      return dateB - dateA;
+                    });
+                  }
+                }
+                
                 return [updatedConversa, ...filtered].sort((a, b) => {
                   const dateA = a.ultima_mensagem_at ? new Date(a.ultima_mensagem_at).getTime() : 0;
                   const dateB = b.ultima_mensagem_at ? new Date(b.ultima_mensagem_at).getTime() : 0;
