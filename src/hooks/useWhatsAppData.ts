@@ -195,9 +195,72 @@ export function useWhatsAppConversas(instanceId: string | null) {
     }
   }, [instanceId, toast]);
 
+  // Realtime subscription para novas conversas/atualizações
   useEffect(() => {
+    if (!instanceId) return;
+
     fetchConversas();
-  }, [fetchConversas]);
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel(`whatsapp_conversas_${instanceId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'whatsapp_conversas',
+          filter: `instance_id=eq.${instanceId}`,
+        },
+        async (payload) => {
+          console.log('Realtime conversa update:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            // Nova conversa - buscar com join do paciente
+            const { data: newConversa } = await supabase
+              .from("whatsapp_conversas")
+              .select(`
+                *,
+                paciente:pacientes(id, nome, telefone, foto_url)
+              `)
+              .eq("id", payload.new.id)
+              .single();
+            
+            if (newConversa) {
+              setConversas(prev => [newConversa, ...prev]);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            // Conversa atualizada - buscar com join
+            const { data: updatedConversa } = await supabase
+              .from("whatsapp_conversas")
+              .select(`
+                *,
+                paciente:pacientes(id, nome, telefone, foto_url)
+              `)
+              .eq("id", payload.new.id)
+              .single();
+            
+            if (updatedConversa) {
+              setConversas(prev => {
+                const filtered = prev.filter(c => c.id !== updatedConversa.id);
+                return [updatedConversa, ...filtered].sort((a, b) => {
+                  const dateA = a.ultima_mensagem_at ? new Date(a.ultima_mensagem_at).getTime() : 0;
+                  const dateB = b.ultima_mensagem_at ? new Date(b.ultima_mensagem_at).getTime() : 0;
+                  return dateB - dateA;
+                });
+              });
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setConversas(prev => prev.filter(c => c.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [instanceId, fetchConversas]);
 
   const syncChats = async (instanceName: string) => {
     try {
@@ -261,9 +324,49 @@ export function useWhatsAppMensagens(conversaId: string | null) {
     }
   }, [conversaId]);
 
+  // Realtime subscription para novas mensagens
   useEffect(() => {
+    if (!conversaId) return;
+
     fetchMensagens();
-  }, [fetchMensagens]);
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel(`whatsapp_mensagens_${conversaId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'whatsapp_mensagens',
+          filter: `conversa_id=eq.${conversaId}`,
+        },
+        (payload) => {
+          console.log('Realtime mensagem update:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            setMensagens(prev => {
+              // Evitar duplicatas
+              if (prev.some(m => m.id === payload.new.id || m.message_id === payload.new.message_id)) {
+                return prev;
+              }
+              return [...prev, payload.new as WhatsAppMensagem];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setMensagens(prev => 
+              prev.map(m => m.id === payload.new.id ? payload.new as WhatsAppMensagem : m)
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setMensagens(prev => prev.filter(m => m.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversaId, fetchMensagens]);
 
   const sendMessage = async (instanceName: string, remoteJid: string, message: string) => {
     try {
@@ -273,7 +376,7 @@ export function useWhatsAppMensagens(conversaId: string | null) {
 
       if (error) throw error;
 
-      await fetchMensagens();
+      // Não precisa mais chamar fetchMensagens pois o realtime vai atualizar
     } catch (error: unknown) {
       console.error("Error sending message:", error);
       toast({
