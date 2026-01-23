@@ -23,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
   const showModuleNav = shouldShowModuleNav(location.pathname);
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
+    <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <AppSidebar />
