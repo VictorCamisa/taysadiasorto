@@ -100,9 +100,9 @@ export function ModuleNav() {
   if (!currentModule) return null;
 
   return (
-    <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-      <ScrollArea className="w-full">
-        <nav className="flex items-center gap-1 px-4 py-2 min-w-max">
+    <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10 overflow-hidden">
+      <ScrollArea className="w-full max-w-full">
+        <nav className="flex items-center gap-1 px-4 py-2">
           {currentModule.items.map((item) => {
             const Icon = item.icon;
             const isActive =
