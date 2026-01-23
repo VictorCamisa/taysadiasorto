@@ -306,7 +306,7 @@ export function useWhatsAppConversas(instanceId: string | null, onlyCRM: boolean
   };
 }
 
-export function useWhatsAppMensagens(conversaId: string | null) {
+export function useWhatsAppMensagens(conversaId: string | null, instanceId?: string | null) {
   const [mensagens, setMensagens] = useState<WhatsAppMensagem[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -316,10 +316,36 @@ export function useWhatsAppMensagens(conversaId: string | null) {
 
     setLoading(true);
     try {
+      // Buscar mensagens desta conversa E de conversas relacionadas pelo mesmo paciente
+      let conversasIds = [conversaId];
+      
+      // Verificar se existe outra conversa do mesmo paciente (LID vs número)
+      if (instanceId) {
+        const { data: thisConversa } = await supabase
+          .from("whatsapp_conversas")
+          .select("paciente_id, remote_jid")
+          .eq("id", conversaId)
+          .single();
+        
+        if (thisConversa?.paciente_id) {
+          // Buscar outras conversas do mesmo paciente
+          const { data: relatedConversas } = await supabase
+            .from("whatsapp_conversas")
+            .select("id")
+            .eq("paciente_id", thisConversa.paciente_id)
+            .eq("instance_id", instanceId)
+            .neq("id", conversaId);
+          
+          if (relatedConversas && relatedConversas.length > 0) {
+            conversasIds = [conversaId, ...relatedConversas.map(c => c.id)];
+          }
+        }
+      }
+      
       const { data, error } = await supabase
         .from("whatsapp_mensagens")
         .select("*")
-        .eq("conversa_id", conversaId)
+        .in("conversa_id", conversasIds)
         .order("timestamp_msg", { ascending: true });
 
       if (error) throw error;
@@ -329,7 +355,7 @@ export function useWhatsAppMensagens(conversaId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [conversaId]);
+  }, [conversaId, instanceId]);
 
   // Realtime subscription para novas mensagens
   useEffect(() => {
@@ -397,21 +423,34 @@ export function useWhatsAppMensagens(conversaId: string | null) {
 
   const syncMessages = async (instanceName: string, remoteJid: string) => {
     try {
+      // Buscar mensagens da Evolution API
       const { data: messages, error } = await supabase.functions.invoke("whatsapp-evolution", {
         body: { action: "fetch_messages", instanceName, remoteJid },
       });
 
       if (error) throw error;
 
-      if (Array.isArray(messages)) {
-        await supabase.functions.invoke("whatsapp-evolution", {
+      console.log("Mensagens recebidas da Evolution:", messages?.length || 0);
+
+      if (Array.isArray(messages) && messages.length > 0) {
+        // Sincronizar com o banco
+        const { data: syncResult, error: syncError } = await supabase.functions.invoke("whatsapp-evolution", {
           body: { action: "sync_messages", conversaId, messages },
         });
+
+        if (syncError) throw syncError;
+        console.log("Sincronização resultado:", syncResult);
       }
 
+      // Recarregar mensagens do banco
       await fetchMensagens();
     } catch (error: unknown) {
       console.error("Error syncing messages:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível sincronizar mensagens",
+        variant: "destructive",
+      });
     }
   };
 

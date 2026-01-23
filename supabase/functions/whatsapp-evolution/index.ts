@@ -254,8 +254,10 @@ serve(async (req) => {
 
       // Buscar mensagens de uma conversa
       case "fetch_messages": {
-        const { instanceName, remoteJid, count = 50 } = params;
-        result = await evolutionFetch(`/chat/findMessages/${instanceName}`, "POST", {
+        const { instanceName, remoteJid, count = 100 } = params;
+        
+        // Buscar mensagens da Evolution API
+        const messagesResponse = await evolutionFetch(`/chat/findMessages/${instanceName}`, "POST", {
           where: {
             key: {
               remoteJid,
@@ -263,6 +265,18 @@ serve(async (req) => {
           },
           limit: count,
         });
+        
+        // A resposta pode vir em diferentes formatos
+        if (messagesResponse?.messages?.records) {
+          result = messagesResponse.messages.records;
+        } else if (Array.isArray(messagesResponse)) {
+          result = messagesResponse;
+        } else if (messagesResponse?.messages) {
+          result = messagesResponse.messages;
+        } else {
+          result = [];
+        }
+        
         break;
       }
 
@@ -333,44 +347,50 @@ serve(async (req) => {
         
         let syncedCount = 0;
         
+        // Mapear LID -> número alternativo para referência cruzada
+        const lidToPhoneMap: Record<string, string> = {};
         for (const chat of chats) {
-          // CRÍTICO: Usar SOMENTE remoteJid, NUNCA o id interno
-          // O remoteJid SEMPRE contém @ (ex: 5511999999999@s.whatsapp.net ou hash@lid)
+          const remoteJidAlt = chat.lastMessage?.key?.remoteJidAlt;
+          if (chat.remoteJid?.endsWith("@lid") && remoteJidAlt && remoteJidAlt.endsWith("@s.whatsapp.net")) {
+            lidToPhoneMap[chat.remoteJid] = remoteJidAlt;
+          }
+        }
+        
+        for (const chat of chats) {
           const remoteJid = chat.remoteJid as string;
           
-          // Se não tiver remoteJid válido (com @), ignorar este chat
           if (!remoteJid || !remoteJid.includes("@")) {
             console.log("Ignorando chat sem remoteJid válido:", chat.id);
             continue;
           }
           
-          // Extrair telefone do remoteJid (formato: 5511999999999@s.whatsapp.net ou hash@lid)
           const isLid = remoteJid.endsWith("@lid");
-          const telefoneRaw = remoteJid.replace("@s.whatsapp.net", "").replace("@g.us", "").replace("@lid", "").replace(/\D/g, "");
           
-          // Nome do contato - priorizar:
-          // 1. pushName do chat (já enriquecido com dados dos contatos)
-          // 2. pushName da última mensagem recebida (não fromMe)
-          // 3. Nome ou notify do contato
-          // 4. Número formatado (se não for LID)
+          // Para LID, tentar usar o número alternativo para buscar paciente
+          const remoteJidAlt = lidToPhoneMap[remoteJid] || chat.lastMessage?.key?.remoteJidAlt;
+          const phoneJid = isLid && remoteJidAlt ? remoteJidAlt : remoteJid;
+          
+          // Extrair telefone para buscar paciente
+          const telefoneRaw = phoneJid
+            .replace("@s.whatsapp.net", "")
+            .replace("@g.us", "")
+            .replace("@lid", "")
+            .replace(/\D/g, "");
+          
+          // Nome do contato
           let nome = chat.pushName;
-          
-          // Se não tem pushName, tentar pegar da última mensagem recebida
           if (!nome && chat.lastMessage && !chat.lastMessage.key?.fromMe) {
             nome = chat.lastMessage.pushName;
           }
-          
-          // Se ainda não tem nome, usar o número formatado ou um placeholder
           if (!nome) {
-            if (isLid) {
-              // LID não tem número de telefone, usar placeholder com últimos dígitos do ID
-              nome = `Contato ${telefoneRaw.slice(-6)}`;
+            if (isLid && !remoteJidAlt) {
+              nome = `Contato ${remoteJid.split("@")[0].slice(-6)}`;
             } else {
               nome = formatPhoneNumber(telefoneRaw);
             }
           }
           
-          // Extrair texto da última mensagem (pode vir em diferentes formatos)
+          // Extrair texto da última mensagem
           let ultimaMensagem = null;
           if (chat.lastMessage) {
             const msg = chat.lastMessage.message;
@@ -390,9 +410,9 @@ serve(async (req) => {
             }
           }
           
-          // Tentar vincular com paciente pelo telefone (somente se não for LID)
+          // Tentar vincular com paciente pelo telefone
           let pacienteId = null;
-          if (!isLid && telefoneRaw.length >= 9) {
+          if (telefoneRaw.length >= 9) {
             const { data: paciente } = await supabase
               .from("pacientes")
               .select("id")
@@ -430,32 +450,99 @@ serve(async (req) => {
       case "sync_messages": {
         const { conversaId, messages } = params;
         
+        // Buscar o remote_jid e instance_id da conversa original
+        const { data: conversaOriginal } = await supabase
+          .from("whatsapp_conversas")
+          .select("id, instance_id, paciente_id, remote_jid")
+          .eq("id", conversaId)
+          .single();
+        
+        let syncedCount = 0;
+        
         for (const msg of messages) {
           const messageId = msg.key?.id;
-          const fromMe = msg.key?.fromMe || false;
-          const conteudo = msg.message?.conversation || 
-                          msg.message?.extendedTextMessage?.text ||
-                          msg.message?.imageMessage?.caption ||
-                          "[Mídia]";
+          if (!messageId) continue;
           
-          await supabase
+          const fromMe = msg.key?.fromMe || false;
+          const msgContent = msg.message || {};
+          const conteudo = msgContent.conversation || 
+                          msgContent.extendedTextMessage?.text ||
+                          msgContent.imageMessage?.caption ||
+                          msgContent.videoMessage?.caption ||
+                          msgContent.documentMessage?.fileName ||
+                          (msgContent.audioMessage ? "🎵 Áudio" : null) ||
+                          (msgContent.stickerMessage ? "Sticker" : null) ||
+                          (msgContent.contactMessage ? "📇 Contato" : null) ||
+                          (msgContent.locationMessage ? "📍 Localização" : null) ||
+                          (msgContent.placeholderMessage ? null : "[Mídia]");
+          
+          // Ignorar mensagens sem conteúdo real
+          if (!conteudo) continue;
+          
+          const tipo = msgContent.imageMessage ? "image" : 
+                      msgContent.audioMessage ? "audio" : 
+                      msgContent.videoMessage ? "video" :
+                      msgContent.documentMessage ? "document" :
+                      msgContent.stickerMessage ? "sticker" :
+                      msgContent.locationMessage ? "location" :
+                      msgContent.contactMessage ? "contact" : "text";
+          
+          const mediaUrl = msgContent.imageMessage?.url || 
+                          msgContent.videoMessage?.url || 
+                          msgContent.audioMessage?.url ||
+                          msgContent.documentMessage?.url || null;
+          
+          // Calcular timestamp correto
+          let timestampMs = msg.messageTimestamp;
+          if (typeof timestampMs === "object" && timestampMs.low) {
+            timestampMs = timestampMs.low;
+          }
+          const timestamp = new Date(Number(timestampMs) * 1000).toISOString();
+          
+          const { error: insertError } = await supabase
             .from("whatsapp_mensagens")
             .upsert({
               conversa_id: conversaId,
               message_id: messageId,
               from_me: fromMe,
-              tipo: msg.message?.imageMessage ? "image" : 
-                    msg.message?.audioMessage ? "audio" : 
-                    msg.message?.videoMessage ? "video" : "text",
+              tipo,
               conteudo,
-              media_url: msg.message?.imageMessage?.url || msg.message?.videoMessage?.url || null,
-              timestamp_msg: new Date(msg.messageTimestamp * 1000).toISOString(),
+              media_url: mediaUrl,
+              timestamp_msg: timestamp,
+              status: fromMe ? (msg.status || "sent") : "received",
             }, {
               onConflict: "message_id",
+              ignoreDuplicates: false,
             });
+          
+          if (!insertError) {
+            syncedCount++;
+          } else {
+            console.log("Erro ao inserir mensagem:", messageId, insertError);
+          }
         }
         
-        result = { success: true, synced: messages.length };
+        // Atualizar última mensagem da conversa
+        if (messages.length > 0 && conversaOriginal) {
+          const lastMsg = messages[0]; // Já vem ordenado do mais recente
+          const lastMsgContent = lastMsg.message?.conversation || 
+                                lastMsg.message?.extendedTextMessage?.text ||
+                                "[Mídia]";
+          let lastTimestamp = lastMsg.messageTimestamp;
+          if (typeof lastTimestamp === "object" && lastTimestamp.low) {
+            lastTimestamp = lastTimestamp.low;
+          }
+          
+          await supabase
+            .from("whatsapp_conversas")
+            .update({
+              ultima_mensagem: lastMsgContent,
+              ultima_mensagem_at: new Date(Number(lastTimestamp) * 1000).toISOString(),
+            })
+            .eq("id", conversaId);
+        }
+        
+        result = { success: true, synced: syncedCount };
         break;
       }
 

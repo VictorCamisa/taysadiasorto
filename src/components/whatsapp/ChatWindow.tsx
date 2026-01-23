@@ -37,7 +37,10 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ instance, conversa, onTogglePatientPanel, showPatientPanel }: ChatWindowProps) {
-  const { mensagens, loading, sendMessage, syncMessages } = useWhatsAppMensagens(conversa?.id || null);
+  const { mensagens, loading, sendMessage, syncMessages } = useWhatsAppMensagens(
+    conversa?.id || null, 
+    conversa?.instance_id || null
+  );
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,11 +52,13 @@ export function ChatWindow({ instance, conversa, onTogglePatientPanel, showPatie
     }
   }, [mensagens]);
 
+  // Sincronizar mensagens ao abrir conversa
   useEffect(() => {
     if (instance && conversa) {
+      console.log("Sincronizando mensagens para:", conversa.remote_jid);
       syncMessages(instance.instance_name, conversa.remote_jid);
     }
-  }, [conversa?.id]);
+  }, [conversa?.id, instance?.instance_name]);
 
   const handleSend = async () => {
     if (!newMessage.trim() || !instance || !conversa) return;
