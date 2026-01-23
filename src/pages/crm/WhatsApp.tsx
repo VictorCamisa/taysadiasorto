@@ -142,7 +142,7 @@ export default function WhatsApp() {
   const connectedInstance = selectedInstance?.status === "connected";
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-full w-full bg-background overflow-hidden">
       {/* Left Sidebar - Chat List */}
       <div className="w-[380px] flex-shrink-0 flex flex-col border-r bg-card">
         {/* Header */}

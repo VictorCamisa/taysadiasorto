@@ -20,7 +20,9 @@ function shouldShowModuleNav(pathname: string): boolean {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const isAssistenteIA = location.pathname === "/assistente-ia";
-  const showModuleNav = shouldShowModuleNav(location.pathname);
+  const isWhatsApp = location.pathname === "/crm/whatsapp";
+  const isFullHeightPage = isAssistenteIA || isWhatsApp;
+  const showModuleNav = shouldShowModuleNav(location.pathname) && !isWhatsApp;
   const isHome = location.pathname === "/";
 
   return (
@@ -68,16 +70,16 @@ export function Layout({ children }: LayoutProps) {
         {/* Main content */}
         <main
           className={cn(
-            "flex-1",
-            isAssistenteIA
+            "flex-1 overflow-hidden",
+            isFullHeightPage
               ? "flex flex-col min-h-0"
-              : "p-6 md:p-8 lg:p-10"
+              : "p-6 md:p-8 lg:p-10 overflow-y-auto"
           )}
         >
           <div
             className={cn(
-              isAssistenteIA
-                ? "flex-1 flex flex-col min-h-0"
+              isFullHeightPage
+                ? "flex-1 flex flex-col min-h-0 h-full"
                 : "max-w-[1600px] mx-auto w-full"
             )}
           >
