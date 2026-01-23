@@ -5,6 +5,10 @@ import {
   BarChart3,
   ArrowRight,
   Sparkles,
+  Settings,
+  TrendingUp,
+  Shield,
+  Zap,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -15,36 +19,46 @@ interface ModuleCardProps {
   icon: React.ElementType;
   href: string;
   features: string[];
+  gradient: string;
+  accentColor: string;
 }
 
 const modules: ModuleCardProps[] = [
   {
     title: "Financeiro",
-    description: "Fluxo de caixa, DRE e lançamentos",
+    description: "Controle completo de fluxo de caixa, DRE e análises",
     icon: DollarSign,
     href: "/financeiro",
-    features: ["Dashboard", "Lançamentos", "DRE"],
+    features: ["Dashboard", "Lançamentos", "DRE", "Relatórios"],
+    gradient: "from-emerald-500/20 via-emerald-500/5 to-transparent",
+    accentColor: "text-emerald-500 dark:text-emerald-400",
   },
   {
     title: "Comercial",
-    description: "Pipeline e gestão de pacientes",
+    description: "Pipeline de vendas e gestão de pacientes",
     icon: Users,
     href: "/crm",
-    features: ["Pipeline", "Agenda", "Pacientes"],
+    features: ["Pipeline", "Agendamentos", "Pacientes"],
+    gradient: "from-cyan-500/20 via-cyan-500/5 to-transparent",
+    accentColor: "text-cyan-500 dark:text-cyan-400",
   },
   {
     title: "Administrativo",
-    description: "Usuários e configurações",
+    description: "Gestão de usuários, LGPD e auditoria",
     icon: Building2,
     href: "/admin",
     features: ["Usuários", "LGPD", "Auditoria"],
+    gradient: "from-violet-500/20 via-violet-500/5 to-transparent",
+    accentColor: "text-violet-500 dark:text-violet-400",
   },
   {
     title: "Business Intelligence",
-    description: "Análises e indicadores",
+    description: "Análises avançadas e indicadores de performance",
     icon: BarChart3,
     href: "/bi",
     features: ["LTV/CAC", "Marketing", "Projeções"],
+    gradient: "from-amber-500/20 via-amber-500/5 to-transparent",
+    accentColor: "text-amber-500 dark:text-amber-400",
   },
 ];
 
@@ -54,104 +68,287 @@ function ModuleCard({
   icon: Icon,
   href,
   features,
+  gradient,
+  accentColor,
 }: ModuleCardProps) {
   return (
     <Link
       to={href}
       className={cn(
-        "group flex flex-col rounded-xl p-5 h-full",
-        "bg-card border border-border/50",
-        "transition-all duration-200",
-        "hover:border-border hover:shadow-md"
+        "group relative flex flex-col rounded-2xl p-6 h-full overflow-hidden",
+        "bg-card/80 dark:bg-card/40",
+        "border border-border/50 dark:border-border/30",
+        "backdrop-blur-sm",
+        "transition-all duration-500 ease-out",
+        "hover:shadow-xl dark:hover:shadow-2xl",
+        "hover:border-primary/30 dark:hover:border-primary/50",
+        "hover:-translate-y-2 dark:hover:-translate-y-3"
       )}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="h-5 w-5 text-primary" />
-        </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-      </div>
+      {/* Gradient Background */}
+      <div
+        className={cn(
+          "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100",
+          "transition-opacity duration-500",
+          gradient
+        )}
+      />
 
-      <h3 className="text-base font-semibold text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground mb-4 flex-1">{description}</p>
+      {/* Glow Effect (dark mode only) */}
+      <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 dark:block hidden" />
 
-      <div className="flex flex-wrap gap-1">
-        {features.map((feature) => (
-          <span
-            key={feature}
-            className="px-2 py-0.5 text-xs rounded bg-muted/50 text-muted-foreground"
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-5">
+          <div
+            className={cn(
+              "h-14 w-14 rounded-2xl flex items-center justify-center",
+              "bg-gradient-to-br from-primary/10 to-primary/5",
+              "dark:from-primary/20 dark:to-primary/5",
+              "border border-primary/10 dark:border-primary/20",
+              "group-hover:scale-110 transition-transform duration-500"
+            )}
           >
-            {feature}
-          </span>
-        ))}
+            <Icon className={cn("h-7 w-7", accentColor)} />
+          </div>
+          <div
+            className={cn(
+              "h-10 w-10 rounded-xl flex items-center justify-center",
+              "bg-muted/50 dark:bg-muted/30",
+              "opacity-0 group-hover:opacity-100",
+              "translate-x-2 group-hover:translate-x-0",
+              "transition-all duration-300"
+            )}
+          >
+            <ArrowRight className="h-5 w-5 text-primary" />
+          </div>
+        </div>
+
+        {/* Title & Description */}
+        <h3 className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+          {title}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+          {description}
+        </p>
+
+        {/* Features */}
+        <div className="flex flex-wrap gap-2 mt-auto">
+          {features.map((feature) => (
+            <span
+              key={feature}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded-lg",
+                "bg-muted/60 dark:bg-muted/40",
+                "text-muted-foreground",
+                "border border-border/30 dark:border-border/20",
+                "group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20",
+                "transition-all duration-300"
+              )}
+            >
+              {feature}
+            </span>
+          ))}
+        </div>
       </div>
+    </Link>
+  );
+}
+
+function QuickActionCard({
+  href,
+  icon: Icon,
+  title,
+  description,
+  variant = "default",
+}: {
+  href: string;
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  variant?: "default" | "primary";
+}) {
+  const isPrimary = variant === "primary";
+
+  return (
+    <Link
+      to={href}
+      className={cn(
+        "group relative flex items-center gap-5 p-5 rounded-2xl overflow-hidden",
+        "transition-all duration-500 ease-out",
+        isPrimary
+          ? [
+              "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent",
+              "dark:from-primary/20 dark:via-primary/10 dark:to-primary/5",
+              "border border-primary/20 dark:border-primary/30",
+              "hover:border-primary/40 dark:hover:border-primary/50",
+              "hover:shadow-lg hover:shadow-primary/10",
+              "dark:hover:shadow-xl dark:hover:shadow-primary/20",
+            ]
+          : [
+              "bg-card/80 dark:bg-card/40",
+              "border border-border/50 dark:border-border/30",
+              "backdrop-blur-sm",
+              "hover:border-border dark:hover:border-border/50",
+              "hover:shadow-lg dark:hover:shadow-xl",
+            ],
+        "hover:-translate-y-1"
+      )}
+    >
+      {/* Icon Container */}
+      <div
+        className={cn(
+          "h-14 w-14 rounded-2xl flex items-center justify-center shrink-0",
+          "transition-all duration-500",
+          isPrimary
+            ? [
+                "bg-primary/10 dark:bg-primary/20",
+                "group-hover:bg-primary/20 dark:group-hover:bg-primary/30",
+                "group-hover:scale-110",
+              ]
+            : [
+                "bg-muted/60 dark:bg-muted/40",
+                "group-hover:bg-primary/10 dark:group-hover:bg-primary/20",
+                "group-hover:scale-110",
+              ]
+        )}
+      >
+        <Icon
+          className={cn(
+            "h-6 w-6 transition-colors duration-300",
+            isPrimary
+              ? "text-primary"
+              : "text-muted-foreground group-hover:text-primary"
+          )}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <h3
+          className={cn(
+            "font-semibold text-foreground mb-1",
+            "group-hover:text-primary transition-colors duration-300"
+          )}
+        >
+          {title}
+        </h3>
+        <p className="text-sm text-muted-foreground truncate">{description}</p>
+      </div>
+
+      {/* Arrow */}
+      <ArrowRight
+        className={cn(
+          "h-5 w-5 shrink-0",
+          "text-muted-foreground/50 group-hover:text-primary",
+          "translate-x-0 group-hover:translate-x-1",
+          "transition-all duration-300"
+        )}
+      />
     </Link>
   );
 }
 
 export default function Home() {
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Bem-vindo ao Sistema
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Selecione um módulo para começar
-        </p>
+    <div className="relative min-h-full">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Light mode gradient */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl dark:hidden" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-primary/3 rounded-full blur-3xl dark:hidden" />
+
+        {/* Dark mode mesh */}
+        <div className="hidden dark:block absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/15 rounded-full blur-[100px]" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-[80px]" />
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-violet-500/8 rounded-full blur-[60px]" />
+        </div>
       </div>
 
-      {/* Modules Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {modules.map((module) => (
-          <ModuleCard key={module.title} {...module} />
-        ))}
-      </div>
+      {/* Content */}
+      <div className="relative z-10 space-y-10 animate-fade-in py-2">
+        {/* Header */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-1 w-12 rounded-full bg-gradient-to-r from-primary to-primary/50" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+              Dashboard
+            </span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+            Bem-vindo ao Sistema
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl">
+            Gerencie sua clínica de forma inteligente. Selecione um módulo para
+            começar.
+          </p>
+        </div>
 
-      {/* Quick Actions */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Link
-          to="/assistente-ia"
-          className={cn(
-            "group flex items-center gap-4 p-5 rounded-xl",
-            "bg-primary/5 border border-primary/20",
-            "transition-all duration-200",
-            "hover:bg-primary/10 hover:border-primary/30"
-          )}
-        >
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground">Assistente IA</h3>
-            <p className="text-sm text-muted-foreground">
-              Tire dúvidas com inteligência artificial
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-        </Link>
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            {
+              icon: TrendingUp,
+              label: "Receita Mensal",
+              value: "Módulo Financeiro",
+            },
+            { icon: Users, label: "Pacientes Ativos", value: "Módulo CRM" },
+            { icon: Shield, label: "Conformidade", value: "Módulo Admin" },
+            { icon: Zap, label: "Insights", value: "Módulo BI" },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className={cn(
+                "p-4 rounded-xl",
+                "bg-card/60 dark:bg-card/30",
+                "border border-border/40 dark:border-border/20",
+                "backdrop-blur-sm"
+              )}
+            >
+              <stat.icon className="h-5 w-5 text-primary mb-2" />
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="text-sm font-medium text-foreground mt-0.5">
+                {stat.value}
+              </p>
+            </div>
+          ))}
+        </div>
 
-        <Link
-          to="/configuracoes"
-          className={cn(
-            "group flex items-center gap-4 p-5 rounded-xl",
-            "bg-card border border-border/50",
-            "transition-all duration-200",
-            "hover:border-border hover:shadow-sm"
-          )}
-        >
-          <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-            <Building2 className="h-5 w-5 text-muted-foreground" />
+        {/* Modules Grid */}
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-5">
+            Módulos Principais
+          </h2>
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
+            {modules.map((module) => (
+              <ModuleCard key={module.title} {...module} />
+            ))}
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground">Configurações</h3>
-            <p className="text-sm text-muted-foreground">
-              Categorias, contas e formas de pagamento
-            </p>
+        </div>
+
+        {/* Quick Actions */}
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-5">
+            Ações Rápidas
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <QuickActionCard
+              href="/assistente-ia"
+              icon={Sparkles}
+              title="Assistente IA"
+              description="Tire dúvidas com inteligência artificial"
+              variant="primary"
+            />
+            <QuickActionCard
+              href="/configuracoes"
+              icon={Settings}
+              title="Configurações"
+              description="Categorias, contas e formas de pagamento"
+            />
           </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-        </Link>
+        </div>
       </div>
     </div>
   );

@@ -13,7 +13,6 @@ import {
   Target,
   FileBarChart,
   Kanban,
-  CalendarDays,
   Calendar,
   Heart,
   XCircle,
@@ -33,11 +32,13 @@ interface NavItem {
 interface ModuleConfig {
   basePath: string;
   items: NavItem[];
+  color: string;
 }
 
 const moduleConfigs: Record<string, ModuleConfig> = {
   financeiro: {
     basePath: "/financeiro",
+    color: "emerald",
     items: [
       { label: "Dashboard", to: "/financeiro", icon: Home },
       { label: "Diário de Caixa", to: "/financeiro/diario-caixa", icon: FileText },
@@ -53,6 +54,7 @@ const moduleConfigs: Record<string, ModuleConfig> = {
   },
   crm: {
     basePath: "/crm",
+    color: "cyan",
     items: [
       { label: "Pipeline", to: "/crm/pipeline", icon: Kanban },
       { label: "Agendamentos", to: "/crm/agendamentos", icon: Calendar },
@@ -63,6 +65,7 @@ const moduleConfigs: Record<string, ModuleConfig> = {
   },
   admin: {
     basePath: "/admin",
+    color: "violet",
     items: [
       { label: "Usuários", to: "/admin?tab=usuarios", icon: Users },
       { label: "LGPD", to: "/admin?tab=lgpd", icon: Lock },
@@ -72,6 +75,7 @@ const moduleConfigs: Record<string, ModuleConfig> = {
   },
   bi: {
     basePath: "/bi",
+    color: "amber",
     items: [
       { label: "Dashboard", to: "/bi", icon: BarChart3 },
       { label: "LTV / CAC", to: "/bi?tab=ltv-cac", icon: Users },
@@ -99,9 +103,14 @@ export function ModuleNav() {
   if (!currentModule) return null;
 
   return (
-    <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10 overflow-hidden">
+    <div className={cn(
+      "border-b sticky top-0 z-10 overflow-hidden",
+      "bg-background/80 dark:bg-background/60",
+      "backdrop-blur-xl",
+      "border-border/40 dark:border-border/20"
+    )}>
       <ScrollArea className="w-full max-w-full">
-        <nav className="flex items-center gap-1 px-4 py-2">
+        <nav className="flex items-center gap-1.5 px-6 py-3">
           {currentModule.items.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -117,14 +126,25 @@ export function ModuleNav() {
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium",
-                  "transition-all duration-200 whitespace-nowrap",
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium",
+                  "transition-all duration-300 whitespace-nowrap",
+                  "group",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    ? [
+                        "bg-primary text-primary-foreground",
+                        "shadow-md shadow-primary/20 dark:shadow-primary/30",
+                      ]
+                    : [
+                        "text-muted-foreground",
+                        "hover:text-foreground",
+                        "hover:bg-muted/60 dark:hover:bg-muted/40",
+                      ]
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className={cn(
+                  "h-4 w-4 transition-transform duration-300",
+                  !isActive && "group-hover:scale-110"
+                )} />
                 <span>{item.label}</span>
               </Link>
             );
