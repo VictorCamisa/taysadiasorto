@@ -62,6 +62,339 @@ export type Database = {
           },
         ]
       }
+      ai_agent_conversations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          message_count: number | null
+          session_id: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          message_count?: number | null
+          session_id?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          message_count?: number | null
+          session_id?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_document_chunks: {
+        Row: {
+          agent_id: string
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string
+          embedding: string | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          agent_id: string
+          chunk_index: number
+          content: string
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          agent_id?: string
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_document_chunks_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_document_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_documents: {
+        Row: {
+          agent_id: string
+          chunk_count: number | null
+          content: string | null
+          created_at: string
+          error_message: string | null
+          file_path: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          source_url: string | null
+          status: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          chunk_count?: number | null
+          content?: string | null
+          created_at?: string
+          error_message?: string | null
+          file_path?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          source_url?: string | null
+          status?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          chunk_count?: number | null
+          content?: string | null
+          created_at?: string
+          error_message?: string | null
+          file_path?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          source_url?: string | null
+          status?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_documents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_memory: {
+        Row: {
+          access_count: number | null
+          agent_id: string
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          importance: number | null
+          last_accessed_at: string | null
+          memory_type: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_count?: number | null
+          agent_id: string
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          importance?: number | null
+          last_accessed_at?: string | null
+          memory_type?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_count?: number | null
+          agent_id?: string
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          importance?: number | null
+          last_accessed_at?: string | null
+          memory_type?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_memory_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_messages: {
+        Row: {
+          agent_id: string
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          model_used: string | null
+          role: string
+          sources: Json | null
+          tokens_used: number | null
+        }
+        Insert: {
+          agent_id: string
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          model_used?: string | null
+          role: string
+          sources?: Json | null
+          tokens_used?: number | null
+        }
+        Update: {
+          agent_id?: string
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          model_used?: string | null
+          role?: string
+          sources?: Json | null
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_messages_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          db_connection_enabled: boolean | null
+          db_tables_access: string[] | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_public: boolean | null
+          max_tokens: number | null
+          memory_enabled: boolean | null
+          memory_window: number | null
+          model: string
+          name: string
+          public_slug: string | null
+          rag_enabled: boolean | null
+          rag_max_results: number | null
+          rag_similarity_threshold: number | null
+          system_prompt: string
+          temperature: number | null
+          total_conversations: number | null
+          total_messages: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          db_connection_enabled?: boolean | null
+          db_tables_access?: string[] | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_public?: boolean | null
+          max_tokens?: number | null
+          memory_enabled?: boolean | null
+          memory_window?: number | null
+          model?: string
+          name: string
+          public_slug?: string | null
+          rag_enabled?: boolean | null
+          rag_max_results?: number | null
+          rag_similarity_threshold?: number | null
+          system_prompt?: string
+          temperature?: number | null
+          total_conversations?: number | null
+          total_messages?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          db_connection_enabled?: boolean | null
+          db_tables_access?: string[] | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_public?: boolean | null
+          max_tokens?: number | null
+          memory_enabled?: boolean | null
+          memory_window?: number | null
+          model?: string
+          name?: string
+          public_slug?: string | null
+          rag_enabled?: boolean | null
+          rag_max_results?: number | null
+          rag_similarity_threshold?: number | null
+          system_prompt?: string
+          temperature?: number | null
+          total_conversations?: number | null
+          total_messages?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       anamneses: {
         Row: {
           alergias: string | null
@@ -2264,6 +2597,36 @@ export type Database = {
         Returns: number
       }
       recalcular_saldo_conta: { Args: { p_conta_id: string }; Returns: number }
+      search_agent_memory: {
+        Args: {
+          p_agent_id: string
+          p_embedding: string
+          p_match_count?: number
+          p_user_id: string
+        }
+        Returns: {
+          content: string
+          id: string
+          importance: number
+          memory_type: string
+          similarity: number
+        }[]
+      }
+      search_document_chunks: {
+        Args: {
+          p_agent_id: string
+          p_embedding: string
+          p_match_count?: number
+          p_match_threshold?: number
+        }
+        Returns: {
+          content: string
+          document_name: string
+          id: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
       uuid_default: { Args: never; Returns: string }
     }
     Enums: {
