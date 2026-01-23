@@ -19,6 +19,12 @@ import {
   History,
   PieChart,
   LineChart,
+  ClipboardList,
+  FileSignature,
+  FlaskConical,
+  Camera,
+  Pill,
+  Stethoscope,
   type LucideIcon,
 } from "lucide-react";
 
@@ -82,6 +88,20 @@ const moduleConfigs: Record<string, ModuleConfig> = {
       { label: "Tratamentos", to: "/bi?tab=tratamentos", icon: PieChart },
       { label: "Sazonalidade", to: "/bi?tab=sazonalidade", icon: Calendar },
       { label: "Projeções", to: "/bi?tab=projecoes", icon: LineChart },
+    ],
+  },
+  gestao: {
+    basePath: "/gestao",
+    color: "rose",
+    items: [
+      { label: "Dashboard", to: "/gestao", icon: Home },
+      { label: "Planos de Tratamento", to: "/gestao/planos-tratamento", icon: FileText },
+      { label: "Contratos", to: "/gestao/contratos", icon: FileSignature },
+      { label: "Anamneses", to: "/gestao/anamneses", icon: ClipboardList },
+      { label: "Exames", to: "/gestao/exames", icon: FlaskConical },
+      { label: "Fotos", to: "/gestao/fotos", icon: Camera },
+      { label: "Receituários", to: "/gestao/receituarios", icon: Pill },
+      { label: "Prontuários", to: "/gestao/prontuarios", icon: Stethoscope },
     ],
   },
 };

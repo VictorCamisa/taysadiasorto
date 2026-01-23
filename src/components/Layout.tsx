@@ -11,7 +11,7 @@ interface LayoutProps {
 }
 
 // Routes where ModuleNav should be shown
-const moduleRoutes = ["/financeiro", "/crm", "/admin", "/bi"];
+const moduleRoutes = ["/financeiro", "/crm", "/admin", "/bi", "/gestao"];
 
 function shouldShowModuleNav(pathname: string): boolean {
   return moduleRoutes.some((route) => pathname.startsWith(route));

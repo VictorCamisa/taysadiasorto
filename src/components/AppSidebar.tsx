@@ -27,6 +27,12 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
+  FileSignature,
+  FlaskConical,
+  Camera,
+  Pill,
+  Stethoscope,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -108,6 +114,22 @@ const modules: NavModule[] = [
       { label: "Tratamentos", to: "/bi?tab=tratamentos", icon: PieChart },
       { label: "Sazonalidade", to: "/bi?tab=sazonalidade", icon: Calendar },
       { label: "Projeções", to: "/bi?tab=projecoes", icon: LineChart },
+    ],
+  },
+  {
+    label: "Gestão Operacional",
+    icon: ClipboardList,
+    basePath: "/gestao",
+    color: "text-rose-500 dark:text-rose-400",
+    items: [
+      { label: "Dashboard", to: "/gestao", icon: Home },
+      { label: "Planos de Tratamento", to: "/gestao/planos-tratamento", icon: FileText },
+      { label: "Contratos", to: "/gestao/contratos", icon: FileSignature },
+      { label: "Anamneses", to: "/gestao/anamneses", icon: ClipboardList },
+      { label: "Exames", to: "/gestao/exames", icon: FlaskConical },
+      { label: "Fotos", to: "/gestao/fotos", icon: Camera },
+      { label: "Receituários", to: "/gestao/receituarios", icon: Pill },
+      { label: "Prontuários", to: "/gestao/prontuarios", icon: Stethoscope },
     ],
   },
 ];
