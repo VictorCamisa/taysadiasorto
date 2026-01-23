@@ -123,10 +123,25 @@ serve(async (req) => {
       case "create_instance": {
         const { instanceName, nome } = params;
         
+        // URL do webhook para receber eventos
+        const webhookUrl = `${supabaseUrl}/functions/v1/whatsapp-webhook`;
+        
         const instanceData = {
           instanceName,
           qrcode: true,
           integration: "WHATSAPP-BAILEYS",
+          webhook: {
+            url: webhookUrl,
+            byEvents: false,
+            base64: false,
+            headers: {},
+            events: [
+              "MESSAGES_UPSERT",
+              "MESSAGES_UPDATE",
+              "CONNECTION_UPDATE",
+              "CONTACTS_UPDATE",
+            ],
+          },
         };
         
         result = await evolutionFetch("/instance/create", "POST", instanceData);
@@ -139,6 +154,7 @@ serve(async (req) => {
             instance_name: instanceName,
             instance_id: result?.instance?.instanceId || instanceName,
             status: "connecting",
+            webhook_url: webhookUrl,
           });
           
         if (dbError) {
@@ -166,6 +182,33 @@ serve(async (req) => {
           .from("whatsapp_instances")
           .update({ status })
           .eq("instance_name", instanceName);
+        
+        // Se conectado, garantir que o webhook está configurado
+        if (status === "connected") {
+          const webhookUrl = `${supabaseUrl}/functions/v1/whatsapp-webhook`;
+          try {
+            await evolutionFetch(`/webhook/set/${instanceName}`, "POST", {
+              url: webhookUrl,
+              events: [
+                "MESSAGES_UPSERT",
+                "MESSAGES_UPDATE",
+                "CONNECTION_UPDATE",
+                "CONTACTS_UPDATE",
+              ],
+              byEvents: false,
+              base64: false,
+            });
+            console.log("Webhook configurado:", webhookUrl);
+            
+            // Atualizar no banco
+            await supabase
+              .from("whatsapp_instances")
+              .update({ webhook_url: webhookUrl })
+              .eq("instance_name", instanceName);
+          } catch (webhookError) {
+            console.error("Erro ao configurar webhook:", webhookError);
+          }
+        }
           
         break;
       }
