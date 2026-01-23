@@ -144,7 +144,7 @@ export default function WhatsApp() {
   return (
     <div className="flex h-full w-full bg-background overflow-hidden">
       {/* Left Sidebar - Chat List */}
-      <div className="w-[380px] flex-shrink-0 flex flex-col border-r bg-card">
+      <div className="w-[380px] flex-shrink-0 flex flex-col border-r bg-card overflow-hidden">
         {/* Header */}
         <div className="h-14 flex items-center justify-between px-4 border-b bg-muted/30">
           <div className="flex items-center gap-3">
@@ -237,8 +237,8 @@ export default function WhatsApp() {
 
       {/* Right Panel - Patient Info */}
       {showPatientPanel && selectedConversa && (
-        <div className="w-[340px] flex-shrink-0 border-l bg-card flex flex-col">
-          <div className="h-14 flex items-center justify-between px-4 border-b">
+        <div className="w-[340px] flex-shrink-0 border-l bg-card flex flex-col overflow-hidden">
+          <div className="h-14 flex items-center justify-between px-4 border-b flex-shrink-0">
             <span className="font-medium text-sm">Informações do contato</span>
             <Button
               variant="ghost"
@@ -249,7 +249,9 @@ export default function WhatsApp() {
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <PatientPanel conversa={selectedConversa} />
+          <div className="flex-1 overflow-hidden">
+            <PatientPanel conversa={selectedConversa} />
+          </div>
         </div>
       )}
 
