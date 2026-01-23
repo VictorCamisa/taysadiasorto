@@ -234,7 +234,13 @@ export function useWhatsAppConversas(instanceId: string | null, onlyCRM: boolean
               .single();
             
             if (newConversa) {
-              setConversas(prev => [newConversa, ...prev]);
+              // Evitar duplicatas: só adicionar se não existir
+              setConversas(prev => {
+                if (prev.some(c => c.id === newConversa.id)) {
+                  return prev; // Já existe, ignorar
+                }
+                return [newConversa, ...prev];
+              });
             }
           } else if (payload.eventType === 'UPDATE') {
             // Conversa atualizada - buscar com join
