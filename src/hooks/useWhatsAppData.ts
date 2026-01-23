@@ -380,38 +380,48 @@ export function useWhatsAppConversas(instanceId: string | null, onlyCRM: boolean
 export function useWhatsAppMensagens(conversaId: string | null, instanceId?: string | null) {
   const [mensagens, setMensagens] = useState<WhatsAppMensagem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [relatedConversaIds, setRelatedConversaIds] = useState<string[]>([]);
   const { toast } = useToast();
+
+  // Buscar IDs de conversas relacionadas (mesmo paciente)
+  const fetchRelatedConversas = useCallback(async () => {
+    if (!conversaId || !instanceId) {
+      setRelatedConversaIds([conversaId || '']);
+      return [conversaId || ''];
+    }
+
+    try {
+      const { data: thisConversa } = await supabase
+        .from("whatsapp_conversas")
+        .select("paciente_id")
+        .eq("id", conversaId)
+        .single();
+      
+      if (thisConversa?.paciente_id) {
+        const { data: relatedConversas } = await supabase
+          .from("whatsapp_conversas")
+          .select("id")
+          .eq("paciente_id", thisConversa.paciente_id)
+          .eq("instance_id", instanceId);
+        
+        const ids = relatedConversas?.map(c => c.id) || [conversaId];
+        setRelatedConversaIds(ids);
+        return ids;
+      }
+    } catch (error) {
+      console.error("Error fetching related conversas:", error);
+    }
+    
+    setRelatedConversaIds([conversaId]);
+    return [conversaId];
+  }, [conversaId, instanceId]);
 
   const fetchMensagens = useCallback(async () => {
     if (!conversaId) return;
 
     setLoading(true);
     try {
-      // Buscar mensagens desta conversa E de conversas relacionadas pelo mesmo paciente
-      let conversasIds = [conversaId];
-      
-      // Verificar se existe outra conversa do mesmo paciente (LID vs número)
-      if (instanceId) {
-        const { data: thisConversa } = await supabase
-          .from("whatsapp_conversas")
-          .select("paciente_id, remote_jid")
-          .eq("id", conversaId)
-          .single();
-        
-        if (thisConversa?.paciente_id) {
-          // Buscar outras conversas do mesmo paciente
-          const { data: relatedConversas } = await supabase
-            .from("whatsapp_conversas")
-            .select("id")
-            .eq("paciente_id", thisConversa.paciente_id)
-            .eq("instance_id", instanceId)
-            .neq("id", conversaId);
-          
-          if (relatedConversas && relatedConversas.length > 0) {
-            conversasIds = [conversaId, ...relatedConversas.map(c => c.id)];
-          }
-        }
-      }
+      const conversasIds = await fetchRelatedConversas();
       
       const { data, error } = await supabase
         .from("whatsapp_mensagens")
@@ -426,51 +436,79 @@ export function useWhatsAppMensagens(conversaId: string | null, instanceId?: str
     } finally {
       setLoading(false);
     }
-  }, [conversaId, instanceId]);
+  }, [conversaId, fetchRelatedConversas]);
 
-  // Realtime subscription para novas mensagens
+  // Realtime subscription para novas mensagens - escuta TODAS as conversas relacionadas
   useEffect(() => {
     if (!conversaId) return;
 
     fetchMensagens();
 
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel(`whatsapp_mensagens_${conversaId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'whatsapp_mensagens',
-          filter: `conversa_id=eq.${conversaId}`,
-        },
-        (payload) => {
-          console.log('Realtime mensagem update:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            setMensagens(prev => {
-              // Evitar duplicatas
-              if (prev.some(m => m.id === payload.new.id || m.message_id === payload.new.message_id)) {
-                return prev;
+    // Aguardar IDs relacionados serem carregados, depois criar subscriptions
+    const setupRealtimeSubscriptions = async () => {
+      const conversaIds = relatedConversaIds.length > 0 ? relatedConversaIds : [conversaId];
+      
+      // Criar um channel para cada conversa relacionada
+      const channels = conversaIds.map((convId, index) => {
+        return supabase
+          .channel(`whatsapp_mensagens_${convId}_${index}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'whatsapp_mensagens',
+              filter: `conversa_id=eq.${convId}`,
+            },
+            (payload) => {
+              console.log('Realtime mensagem update:', payload);
+              
+              if (payload.eventType === 'INSERT') {
+                setMensagens(prev => {
+                  // Evitar duplicatas por ID ou message_id
+                  if (prev.some(m => m.id === payload.new.id || 
+                      (payload.new.message_id && m.message_id === payload.new.message_id))) {
+                    return prev;
+                  }
+                  // Evitar adicionar mensagens temporárias que já foram atualizadas
+                  if (prev.some(m => m.id.startsWith('temp-') && m.conteudo === payload.new.conteudo)) {
+                    return prev.map(m => 
+                      m.id.startsWith('temp-') && m.conteudo === payload.new.conteudo
+                        ? payload.new as WhatsAppMensagem
+                        : m
+                    );
+                  }
+                  return [...prev, payload.new as WhatsAppMensagem].sort((a, b) => 
+                    new Date(a.timestamp_msg).getTime() - new Date(b.timestamp_msg).getTime()
+                  );
+                });
+              } else if (payload.eventType === 'UPDATE') {
+                setMensagens(prev => 
+                  prev.map(m => m.id === payload.new.id ? payload.new as WhatsAppMensagem : m)
+                );
+              } else if (payload.eventType === 'DELETE') {
+                setMensagens(prev => prev.filter(m => m.id !== payload.old.id));
               }
-              return [...prev, payload.new as WhatsAppMensagem];
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            setMensagens(prev => 
-              prev.map(m => m.id === payload.new.id ? payload.new as WhatsAppMensagem : m)
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setMensagens(prev => prev.filter(m => m.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
+            }
+          )
+          .subscribe();
+      });
+
+      return channels;
+    };
+
+    let channels: ReturnType<typeof supabase.channel>[] = [];
+    
+    setupRealtimeSubscriptions().then(chs => {
+      channels = chs;
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
     };
-  }, [conversaId, fetchMensagens]);
+  }, [conversaId, relatedConversaIds, fetchMensagens]);
 
   const sendMessage = async (instanceName: string, remoteJid: string, message: string) => {
     try {
