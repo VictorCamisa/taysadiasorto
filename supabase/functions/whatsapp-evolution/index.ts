@@ -53,17 +53,30 @@ serve(async (req) => {
     const { action, ...params } = await req.json();
     console.log("Action:", action, "Params:", JSON.stringify(params));
 
-    // Helper para formatar telefone
+    // Helper para formatar telefone no padrão WhatsApp: 55XX999999999
     const formatPhoneNumber = (phone: string) => {
-      if (!phone || phone.length < 10) return phone;
-      // Formato brasileiro: +55 (11) 99999-9999
+      if (!phone) return phone;
+      // Remove todos caracteres não numéricos
       const cleaned = phone.replace(/\D/g, "");
-      if (cleaned.length === 13) { // 55 + DDD + 9 dígitos
-        return `+${cleaned.slice(0, 2)} (${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
-      } else if (cleaned.length === 12) { // 55 + DDD + 8 dígitos
-        return `+${cleaned.slice(0, 2)} (${cleaned.slice(2, 4)}) ${cleaned.slice(4, 8)}-${cleaned.slice(8)}`;
+      
+      // Se já tem 13 dígitos (55 + DDD + 9 dígitos), retorna como está
+      if (cleaned.length === 13) {
+        return cleaned;
       }
-      return phone;
+      // Se tem 12 dígitos (55 + DDD + 8 dígitos), pode ser número antigo
+      if (cleaned.length === 12) {
+        return cleaned;
+      }
+      // Se tem 11 dígitos (DDD + 9 dígitos), adiciona 55
+      if (cleaned.length === 11) {
+        return `55${cleaned}`;
+      }
+      // Se tem 10 dígitos (DDD + 8 dígitos), adiciona 55
+      if (cleaned.length === 10) {
+        return `55${cleaned}`;
+      }
+      // Se tem 9 dígitos (só o número), não tem como saber o DDD
+      return cleaned;
     };
 
     const evolutionFetch = async (endpoint: string, method = "GET", body?: unknown) => {
