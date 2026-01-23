@@ -147,7 +147,8 @@ serve(async (req) => {
       // Buscar conversas
       case "fetch_chats": {
         const { instanceName } = params;
-        result = await evolutionFetch(`/chat/findChats/${instanceName}`);
+        // Evolution API v2: POST /chat/findChats/{instanceName} with empty body or filters
+        result = await evolutionFetch(`/chat/findChats/${instanceName}`, "POST", {});
         break;
       }
 
