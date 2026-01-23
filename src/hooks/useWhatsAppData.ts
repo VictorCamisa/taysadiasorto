@@ -162,7 +162,7 @@ export function useWhatsAppInstances() {
   };
 }
 
-export function useWhatsAppConversas(instanceId: string | null) {
+export function useWhatsAppConversas(instanceId: string | null, onlyCRM: boolean = true) {
   const [conversas, setConversas] = useState<WhatsAppConversa[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -172,7 +172,7 @@ export function useWhatsAppConversas(instanceId: string | null) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("whatsapp_conversas")
         .select(`
           *,
@@ -180,6 +180,13 @@ export function useWhatsAppConversas(instanceId: string | null) {
         `)
         .eq("instance_id", instanceId)
         .order("ultima_mensagem_at", { ascending: false, nullsFirst: false });
+
+      // Se onlyCRM = true, mostrar apenas conversas com pacientes vinculados
+      if (onlyCRM) {
+        query = query.not("paciente_id", "is", null);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setConversas(data || []);
@@ -193,7 +200,7 @@ export function useWhatsAppConversas(instanceId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [instanceId, toast]);
+  }, [instanceId, onlyCRM, toast]);
 
   // Realtime subscription para novas conversas/atualizações
   useEffect(() => {
