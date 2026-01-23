@@ -189,7 +189,30 @@ export function useWhatsAppConversas(instanceId: string | null, onlyCRM: boolean
       const { data, error } = await query;
 
       if (error) throw error;
-      setConversas(data || []);
+      
+      // Deduplicar por paciente_id - manter apenas a conversa mais recente de cada paciente
+      const deduplicatedData = (data || []).reduce((acc: WhatsAppConversa[], conversa) => {
+        if (!conversa.paciente_id) {
+          acc.push(conversa);
+          return acc;
+        }
+        
+        const existingIndex = acc.findIndex(c => c.paciente_id === conversa.paciente_id);
+        if (existingIndex === -1) {
+          acc.push(conversa);
+        } else {
+          // Manter a mais recente
+          const existing = acc[existingIndex];
+          const existingDate = existing.ultima_mensagem_at ? new Date(existing.ultima_mensagem_at).getTime() : 0;
+          const currentDate = conversa.ultima_mensagem_at ? new Date(conversa.ultima_mensagem_at).getTime() : 0;
+          if (currentDate > existingDate) {
+            acc[existingIndex] = conversa;
+          }
+        }
+        return acc;
+      }, []);
+      
+      setConversas(deduplicatedData);
     } catch (error: unknown) {
       console.error("Error fetching conversas:", error);
       toast({
