@@ -332,7 +332,7 @@ serve(async (req) => {
 
       // Sincronizar conversas com banco de dados
       case "sync_chats": {
-        const { instanceId, chats } = params;
+        const { instanceId, chats, instanceName } = params;
         
         // Primeiro, deletar conversas com remote_jid inválido (IDs internos da Evolution)
         const { error: deleteError } = await supabase
@@ -349,12 +349,71 @@ serve(async (req) => {
         
         // Mapear LID -> número alternativo para referência cruzada
         const lidToPhoneMap: Record<string, string> = {};
+        
+        // Tentar buscar contatos da Evolution API para mapear LID -> telefone real
+        if (instanceName) {
+          try {
+            const contactsResponse = await evolutionFetch(`/chat/findContacts/${instanceName}`, "POST", {});
+            if (Array.isArray(contactsResponse)) {
+              for (const contact of contactsResponse) {
+                const lid = contact.lid || contact.id;
+                const phone = contact.id || contact.remoteJid || contact.wuid;
+                
+                // Se temos um LID e um número de telefone diferente
+                if (lid && lid.endsWith("@lid") && phone && phone.endsWith("@s.whatsapp.net")) {
+                  lidToPhoneMap[lid] = phone;
+                }
+                
+                // Tentar também o campo phone_number ou wid
+                if (contact.wid && contact.wid.endsWith("@s.whatsapp.net") && lid?.endsWith("@lid")) {
+                  lidToPhoneMap[lid] = contact.wid;
+                }
+              }
+            }
+            console.log("LID to Phone mapping found:", Object.keys(lidToPhoneMap).length, "entries");
+          } catch (e) {
+            console.log("Could not fetch contacts for LID mapping:", e);
+          }
+        }
+        
+        // Fallback: tentar remoteJidAlt das mensagens
         for (const chat of chats) {
-          const remoteJidAlt = chat.lastMessage?.key?.remoteJidAlt;
+          const remoteJidAlt = chat.lastMessage?.key?.remoteJidAlt || chat.remoteJidAlt;
           if (chat.remoteJid?.endsWith("@lid") && remoteJidAlt && remoteJidAlt.endsWith("@s.whatsapp.net")) {
             lidToPhoneMap[chat.remoteJid] = remoteJidAlt;
           }
+          
+          // Tentar também no participant da mensagem
+          const participant = chat.lastMessage?.key?.participant;
+          if (chat.remoteJid?.endsWith("@lid") && participant && participant.endsWith("@s.whatsapp.net")) {
+            lidToPhoneMap[chat.remoteJid] = participant;
+          }
         }
+        
+        console.log("Total LID mappings:", Object.keys(lidToPhoneMap).length);
+        
+        // Carregar todos os pacientes com telefone para busca eficiente
+        const { data: pacientesDB } = await supabase
+          .from("pacientes")
+          .select("id, nome, telefone")
+          .not("telefone", "is", null);
+        
+        const pacientesByPhone: Record<string, { id: string; nome: string }> = {};
+        if (pacientesDB) {
+          for (const p of pacientesDB) {
+            if (p.telefone) {
+              // Normalizar telefone: manter só últimos 9 dígitos
+              const cleaned = p.telefone.replace(/\D/g, "");
+              if (cleaned.length >= 9) {
+                const lastDigits = cleaned.slice(-9);
+                pacientesByPhone[lastDigits] = { id: p.id, nome: p.nome };
+                // Também indexar pelo telefone completo limpo
+                pacientesByPhone[cleaned] = { id: p.id, nome: p.nome };
+              }
+            }
+          }
+        }
+        console.log("Pacientes indexed by phone:", Object.keys(pacientesByPhone).length);
         
         for (const chat of chats) {
           const remoteJid = chat.remoteJid as string;
@@ -367,8 +426,8 @@ serve(async (req) => {
           const isLid = remoteJid.endsWith("@lid");
           
           // Para LID, tentar usar o número alternativo para buscar paciente
-          const remoteJidAlt = lidToPhoneMap[remoteJid] || chat.lastMessage?.key?.remoteJidAlt;
-          const phoneJid = isLid && remoteJidAlt ? remoteJidAlt : remoteJid;
+          const mappedPhone = lidToPhoneMap[remoteJid];
+          const phoneJid = isLid && mappedPhone ? mappedPhone : remoteJid;
           
           // Extrair telefone para buscar paciente
           const telefoneRaw = phoneJid
@@ -383,7 +442,7 @@ serve(async (req) => {
             nome = chat.lastMessage.pushName;
           }
           if (!nome) {
-            if (isLid && !remoteJidAlt) {
+            if (isLid && !mappedPhone) {
               nome = `Contato ${remoteJid.split("@")[0].slice(-6)}`;
             } else {
               nome = formatPhoneNumber(telefoneRaw);
@@ -410,16 +469,17 @@ serve(async (req) => {
             }
           }
           
-          // Tentar vincular com paciente pelo telefone
+          // Tentar vincular com paciente pelo telefone (busca em memória)
           let pacienteId = null;
+          let pacienteNome = null;
           if (telefoneRaw.length >= 9) {
-            const { data: paciente } = await supabase
-              .from("pacientes")
-              .select("id")
-              .or(`telefone.ilike.%${telefoneRaw.slice(-9)}%,telefone.ilike.%${telefoneRaw}%`)
-              .limit(1)
-              .single();
-            pacienteId = paciente?.id || null;
+            const lastDigits = telefoneRaw.slice(-9);
+            const match = pacientesByPhone[lastDigits] || pacientesByPhone[telefoneRaw];
+            if (match) {
+              pacienteId = match.id;
+              pacienteNome = match.nome;
+              console.log(`Match found: ${telefoneRaw} -> ${pacienteNome}`);
+            }
           }
           
           await supabase
@@ -427,7 +487,7 @@ serve(async (req) => {
             .upsert({
               instance_id: instanceId,
               remote_jid: remoteJid,
-              nome_contato: nome,
+              nome_contato: pacienteNome || nome,
               foto_url: chat.profilePictureUrl || chat.profilePicUrl || null,
               paciente_id: pacienteId,
               ultima_mensagem: ultimaMensagem,
@@ -442,7 +502,7 @@ serve(async (req) => {
           syncedCount++;
         }
         
-        result = { success: true, synced: syncedCount };
+        result = { success: true, synced: syncedCount, lidMappings: Object.keys(lidToPhoneMap).length };
         break;
       }
 

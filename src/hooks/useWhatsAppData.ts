@@ -278,9 +278,11 @@ export function useWhatsAppConversas(instanceId: string | null, onlyCRM: boolean
       if (error) throw error;
 
       if (Array.isArray(chats)) {
-        await supabase.functions.invoke("whatsapp-evolution", {
-          body: { action: "sync_chats", instanceId, chats },
+        // Passar instanceName para poder buscar contatos e mapear LIDs
+        const { data: syncResult } = await supabase.functions.invoke("whatsapp-evolution", {
+          body: { action: "sync_chats", instanceId, instanceName, chats },
         });
+        console.log("Sync result:", syncResult);
       }
 
       await fetchConversas();
