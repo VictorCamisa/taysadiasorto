@@ -2149,6 +2149,8 @@ export type Database = {
           endereco_profissional: string | null
           estado: string | null
           estado_civil: string | null
+          form_completed_at: string | null
+          form_token: string | null
           foto_url: string | null
           id: string
           indicado_por: string | null
@@ -2194,6 +2196,8 @@ export type Database = {
           endereco_profissional?: string | null
           estado?: string | null
           estado_civil?: string | null
+          form_completed_at?: string | null
+          form_token?: string | null
           foto_url?: string | null
           id?: string
           indicado_por?: string | null
@@ -2239,6 +2243,8 @@ export type Database = {
           endereco_profissional?: string | null
           estado?: string | null
           estado_civil?: string | null
+          form_completed_at?: string | null
+          form_token?: string | null
           foto_url?: string | null
           id?: string
           indicado_por?: string | null
