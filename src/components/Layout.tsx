@@ -5,6 +5,8 @@ import { TopBar } from "@/components/TopBar";
 import { ModuleNav } from "@/components/ModuleNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserAuthMenu } from "@/components/UserAuthMenu";
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,12 +21,42 @@ function shouldShowModuleNav(pathname: string): boolean {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const isMobile = useIsMobile();
   const isAssistenteIA = location.pathname === "/assistente-ia";
   const isWhatsApp = location.pathname === "/crm/whatsapp";
   const isFullHeightPage = isAssistenteIA || isWhatsApp;
   const showModuleNav = shouldShowModuleNav(location.pathname) && !isWhatsApp;
   const isHome = location.pathname === "/";
 
+  // Mobile Layout - completely different structure
+  if (isMobile) {
+    return (
+      <div className={cn(
+        "flex flex-col w-full",
+        isFullHeightPage ? "h-screen" : "min-h-screen"
+      )}>
+        {/* Adaptive Background for Mobile */}
+        <div className="fixed inset-0 -z-10">
+          <div className="absolute inset-0 bg-background" />
+        </div>
+
+        {/* Mobile Content */}
+        <main className={cn(
+          "flex-1 flex flex-col min-w-0",
+          isFullHeightPage 
+            ? "h-full overflow-hidden" 
+            : "overflow-y-auto pb-20"
+        )}>
+          {children}
+        </main>
+
+        {/* Mobile Bottom Navigation */}
+        {!isFullHeightPage && <MobileBottomNav />}
+      </div>
+    );
+  }
+
+  // Desktop Layout - original structure
   return (
     <div className={cn(
       "flex w-full overflow-hidden relative",
@@ -52,7 +84,7 @@ export function Layout({ children }: LayoutProps) {
         "flex-1 flex flex-col min-w-0",
         isFullHeightPage ? "h-full overflow-hidden" : "min-h-screen"
       )}>
-        {/* Mobile Top Bar */}
+        {/* Mobile Top Bar (tablet) */}
         <TopBar />
 
         {/* Desktop Top Actions */}
