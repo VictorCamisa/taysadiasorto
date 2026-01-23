@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import {
   CRMAgendamento,
   AgendamentoStatus,
@@ -98,12 +99,52 @@ export function PipelineKanban({
     setDragOverColumn(null);
   };
 
-  const handleDrop = (e: React.DragEvent, newStatus: AgendamentoStatus) => {
+  const handleDrop = async (e: React.DragEvent, newStatus: AgendamentoStatus) => {
     e.preventDefault();
     const agendamentoId = e.dataTransfer.getData("agendamentoId");
     const agendamento = agendamentos.find((a) => a.id === agendamentoId);
 
     if (agendamento && agendamento.status !== newStatus) {
+      const currentIndex = PIPELINE_COLUMNS.indexOf(agendamento.status as AgendamentoStatus);
+      const newIndex = PIPELINE_COLUMNS.indexOf(newStatus);
+      const isAdvancing = newIndex > currentIndex && currentIndex >= 0 && newIndex >= 0;
+      
+      // Se está avançando, verificar checklist
+      if (isAdvancing) {
+        // Buscar itens do checklist diretamente
+        const { supabase } = await import("@/integrations/supabase/client");
+        
+        const { data: checklistItems } = await supabase
+          .from("pipeline_checklist_items")
+          .select("id, obrigatorio")
+          .eq("etapa", agendamento.status)
+          .eq("ativo", true);
+        
+        if (checklistItems && checklistItems.length > 0) {
+          const requiredItems = checklistItems.filter(i => i.obrigatorio);
+          
+          if (requiredItems.length > 0) {
+            const { data: progress } = await supabase
+              .from("pipeline_checklist_progress")
+              .select("checklist_item_id, concluido")
+              .eq("agendamento_id", agendamentoId);
+            
+            const completedRequiredCount = requiredItems.filter(item => 
+              progress?.some(p => p.checklist_item_id === item.id && p.concluido)
+            ).length;
+            
+            if (completedRequiredCount < requiredItems.length) {
+              toast.error("Complete o checklist antes de avançar", {
+                description: `${completedRequiredCount}/${requiredItems.length} itens obrigatórios concluídos`
+              });
+              setDraggedId(null);
+              setDragOverColumn(null);
+              return;
+            }
+          }
+        }
+      }
+      
       // Open transition modal
       setTransicaoModal({
         open: true,
