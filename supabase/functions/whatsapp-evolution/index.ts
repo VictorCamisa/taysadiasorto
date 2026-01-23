@@ -320,9 +320,29 @@ serve(async (req) => {
       case "sync_chats": {
         const { instanceId, chats } = params;
         
+        // Primeiro, deletar conversas com remote_jid inválido (IDs internos da Evolution)
+        const { error: deleteError } = await supabase
+          .from("whatsapp_conversas")
+          .delete()
+          .eq("instance_id", instanceId)
+          .not("remote_jid", "like", "%@%");
+        
+        if (deleteError) {
+          console.log("Erro ao limpar conversas inválidas:", deleteError);
+        }
+        
+        let syncedCount = 0;
+        
         for (const chat of chats) {
-          // IMPORTANTE: Usar remoteJid como prioridade, não o id interno da Evolution
-          const remoteJid = (chat.remoteJid || chat.id) as string;
+          // CRÍTICO: Usar SOMENTE remoteJid, NUNCA o id interno
+          // O remoteJid SEMPRE contém @ (ex: 5511999999999@s.whatsapp.net ou hash@lid)
+          const remoteJid = chat.remoteJid as string;
+          
+          // Se não tiver remoteJid válido (com @), ignorar este chat
+          if (!remoteJid || !remoteJid.includes("@")) {
+            console.log("Ignorando chat sem remoteJid válido:", chat.id);
+            continue;
+          }
           
           // Extrair telefone do remoteJid (formato: 5511999999999@s.whatsapp.net ou hash@lid)
           const isLid = remoteJid.endsWith("@lid");
@@ -398,9 +418,11 @@ serve(async (req) => {
             }, {
               onConflict: "instance_id,remote_jid",
             });
+          
+          syncedCount++;
         }
         
-        result = { success: true, synced: chats.length };
+        result = { success: true, synced: syncedCount };
         break;
       }
 
