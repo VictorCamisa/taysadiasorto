@@ -1,8 +1,15 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, ExternalLink, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { FileText, Plus, Eye, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -31,6 +38,8 @@ export function PlanosTratamentoList({
   pacienteNome,
   onNewPlano 
 }: PlanosTratamentoListProps) {
+  const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
+
   const { data: planos, isLoading } = useQuery({
     queryKey: ["planos-tratamento", pacienteId],
     queryFn: async () => {
@@ -72,71 +81,96 @@ export function PlanosTratamentoList({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Planos de Tratamento
-        </CardTitle>
-        <Button size="sm" onClick={onNewPlano}>
-          <Plus className="h-4 w-4 mr-1" />
-          Novo Plano
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {planos && planos.length > 0 ? (
-          <div className="space-y-3">
-            {planos.map((plano) => (
-              <div
-                key={plano.id}
-                className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">
-                      {formatDate(plano.created_at)}
-                    </span>
-                    <Badge variant="secondary" className="text-xs">
-                      {Array.isArray(plano.itens) ? plano.itens.length : 0} procedimento(s)
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {Array.isArray(plano.itens) && plano.itens.slice(0, 2).map((item, i) => (
-                      <span key={i}>
-                        {item.procedimento}
-                        {i < Math.min(plano.itens.length - 1, 1) ? ", " : ""}
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Planos de Tratamento
+          </CardTitle>
+          <Button size="sm" onClick={onNewPlano}>
+            <Plus className="h-4 w-4 mr-1" />
+            Novo Plano
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {planos && planos.length > 0 ? (
+            <div className="space-y-3">
+              {planos.map((plano) => (
+                <div
+                  key={plano.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">
+                        {formatDate(plano.created_at)}
                       </span>
-                    ))}
-                    {Array.isArray(plano.itens) && plano.itens.length > 2 && ` +${plano.itens.length - 2} mais`}
+                      <Badge variant="secondary" className="text-xs">
+                        {Array.isArray(plano.itens) ? plano.itens.length : 0} procedimento(s)
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {Array.isArray(plano.itens) && plano.itens.slice(0, 2).map((item, i) => (
+                        <span key={i}>
+                          {item.procedimento}
+                          {i < Math.min(plano.itens.length - 1, 1) ? ", " : ""}
+                        </span>
+                      ))}
+                      {Array.isArray(plano.itens) && plano.itens.length > 2 && ` +${plano.itens.length - 2} mais`}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-primary">
+                      {formatCurrency(plano.valor_total || 0)}
+                    </span>
+                    {plano.pdf_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedPdfUrl(plano.pdf_url)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Visualizar
+                      </Button>
+                    )}
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Nenhum plano de tratamento</p>
+              <p className="text-xs mt-1">Clique em "Novo Plano" para criar</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold text-primary">
-                    {formatCurrency(plano.valor_total || 0)}
-                  </span>
-                  {plano.pdf_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(plano.pdf_url!, "_blank")}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      Ver PDF
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+      {/* Modal de visualização do PDF */}
+      <Dialog open={!!selectedPdfUrl} onOpenChange={() => setSelectedPdfUrl(null)}>
+        <DialogContent className="max-w-4xl h-[85vh] p-0">
+          <DialogHeader className="p-4 pb-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Plano de Tratamento
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 p-4 pt-2 h-full">
+            {selectedPdfUrl && (
+              <iframe
+                src={selectedPdfUrl}
+                className="w-full h-full rounded-lg border"
+                title="Visualização do Plano de Tratamento"
+              />
+            )}
           </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Nenhum plano de tratamento</p>
-            <p className="text-xs mt-1">Clique em "Novo Plano" para criar</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
