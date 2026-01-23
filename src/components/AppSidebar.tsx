@@ -26,8 +26,8 @@ import {
   Sparkles,
   Settings,
   ChevronDown,
-  PanelLeftClose,
-  PanelLeft,
+  X,
+  Menu,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,11 +38,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface NavItem {
   label: string;
@@ -119,13 +114,7 @@ const globalItems: NavItem[] = [
   { label: "Configurações", to: "/configuracoes", icon: Settings },
 ];
 
-function NavModuleSection({
-  module,
-  isCollapsed,
-}: {
-  module: NavModule;
-  isCollapsed: boolean;
-}) {
+function NavModuleSection({ module }: { module: NavModule }) {
   const location = useLocation();
   const isActive =
     location.pathname === module.basePath ||
@@ -139,30 +128,6 @@ function NavModuleSection({
 
   const [isOpen, setIsOpen] = useState(isActive);
   const Icon = module.icon;
-
-  if (isCollapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            to={module.items[0]?.to || module.basePath}
-            className={cn(
-              "flex items-center justify-center h-10 w-10 rounded-lg mx-auto",
-              "transition-colors duration-200",
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <Icon className="h-5 w-5" />
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={8}>
-          {module.label}
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -221,70 +186,52 @@ function NavModuleSection({
 }
 
 export function AppSidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
 
   return (
-    <aside
-      className={cn(
-        "h-screen flex flex-col flex-shrink-0",
-        "bg-card/50 backdrop-blur-sm border-r border-border/50",
-        "transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-[60px]" : "w-[240px]"
+    <>
+      {/* Toggle Button - Always visible when sidebar is closed */}
+      {!isOpen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="fixed top-3 left-3 z-50 h-10 w-10 bg-card/90 backdrop-blur-sm border border-border/50 shadow-sm hover:bg-accent"
+          onClick={() => setIsOpen(true)}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
       )}
-    >
-      {/* Header */}
-      <div
+
+      {/* Sidebar */}
+      <aside
         className={cn(
-          "flex items-center h-14 border-b border-border/50",
-          isCollapsed ? "justify-center px-2" : "justify-between px-4"
+          "h-screen flex flex-col flex-shrink-0",
+          "bg-card/50 backdrop-blur-sm border-r border-border/50",
+          "transition-all duration-300 ease-in-out",
+          isOpen ? "w-[240px] opacity-100" : "w-0 opacity-0 overflow-hidden"
         )}
       >
-        {!isCollapsed && (
+        {/* Header */}
+        <div className="flex items-center justify-between h-14 border-b border-border/50 px-4">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-lg font-bold text-foreground">TD</span>
             <span className="text-sm text-muted-foreground">Clínica</span>
           </Link>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? (
-            <PanelLeft className="h-4 w-4" />
-          ) : (
-            <PanelLeftClose className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={() => setIsOpen(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 py-3">
-        <nav className={cn("space-y-1", isCollapsed ? "px-2" : "px-3")}>
-          {/* Home */}
-          {isCollapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/"
-                  className={cn(
-                    "flex items-center justify-center h-10 w-10 rounded-lg mx-auto",
-                    "transition-colors duration-200",
-                    location.pathname === "/"
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <Home className="h-5 w-5" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                Início
-              </TooltipContent>
-            </Tooltip>
-          ) : (
+        {/* Navigation */}
+        <ScrollArea className="flex-1 py-3">
+          <nav className="space-y-1 px-3">
+            {/* Home */}
             <NavLink
               to="/"
               end
@@ -298,91 +245,58 @@ export function AppSidebar() {
               <Home className="h-4 w-4" />
               <span>Início</span>
             </NavLink>
-          )}
 
-          <Separator className="my-3" />
+            <Separator className="my-3" />
 
-          {/* Modules */}
-          <div className="space-y-1">
-            {!isCollapsed && (
+            {/* Modules */}
+            <div className="space-y-1">
               <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                 Módulos
               </p>
-            )}
-            {modules.map((module) => (
-              <NavModuleSection
-                key={module.basePath}
-                module={module}
-                isCollapsed={isCollapsed}
-              />
-            ))}
-          </div>
+              {modules.map((module) => (
+                <NavModuleSection key={module.basePath} module={module} />
+              ))}
+            </div>
 
-          <Separator className="my-3" />
+            <Separator className="my-3" />
 
-          {/* Global Items */}
-          <div className="space-y-1">
-            {!isCollapsed && (
+            {/* Global Items */}
+            <div className="space-y-1">
               <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
                 Sistema
               </p>
-            )}
-            {globalItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.to;
-              const isAI = item.to === "/assistente-ia";
+              {globalItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.to;
+                const isAI = item.to === "/assistente-ia";
 
-              if (isCollapsed) {
                 return (
-                  <Tooltip key={item.to}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to={item.to}
-                        className={cn(
-                          "flex items-center justify-center h-10 w-10 rounded-lg mx-auto",
-                          "transition-colors duration-200",
-                          isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                          isAI && !isActive && "text-primary/70"
-                        )}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" sideOffset={8}>
-                      {item.label}
-                    </TooltipContent>
-                  </Tooltip>
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2",
+                      "text-sm font-medium transition-colors duration-200",
+                      !isActive &&
+                        "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                      isAI && !isActive && "text-primary/70 hover:text-primary"
+                    )}
+                    activeClassName="text-primary bg-primary/5 font-medium"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                    {isAI && !isActive && (
+                      <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">
+                        IA
+                      </span>
+                    )}
+                  </NavLink>
                 );
-              }
-
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2",
-                    "text-sm font-medium transition-colors duration-200",
-                    !isActive &&
-                      "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                    isAI && !isActive && "text-primary/70 hover:text-primary"
-                  )}
-                  activeClassName="text-primary bg-primary/5 font-medium"
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                  {isAI && !isActive && (
-                    <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold">
-                      IA
-                    </span>
-                  )}
-                </NavLink>
-              );
-            })}
-          </div>
-        </nav>
-      </ScrollArea>
-    </aside>
+              })}
+            </div>
+          </nav>
+        </ScrollArea>
+      </aside>
+    </>
   );
 }
