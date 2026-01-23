@@ -149,11 +149,11 @@ export default function Auth() {
         <Card className="border-border/50 shadow-lg">
           <CardHeader className="text-center pb-2 pt-8">
             <div className="flex justify-center mb-4">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-primary/5 border border-primary/10">
+              <div className="p-6 border border-border">
                 <img 
                   src={logoTaysa} 
                   alt="Dra. Taysa Dias" 
-                  className="h-20 w-auto drop-shadow-md"
+                  className="h-32 w-auto"
                 />
               </div>
             </div>
