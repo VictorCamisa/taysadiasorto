@@ -2,20 +2,18 @@ import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  User, Phone, Mail, MapPin, Calendar, FileText, DollarSign,
-  ExternalLink, Link2, Target, ClipboardList
+  User, Phone, Mail, MapPin, Calendar, 
+  ExternalLink, Target, FileText, DollarSign
 } from "lucide-react";
 import { WhatsAppConversa } from "@/hooks/useWhatsAppData";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface PatientPanelProps {
   conversa: WhatsAppConversa | null;
@@ -45,6 +43,15 @@ interface Agendamento {
   origem?: { nome: string } | null;
 }
 
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  lead: { label: "Lead", color: "bg-blue-500" },
+  em_negociacao: { label: "Em Negociação", color: "bg-amber-500" },
+  orcamento_enviado: { label: "Orçamento", color: "bg-orange-500" },
+  agendado: { label: "Agendado", color: "bg-purple-500" },
+  ganho: { label: "Ganho", color: "bg-emerald-500" },
+  perdido: { label: "Perdido", color: "bg-red-500" },
+};
+
 export function PatientPanel({ conversa }: PatientPanelProps) {
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
@@ -61,7 +68,6 @@ export function PatientPanel({ conversa }: PatientPanelProps) {
 
       setLoading(true);
       try {
-        // Fetch paciente
         const { data: pacienteData } = await supabase
           .from("pacientes")
           .select("*")
@@ -70,7 +76,6 @@ export function PatientPanel({ conversa }: PatientPanelProps) {
 
         setPaciente(pacienteData);
 
-        // Fetch agendamentos
         const { data: agendamentosData } = await supabase
           .from("crm_agendamentos")
           .select(`
@@ -91,206 +96,169 @@ export function PatientPanel({ conversa }: PatientPanelProps) {
     fetchPacienteData();
   }, [conversa?.paciente_id]);
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  };
+
   if (!conversa) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-4">
-        <User className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">Selecione uma conversa</p>
-        <p className="text-sm text-muted-foreground">para ver os dados do paciente</p>
-      </div>
-    );
+    return null;
   }
 
   if (loading) {
     return (
-      <div className="p-4 space-y-4">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <div className="flex-1">
-            <Skeleton className="h-5 w-32 mb-2" />
-            <Skeleton className="h-4 w-24" />
-          </div>
+      <div className="p-6 space-y-4 animate-pulse">
+        <div className="flex flex-col items-center">
+          <div className="h-20 w-20 rounded-full bg-muted mb-4" />
+          <div className="h-5 w-32 bg-muted rounded mb-2" />
+          <div className="h-4 w-24 bg-muted rounded" />
         </div>
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
+        <div className="h-24 w-full bg-muted rounded" />
+        <div className="h-24 w-full bg-muted rounded" />
       </div>
     );
   }
 
   if (!paciente) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-4">
-        <Link2 className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">Contato não vinculado</p>
+      <div className="flex flex-col items-center justify-center h-full text-center p-6">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <User className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="font-medium text-foreground mb-1">Contato não vinculado</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Este contato ainda não está vinculado a um paciente
+          Este contato ainda não está vinculado a um paciente no sistema
         </p>
         <Button variant="outline" size="sm">
-          Vincular a paciente
+          Vincular paciente
         </Button>
       </div>
     );
   }
 
-  const statusColors: Record<string, string> = {
-    lead: "bg-blue-500",
-    em_negociacao: "bg-yellow-500",
-    orcamento_enviado: "bg-orange-500",
-    agendado: "bg-purple-500",
-    ganho: "bg-green-500",
-    perdido: "bg-red-500",
-  };
-
-  const statusLabels: Record<string, string> = {
-    lead: "Lead",
-    em_negociacao: "Em Negociação",
-    orcamento_enviado: "Orçamento Enviado",
-    agendado: "Agendado",
-    ganho: "Ganho",
-    perdido: "Perdido",
-  };
-
   return (
     <ScrollArea className="h-full">
-      <div className="p-4 space-y-4">
-        {/* Patient Header */}
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
+      <div className="p-6">
+        {/* Header com avatar */}
+        <div className="flex flex-col items-center text-center mb-6">
+          <Avatar className="h-20 w-20 mb-4">
             <AvatarImage src={paciente.foto_url || undefined} />
-            <AvatarFallback className="text-lg">
-              {paciente.nome.slice(0, 2).toUpperCase()}
+            <AvatarFallback className="text-xl bg-primary/10 text-primary">
+              {getInitials(paciente.nome)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">{paciente.nome}</h3>
-            <p className="text-sm text-muted-foreground">
-              Paciente desde {format(new Date(paciente.created_at), "MMM yyyy", { locale: ptBR })}
-            </p>
-          </div>
+          <h3 className="font-semibold text-lg">{paciente.nome}</h3>
+          <p className="text-sm text-muted-foreground">
+            Paciente desde {format(new Date(paciente.created_at), "MMM yyyy", { locale: ptBR })}
+          </p>
           <Button
             size="sm"
             variant="outline"
+            className="mt-3 gap-2"
             onClick={() => navigate(`/crm/pacientes/${paciente.id}`)}
           >
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-3 w-3" />
+            Ver ficha completa
           </Button>
         </div>
 
-        <Separator />
+        <Separator className="my-4" />
 
-        {/* Tabs */}
-        <Tabs defaultValue="info" className="w-full">
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="info">Informações</TabsTrigger>
-            <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="info" className="space-y-4 mt-4">
-            {/* Contact Info */}
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm">Contato</CardTitle>
-              </CardHeader>
-              <CardContent className="py-2 space-y-2">
-                {paciente.telefone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{paciente.telefone}</span>
-                  </div>
-                )}
-                {paciente.email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span>{paciente.email}</span>
-                  </div>
-                )}
-                {paciente.data_nascimento && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>
-                      {format(new Date(paciente.data_nascimento), "dd/MM/yyyy")}
-                    </span>
-                  </div>
-                )}
-                {(paciente.cidade || paciente.estado) && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>
-                      {[paciente.cidade, paciente.estado].filter(Boolean).join(", ")}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Notes */}
-            {paciente.observacoes && (
-              <Card>
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm">Observações</CardTitle>
-                </CardHeader>
-                <CardContent className="py-2">
-                  <p className="text-sm text-muted-foreground">{paciente.observacoes}</p>
-                </CardContent>
-              </Card>
+        {/* Informações de contato */}
+        <div className="space-y-3 mb-6">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Contato
+          </h4>
+          <div className="space-y-2">
+            {paciente.telefone && (
+              <div className="flex items-center gap-3 text-sm">
+                <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span>{paciente.telefone}</span>
+              </div>
             )}
-          </TabsContent>
+            {paciente.email && (
+              <div className="flex items-center gap-3 text-sm">
+                <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="truncate">{paciente.email}</span>
+              </div>
+            )}
+            {paciente.data_nascimento && (
+              <div className="flex items-center gap-3 text-sm">
+                <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span>{format(new Date(paciente.data_nascimento), "dd/MM/yyyy")}</span>
+              </div>
+            )}
+            {(paciente.cidade || paciente.estado) && (
+              <div className="flex items-center gap-3 text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span>{[paciente.cidade, paciente.estado].filter(Boolean).join(", ")}</span>
+              </div>
+            )}
+          </div>
+        </div>
 
-          <TabsContent value="pipeline" className="space-y-4 mt-4">
-            {agendamentos.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <Target className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma oportunidade no pipeline
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              agendamentos.map((agendamento) => (
-                <Card key={agendamento.id}>
-                  <CardContent className="py-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge
-                        variant="secondary"
-                        className={`${statusColors[agendamento.status]} text-white`}
-                      >
-                        {statusLabels[agendamento.status] || agendamento.status}
-                      </Badge>
-                      {agendamento.valor_previsto > 0 && (
-                        <span className="text-sm font-medium text-green-600">
-                          R$ {agendamento.valor_previsto.toLocaleString("pt-BR")}
-                        </span>
+        {/* Oportunidades no Pipeline */}
+        {agendamentos.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Pipeline
+              </h4>
+              <div className="space-y-2">
+                {agendamentos.map((agendamento) => {
+                  const config = STATUS_CONFIG[agendamento.status] || { label: agendamento.status, color: "bg-gray-500" };
+                  return (
+                    <div
+                      key={agendamento.id}
+                      className="p-3 rounded-lg bg-muted/50 space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge className={cn("text-xs text-white", config.color)}>
+                          {config.label}
+                        </Badge>
+                        {agendamento.valor_previsto > 0 && (
+                          <span className="text-sm font-medium text-primary">
+                            R$ {agendamento.valor_previsto.toLocaleString("pt-BR")}
+                          </span>
+                        )}
+                      </div>
+                      {agendamento.tratamento && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{agendamento.tratamento.nome}</span>
+                        </div>
+                      )}
+                      {agendamento.origem && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Target className="h-3 w-3" />
+                          <span>{agendamento.origem.nome}</span>
+                        </div>
                       )}
                     </div>
-                    {agendamento.tratamento && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                        <span>{agendamento.tratamento.nome}</span>
-                      </div>
-                    )}
-                    {agendamento.origem && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Target className="h-4 w-4" />
-                        <span>{agendamento.origem.nome}</span>
-                      </div>
-                    )}
-                    {agendamento.data_agendamento && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                          {format(new Date(agendamento.data_agendamento), "dd/MM/yyyy HH:mm", {
-                            locale: ptBR,
-                          })}
-                        </span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-        </Tabs>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Observações */}
+        {paciente.observacoes && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Observações
+              </h4>
+              <p className="text-sm text-muted-foreground">{paciente.observacoes}</p>
+            </div>
+          </>
+        )}
       </div>
     </ScrollArea>
   );
