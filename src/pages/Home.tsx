@@ -76,13 +76,12 @@ function ModuleCard({
       to={href}
       className={cn(
         "group relative flex flex-col rounded-2xl p-6 h-full overflow-hidden",
-        "bg-card/80 dark:bg-card/40",
-        "border border-border/50 dark:border-border/30",
-        "backdrop-blur-sm",
-        "transition-all duration-500 ease-out",
-        "hover:shadow-xl dark:hover:shadow-2xl",
-        "hover:border-primary/30 dark:hover:border-primary/50",
-        "hover:-translate-y-2 dark:hover:-translate-y-3"
+        "bg-card/80 dark:bg-card/90",
+        "border border-border/50 dark:border-border/40",
+        "transition-all duration-300 ease-out",
+        "hover:shadow-lg dark:hover:shadow-xl",
+        "hover:border-primary/20 dark:hover:border-primary/30",
+        "hover:-translate-y-1.5"
       )}
     >
       {/* Gradient Background */}
@@ -94,8 +93,8 @@ function ModuleCard({
         )}
       />
 
-      {/* Glow Effect (dark mode only) */}
-      <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 dark:block hidden" />
+      {/* Glow Effect (dark mode only) - subtle */}
+      <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 dark:block hidden" />
 
       {/* Content */}
       <div className="relative z-10">
@@ -103,14 +102,13 @@ function ModuleCard({
         <div className="flex items-start justify-between mb-5">
           <div
             className={cn(
-              "h-14 w-14 rounded-2xl flex items-center justify-center",
-              "bg-gradient-to-br from-primary/10 to-primary/5",
-              "dark:from-primary/20 dark:to-primary/5",
+              "h-12 w-12 rounded-xl flex items-center justify-center",
+              "bg-primary/10 dark:bg-primary/15",
               "border border-primary/10 dark:border-primary/20",
-              "group-hover:scale-110 transition-transform duration-500"
+              "group-hover:scale-105 transition-transform duration-300"
             )}
           >
-            <Icon className={cn("h-7 w-7", accentColor)} />
+            <Icon className={cn("h-6 w-6", accentColor)} />
           </div>
           <div
             className={cn(
@@ -259,12 +257,8 @@ export default function Home() {
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl dark:hidden" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-primary/3 rounded-full blur-3xl dark:hidden" />
 
-        {/* Dark mode mesh */}
-        <div className="hidden dark:block absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/15 rounded-full blur-[100px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-[80px]" />
-          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-violet-500/8 rounded-full blur-[60px]" />
-        </div>
+        {/* Dark mode - minimal accent */}
+        <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-primary/[0.03] rounded-full blur-[80px]" />
       </div>
 
       {/* Content */}
