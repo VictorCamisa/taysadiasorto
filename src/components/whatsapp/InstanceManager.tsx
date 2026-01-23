@@ -77,7 +77,7 @@ export function InstanceManager({ selectedInstance, onSelectInstance }: Instance
               Nova
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent aria-describedby={undefined}>
             <DialogHeader>
               <DialogTitle>Nova Instância WhatsApp</DialogTitle>
             </DialogHeader>
@@ -196,25 +196,25 @@ export function InstanceManager({ selectedInstance, onSelectInstance }: Instance
 
       {/* QR Code Dialog */}
       <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Escaneie o QR Code</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center py-4">
             {qrData?.base64 ? (
               <img
-                src={`data:image/png;base64,${qrData.base64}`}
+                src={qrData.base64.startsWith("data:") ? qrData.base64 : `data:image/png;base64,${qrData.base64}`}
                 alt="QR Code"
-                className="w-64 h-64"
+                className="w-64 h-64 rounded-lg"
               />
             ) : qrData?.code ? (
               <div className="w-64 h-64 flex items-center justify-center bg-muted rounded-lg">
-                <p className="text-sm text-center text-muted-foreground p-4">
-                  {qrData.code}
+                <p className="text-sm text-center text-muted-foreground p-4 break-all">
+                  Código: {qrData.code.substring(0, 50)}...
                 </p>
               </div>
             ) : (
-              <div className="w-64 h-64 flex items-center justify-center">
+              <div className="w-64 h-64 flex items-center justify-center bg-muted rounded-lg">
                 <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             )}
