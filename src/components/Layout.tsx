@@ -6,6 +6,7 @@ import { ModuleNav } from "@/components/ModuleNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserAuthMenu } from "@/components/UserAuthMenu";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
+import { MobileWhatsApp } from "@/components/mobile/pages/MobileWhatsApp";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
@@ -30,6 +31,11 @@ export function Layout({ children }: LayoutProps) {
 
   // Mobile Layout - completely different structure
   if (isMobile) {
+    // Full-screen mobile WhatsApp experience
+    if (isWhatsApp) {
+      return <MobileWhatsApp />;
+    }
+
     return (
       <div className={cn(
         "flex flex-col w-full",
