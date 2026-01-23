@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { InstanceManager } from "@/components/whatsapp/InstanceManager";
 import { ChatList } from "@/components/whatsapp/ChatList";
 import { ChatWindow } from "@/components/whatsapp/ChatWindow";
 import { PatientPanel } from "@/components/whatsapp/PatientPanel";
-import { WhatsAppInstance, WhatsAppConversa } from "@/hooks/useWhatsAppData";
+import { WhatsAppInstance, WhatsAppConversa, useWhatsAppInstances } from "@/hooks/useWhatsAppData";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, PanelLeftClose, PanelRightClose } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function WhatsApp() {
   const [selectedInstance, setSelectedInstance] = useState<WhatsAppInstance | null>(null);
@@ -16,6 +17,45 @@ export default function WhatsApp() {
   const [showInstances, setShowInstances] = useState(true);
   const [showPatientPanel, setShowPatientPanel] = useState(true);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { instances } = useWhatsAppInstances();
+
+  // Auto-select conversation based on URL params (from CRM lead card)
+  useEffect(() => {
+    const phone = searchParams.get("phone");
+    const pacienteId = searchParams.get("paciente");
+    
+    if ((phone || pacienteId) && instances.length > 0) {
+      // Auto-select the first connected instance
+      const connectedInstance = instances.find(i => i.status === "connected") || instances[0];
+      if (connectedInstance && !selectedInstance) {
+        setSelectedInstance(connectedInstance);
+      }
+      
+      // Try to find existing conversation by phone or paciente_id
+      const findAndSelectConversa = async () => {
+        let query = supabase.from("whatsapp_conversas").select(`
+          *,
+          paciente:pacientes(id, nome, telefone, foto_url)
+        `);
+        
+        if (pacienteId) {
+          query = query.eq("paciente_id", pacienteId);
+        } else if (phone) {
+          // Search by phone number in remote_jid
+          query = query.ilike("remote_jid", `%${phone.slice(-9)}%`);
+        }
+        
+        const { data } = await query.limit(1).single();
+        
+        if (data) {
+          setSelectedConversa(data);
+        }
+      };
+      
+      findAndSelectConversa();
+    }
+  }, [searchParams, instances, selectedInstance]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">

@@ -128,7 +128,8 @@ export function CardActionsModal({
   const handleWhatsApp = () => {
     if (agendamento.paciente?.telefone) {
       const phone = agendamento.paciente.telefone.replace(/\D/g, "");
-      window.open(`https://wa.me/55${phone}`, "_blank");
+      // Navegar para o chat nativo do sistema com o telefone do paciente
+      navigate(`/crm/whatsapp?phone=${phone}&paciente=${agendamento.paciente_id}`);
     }
     onQuickAction("whatsapp");
     onOpenChange(false);
