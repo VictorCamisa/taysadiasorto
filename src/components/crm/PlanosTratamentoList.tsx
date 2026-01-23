@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileText, Plus, Eye, Loader2, Download, ExternalLink } from "lucide-react";
+import { FileText, Plus, Eye, Loader2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -205,28 +205,23 @@ export function PlanosTratamentoList({
                 <FileText className="h-5 w-5" />
                 Plano de Tratamento
               </DialogTitle>
-              <div className="flex items-center gap-2">
-                {selectedPdfUrl && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(selectedPdfUrl, "_blank")}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      Abrir em nova aba
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                    >
-                      <a href={selectedPdfUrl} download="plano-tratamento.pdf">
-                        <Download className="h-4 w-4 mr-1" />
-                        Baixar
-                      </a>
-                    </Button>
-                  </>
+              <div className="flex items-center gap-2 mr-6">
+                {blobUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const link = document.createElement("a");
+                      link.href = blobUrl;
+                      link.download = "plano-tratamento.pdf";
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Baixar
+                  </Button>
                 )}
               </div>
             </div>
@@ -247,18 +242,19 @@ export function PlanosTratamentoList({
                   <p className="text-muted-foreground">
                     Seu navegador não suporta visualização de PDF inline.
                   </p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => window.open(selectedPdfUrl!, "_blank")}>
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      Abrir em nova aba
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <a href={selectedPdfUrl!} download="plano-tratamento.pdf">
-                        <Download className="h-4 w-4 mr-1" />
-                        Baixar PDF
-                      </a>
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => {
+                      const link = document.createElement("a");
+                      link.href = blobUrl!;
+                      link.download = "plano-tratamento.pdf";
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Baixar PDF
+                  </Button>
                 </div>
               </object>
             ) : null}
