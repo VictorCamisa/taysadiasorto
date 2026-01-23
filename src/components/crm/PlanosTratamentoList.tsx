@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileText, Plus, Eye, Loader2, X } from "lucide-react";
+import { FileText, Plus, Eye, Loader2, Download, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface PlanosTratamentoListProps {
   pacienteId: string;
@@ -39,6 +40,8 @@ export function PlanosTratamentoList({
   onNewPlano 
 }: PlanosTratamentoListProps) {
   const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
 
   const { data: planos, isLoading } = useQuery({
     queryKey: ["planos-tratamento", pacienteId],
@@ -58,6 +61,50 @@ export function PlanosTratamentoList({
       })) as PlanoTratamento[];
     },
   });
+
+  // Fetch PDF as blob when URL is selected
+  useEffect(() => {
+    if (!selectedPdfUrl) {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+        setBlobUrl(null);
+      }
+      return;
+    }
+
+    const fetchPdf = async () => {
+      setLoadingPdf(true);
+      try {
+        const response = await fetch(selectedPdfUrl);
+        if (!response.ok) throw new Error("Erro ao carregar PDF");
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setBlobUrl(url);
+      } catch (error) {
+        console.error("Erro ao carregar PDF:", error);
+        toast.error("Erro ao carregar o PDF");
+        setSelectedPdfUrl(null);
+      } finally {
+        setLoadingPdf(false);
+      }
+    };
+
+    fetchPdf();
+
+    return () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+  }, [selectedPdfUrl]);
+
+  const handleCloseModal = () => {
+    setSelectedPdfUrl(null);
+    if (blobUrl) {
+      URL.revokeObjectURL(blobUrl);
+      setBlobUrl(null);
+    }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -150,24 +197,71 @@ export function PlanosTratamentoList({
       </Card>
 
       {/* Modal de visualização do PDF */}
-      <Dialog open={!!selectedPdfUrl} onOpenChange={() => setSelectedPdfUrl(null)}>
-        <DialogContent className="max-w-4xl h-[85vh] p-0">
-          <DialogHeader className="p-4 pb-0">
+      <Dialog open={!!selectedPdfUrl} onOpenChange={handleCloseModal}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
+          <DialogHeader className="p-4 pb-2 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Plano de Tratamento
               </DialogTitle>
+              <div className="flex items-center gap-2">
+                {selectedPdfUrl && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(selectedPdfUrl, "_blank")}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      Abrir em nova aba
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                    >
+                      <a href={selectedPdfUrl} download="plano-tratamento.pdf">
+                        <Download className="h-4 w-4 mr-1" />
+                        Baixar
+                      </a>
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </DialogHeader>
-          <div className="flex-1 p-4 pt-2 h-full">
-            {selectedPdfUrl && (
-              <iframe
-                src={selectedPdfUrl}
+          <div className="flex-1 p-4 min-h-0">
+            {loadingPdf ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : blobUrl ? (
+              <object
+                data={blobUrl}
+                type="application/pdf"
                 className="w-full h-full rounded-lg border"
-                title="Visualização do Plano de Tratamento"
-              />
-            )}
+              >
+                <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-muted/30 rounded-lg">
+                  <FileText className="h-16 w-16 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    Seu navegador não suporta visualização de PDF inline.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button onClick={() => window.open(selectedPdfUrl!, "_blank")}>
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      Abrir em nova aba
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <a href={selectedPdfUrl!} download="plano-tratamento.pdf">
+                        <Download className="h-4 w-4 mr-1" />
+                        Baixar PDF
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </object>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
