@@ -52,13 +52,13 @@ export function ReceituarioTab({ pacienteId, pacienteNome }: ReceituarioTabProps
     queryKey: ["receituario", pacienteId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("receituario_digital")
+        .from("receituario_digital" as any)
         .select("*")
         .eq("paciente_id", pacienteId)
         .order("data_prescricao", { ascending: false });
 
       if (error) throw error;
-      return data as Receituario[];
+      return (data || []) as unknown as Receituario[];
     },
   });
 
@@ -66,15 +66,15 @@ export function ReceituarioTab({ pacienteId, pacienteNome }: ReceituarioTabProps
     mutationFn: async (data: typeof formData) => {
       if (selectedReceita) {
         const { error } = await supabase
-          .from("receituario_digital")
-          .update(data)
+          .from("receituario_digital" as any)
+          .update(data as any)
           .eq("id", selectedReceita.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("receituario_digital").insert({
+        const { error } = await supabase.from("receituario_digital" as any).insert({
           paciente_id: pacienteId,
           ...data,
-        });
+        } as any);
         if (error) throw error;
       }
     },
@@ -91,7 +91,7 @@ export function ReceituarioTab({ pacienteId, pacienteNome }: ReceituarioTabProps
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("receituario_digital").delete().eq("id", id);
+      const { error } = await supabase.from("receituario_digital" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

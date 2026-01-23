@@ -54,13 +54,13 @@ export function ExamesTab({ pacienteId }: ExamesTabProps) {
     queryKey: ["exames", pacienteId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("exames_paciente")
+        .from("exames_paciente" as any)
         .select("*")
         .eq("paciente_id", pacienteId)
         .order("data_exame", { ascending: false });
 
       if (error) throw error;
-      return data as Exame[];
+      return (data || []) as unknown as Exame[];
     },
   });
 
@@ -68,15 +68,15 @@ export function ExamesTab({ pacienteId }: ExamesTabProps) {
     mutationFn: async (data: typeof formData) => {
       if (selectedExame) {
         const { error } = await supabase
-          .from("exames_paciente")
-          .update(data)
+          .from("exames_paciente" as any)
+          .update(data as any)
           .eq("id", selectedExame.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("exames_paciente").insert({
+        const { error } = await supabase.from("exames_paciente" as any).insert({
           paciente_id: pacienteId,
           ...data,
-        });
+        } as any);
         if (error) throw error;
       }
     },
@@ -93,7 +93,7 @@ export function ExamesTab({ pacienteId }: ExamesTabProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("exames_paciente").delete().eq("id", id);
+      const { error } = await supabase.from("exames_paciente" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -66,19 +66,19 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
     queryKey: ["fotos-paciente", pacienteId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("fotos_paciente")
+        .from("fotos_paciente" as any)
         .select("*")
         .eq("paciente_id", pacienteId)
         .order("data_foto", { ascending: false });
 
       if (error) throw error;
-      return data as FotoPaciente[];
+      return (data || []) as unknown as FotoPaciente[];
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("fotos_paciente").delete().eq("id", id);
+      const { error } = await supabase.from("fotos_paciente" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -119,13 +119,13 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
           .from("fotos-pacientes")
           .getPublicUrl(fileName);
 
-        const { error: insertError } = await supabase.from("fotos_paciente").insert({
+        const { error: insertError } = await supabase.from("fotos_paciente" as any).insert({
           paciente_id: pacienteId,
           url: urlData.publicUrl,
           categoria: formData.categoria,
           descricao: formData.descricao,
           data_foto: formData.data_foto,
-        });
+        } as any);
 
         if (insertError) throw insertError;
       }

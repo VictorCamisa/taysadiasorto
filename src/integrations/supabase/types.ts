@@ -773,6 +773,53 @@ export type Database = {
         }
         Relationships: []
       }
+      contratos_paciente: {
+        Row: {
+          arquivo_url: string | null
+          created_at: string
+          data_assinatura: string | null
+          descricao: string | null
+          id: string
+          paciente_id: string
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url?: string | null
+          created_at?: string
+          data_assinatura?: string | null
+          descricao?: string | null
+          id?: string
+          paciente_id: string
+          status?: string
+          tipo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string | null
+          created_at?: string
+          data_assinatura?: string | null
+          descricao?: string | null
+          id?: string
+          paciente_id?: string
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_paciente_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_agendamentos: {
         Row: {
           created_at: string | null
@@ -1163,6 +1210,53 @@ export type Database = {
             columns: ["fornecedor_id"]
             isOneToOne: false
             referencedRelation: "financeiro_fornecedores_old"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exames_paciente: {
+        Row: {
+          arquivo_url: string | null
+          created_at: string
+          data_exame: string
+          id: string
+          laboratorio: string | null
+          nome: string
+          observacoes: string | null
+          paciente_id: string
+          resultado: string | null
+          tipo: string
+        }
+        Insert: {
+          arquivo_url?: string | null
+          created_at?: string
+          data_exame?: string
+          id?: string
+          laboratorio?: string | null
+          nome: string
+          observacoes?: string | null
+          paciente_id: string
+          resultado?: string | null
+          tipo?: string
+        }
+        Update: {
+          arquivo_url?: string | null
+          created_at?: string
+          data_exame?: string
+          id?: string
+          laboratorio?: string | null
+          nome?: string
+          observacoes?: string | null
+          paciente_id?: string
+          resultado?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exames_paciente_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
             referencedColumns: ["id"]
           },
         ]
@@ -1701,6 +1795,44 @@ export type Database = {
           nome?: string
         }
         Relationships: []
+      }
+      fotos_paciente: {
+        Row: {
+          categoria: string
+          created_at: string
+          data_foto: string
+          descricao: string | null
+          id: string
+          paciente_id: string
+          url: string
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          data_foto?: string
+          descricao?: string | null
+          id?: string
+          paciente_id: string
+          url: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          data_foto?: string
+          descricao?: string | null
+          id?: string
+          paciente_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fotos_paciente_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads: {
         Row: {
@@ -2282,6 +2414,47 @@ export type Database = {
             columns: ["tratamento_id"]
             isOneToOne: false
             referencedRelation: "tratamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receituario_digital: {
+        Row: {
+          created_at: string
+          data_prescricao: string
+          id: string
+          medicamentos: string
+          orientacoes: string | null
+          paciente_id: string
+          posologia: string
+          validade_dias: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_prescricao?: string
+          id?: string
+          medicamentos: string
+          orientacoes?: string | null
+          paciente_id: string
+          posologia: string
+          validade_dias?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_prescricao?: string
+          id?: string
+          medicamentos?: string
+          orientacoes?: string | null
+          paciente_id?: string
+          posologia?: string
+          validade_dias?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receituario_digital_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
             referencedColumns: ["id"]
           },
         ]

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -69,13 +69,13 @@ export function ContratosTab({ pacienteId, pacienteNome }: ContratosTabProps) {
     queryKey: ["contratos", pacienteId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("contratos_paciente")
+        .from("contratos_paciente" as any)
         .select("*")
         .eq("paciente_id", pacienteId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Contrato[];
+      return (data || []) as unknown as Contrato[];
     },
   });
 
@@ -83,24 +83,24 @@ export function ContratosTab({ pacienteId, pacienteNome }: ContratosTabProps) {
     mutationFn: async (data: typeof formData & { arquivo_url?: string }) => {
       if (selectedContrato) {
         const { error } = await supabase
-          .from("contratos_paciente")
+          .from("contratos_paciente" as any)
           .update({
             titulo: data.titulo,
             tipo: data.tipo,
             descricao: data.descricao,
             status: data.status,
-          })
+          } as any)
           .eq("id", selectedContrato.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("contratos_paciente").insert({
+        const { error } = await supabase.from("contratos_paciente" as any).insert({
           paciente_id: pacienteId,
           titulo: data.titulo,
           tipo: data.tipo,
           descricao: data.descricao,
           status: data.status,
           arquivo_url: data.arquivo_url,
-        });
+        } as any);
         if (error) throw error;
       }
     },
@@ -118,7 +118,7 @@ export function ContratosTab({ pacienteId, pacienteNome }: ContratosTabProps) {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("contratos_paciente")
+        .from("contratos_paciente" as any)
         .delete()
         .eq("id", id);
       if (error) throw error;

@@ -5,10 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { 
   ArrowLeft, 
-  User, 
   Phone, 
   Mail, 
   MapPin, 
@@ -16,20 +15,19 @@ import {
   FileText, 
   ClipboardList, 
   Stethoscope,
-  AlertTriangle,
-  Pill,
-  Activity,
   Plus,
   Pencil
 } from "lucide-react";
 import { useFichaPacienteData, Anamnese, Prontuario } from "@/components/crm/hooks/useFichaPacienteData";
 import { AnamneseForm } from "@/components/crm/AnamneseForm";
 import { ProntuarioForm } from "@/components/crm/ProntuarioForm";
-import { AtendimentosTimeline } from "@/components/crm/AtendimentosTimeline";
-import { HistoricoInteracoes } from "@/components/crm/HistoricoInteracoes";
-import { ConsentimentosPaciente } from "@/components/crm/ConsentimentosPaciente";
 import { PlanoTratamentoForm } from "@/components/crm/PlanoTratamentoForm";
 import { PlanosTratamentoList } from "@/components/crm/PlanosTratamentoList";
+import { InformacoesPessoaisTab } from "@/components/crm/fichas/InformacoesPessoaisTab";
+import { ContratosTab } from "@/components/crm/fichas/ContratosTab";
+import { ExamesTab } from "@/components/crm/fichas/ExamesTab";
+import { FotosTab } from "@/components/crm/fichas/FotosTab";
+import { ReceituarioTab } from "@/components/crm/fichas/ReceituarioTab";
 import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -241,20 +239,23 @@ export default function FichaPaciente() {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="resumo" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="resumo">Resumo</TabsTrigger>
-          <TabsTrigger value="contatos">Contatos</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="anamneses">Anamneses</TabsTrigger>
-          <TabsTrigger value="prontuarios">Prontuários</TabsTrigger>
-          <TabsTrigger value="lgpd">LGPD</TabsTrigger>
-          <TabsTrigger value="dados">Dados</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="plano" className="space-y-4">
+        <ScrollArea className="w-full">
+          <TabsList className="inline-flex w-auto min-w-full">
+            <TabsTrigger value="plano">Plano de Tratamento</TabsTrigger>
+            <TabsTrigger value="informacoes">Informações Pessoais</TabsTrigger>
+            <TabsTrigger value="contratos">Contratos</TabsTrigger>
+            <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
+            <TabsTrigger value="exames">Exames</TabsTrigger>
+            <TabsTrigger value="fotos">Fotos</TabsTrigger>
+            <TabsTrigger value="receituario">Receituário Digital</TabsTrigger>
+            <TabsTrigger value="prontuario">Prontuário</TabsTrigger>
+          </TabsList>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
-        {/* Resumo Tab */}
-        <TabsContent value="resumo" className="space-y-4">
-          {/* Plano de Tratamento */}
+        {/* Plano de Tratamento Tab */}
+        <TabsContent value="plano" className="space-y-4">
           {id && paciente && (
             <PlanosTratamentoList
               pacienteId={id}
@@ -262,141 +263,20 @@ export default function FichaPaciente() {
               onNewPlano={() => setPlanoFormOpen(true)}
             />
           )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Última Anamnese */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <ClipboardList className="h-5 w-5" />
-                    Última Anamnese
-                  </CardTitle>
-                  {ultimaAnamnese && (
-                    <CardDescription>{formatDate(ultimaAnamnese.data_anamnese)}</CardDescription>
-                  )}
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setSelectedAnamnese(null);
-                    setAnamneseFormOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Nova
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {ultimaAnamnese ? (
-                  <div className="space-y-3">
-                    {ultimaAnamnese.queixa_principal && (
-                      <div>
-                        <div className="text-xs font-medium text-muted-foreground mb-1">Queixa Principal</div>
-                        <p className="text-sm">{ultimaAnamnese.queixa_principal}</p>
-                      </div>
-                    )}
-                    {ultimaAnamnese.alergias && (
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
-                        <div>
-                          <div className="text-xs font-medium text-destructive mb-1">Alergias</div>
-                          <p className="text-sm">{ultimaAnamnese.alergias}</p>
-                        </div>
-                      </div>
-                    )}
-                    {ultimaAnamnese.medicamentos_uso && (
-                      <div className="flex items-start gap-2">
-                        <Pill className="h-4 w-4 text-muted-foreground mt-0.5" />
-                        <div>
-                          <div className="text-xs font-medium text-muted-foreground mb-1">Medicamentos</div>
-                          <p className="text-sm">{ultimaAnamnese.medicamentos_uso}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nenhuma anamnese registrada</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Últimos Prontuários */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Stethoscope className="h-5 w-5" />
-                  Últimos Atendimentos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {prontuarios.length > 0 ? (
-                  <div className="space-y-3">
-                    {prontuarios.slice(0, 3).map((prontuario) => (
-                      <div key={prontuario.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50">
-                        <Activity className="h-4 w-4 text-muted-foreground mt-1" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
-                              {prontuario.tratamento?.nome || "Atendimento"}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(prontuario.data_atendimento)}
-                            </span>
-                          </div>
-                          {prontuario.evolucao && (
-                            <p className="text-xs text-muted-foreground truncate">{prontuario.evolucao}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nenhum atendimento registrado</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Observações */}
-          {paciente.observacoes && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Observações
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm whitespace-pre-wrap">{paciente.observacoes}</p>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
-        {/* Contatos Tab */}
-        <TabsContent value="contatos" className="space-y-4">
-          {id && <HistoricoInteracoes pacienteId={id} />}
+        {/* Informações Pessoais Tab */}
+        <TabsContent value="informacoes">
+          <InformacoesPessoaisTab paciente={paciente} />
         </TabsContent>
 
-        {/* Timeline Tab */}
-        <TabsContent value="timeline" className="space-y-4">
-          <AtendimentosTimeline
-            anamneses={anamneses}
-            prontuarios={prontuarios}
-            onSelectAnamnese={(anamnese) => {
-              setSelectedAnamnese(anamnese);
-              setAnamneseFormOpen(true);
-            }}
-            onSelectProntuario={(prontuario) => {
-              setSelectedProntuario(prontuario);
-              setProntuarioFormOpen(true);
-            }}
-          />
+        {/* Contratos Tab */}
+        <TabsContent value="contratos">
+          {id && <ContratosTab pacienteId={id} pacienteNome={paciente.nome} />}
         </TabsContent>
 
-        {/* Anamneses Tab */}
-        <TabsContent value="anamneses" className="space-y-4">
+        {/* Anamnese Tab */}
+        <TabsContent value="anamnese" className="space-y-4">
           <div className="flex justify-end">
             <Button
               onClick={() => {
@@ -411,7 +291,9 @@ export default function FichaPaciente() {
           {anamneses.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                Nenhuma anamnese registrada
+                <ClipboardList className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
+                <p>Nenhuma anamnese registrada</p>
+                <p className="text-sm mt-1">Registre a primeira anamnese do paciente</p>
               </CardContent>
             </Card>
           ) : (
@@ -493,8 +375,23 @@ export default function FichaPaciente() {
           )}
         </TabsContent>
 
-        {/* Prontuários Tab */}
-        <TabsContent value="prontuarios" className="space-y-4">
+        {/* Exames Tab */}
+        <TabsContent value="exames">
+          {id && <ExamesTab pacienteId={id} />}
+        </TabsContent>
+
+        {/* Fotos Tab */}
+        <TabsContent value="fotos">
+          {id && <FotosTab pacienteId={id} />}
+        </TabsContent>
+
+        {/* Receituário Tab */}
+        <TabsContent value="receituario">
+          {id && <ReceituarioTab pacienteId={id} pacienteNome={paciente.nome} />}
+        </TabsContent>
+
+        {/* Prontuário Tab */}
+        <TabsContent value="prontuario" className="space-y-4">
           <div className="flex justify-end">
             <Button
               onClick={() => {
@@ -509,7 +406,9 @@ export default function FichaPaciente() {
           {prontuarios.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                Nenhum prontuário registrado
+                <Stethoscope className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
+                <p>Nenhum prontuário registrado</p>
+                <p className="text-sm mt-1">Registre os atendimentos do paciente</p>
               </CardContent>
             </Card>
           ) : (
@@ -608,86 +507,6 @@ export default function FichaPaciente() {
               ))}
             </div>
           )}
-        </TabsContent>
-
-        {/* LGPD Tab */}
-        <TabsContent value="lgpd">
-          {id && <ConsentimentosPaciente pacienteId={id} />}
-        </TabsContent>
-
-        {/* Dados Pessoais Tab */}
-        <TabsContent value="dados">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Dados Pessoais
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground mb-1">Nome Completo</div>
-                    <p className="text-sm font-medium">{paciente.nome}</p>
-                  </div>
-                  {paciente.cpf && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">CPF</div>
-                      <p className="text-sm">{paciente.cpf}</p>
-                    </div>
-                  )}
-                  {paciente.data_nascimento && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">Data de Nascimento</div>
-                      <p className="text-sm">{formatDate(paciente.data_nascimento)} {idade && `(${idade} anos)`}</p>
-                    </div>
-                  )}
-                  {paciente.telefone && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">Telefone</div>
-                      <p className="text-sm">{paciente.telefone}</p>
-                    </div>
-                  )}
-                  {paciente.email && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">E-mail</div>
-                      <p className="text-sm">{paciente.email}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  {paciente.endereco && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">Endereço</div>
-                      <p className="text-sm">{paciente.endereco}</p>
-                    </div>
-                  )}
-                  {(paciente.cidade || paciente.estado) && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">Cidade/Estado</div>
-                      <p className="text-sm">
-                        {paciente.cidade && paciente.estado
-                          ? `${paciente.cidade}/${paciente.estado}`
-                          : paciente.cidade || paciente.estado}
-                      </p>
-                    </div>
-                  )}
-                  {paciente.cep && (
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">CEP</div>
-                      <p className="text-sm">{paciente.cep}</p>
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground mb-1">Cadastrado em</div>
-                    <p className="text-sm">{formatDate(paciente.created_at)}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
 
