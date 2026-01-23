@@ -49,6 +49,9 @@ import FotosPage from "./pages/gestao/FotosPage";
 import ReceituariosPage from "./pages/gestao/ReceituariosPage";
 import ProntuariosPage from "./pages/gestao/ProntuariosPage";
 
+// Páginas públicas
+import FormularioPaciente from "./pages/public/FormularioPaciente";
+
 // Global
 import AssistenteIA from "./pages/AssistenteIA";
 import Configuracoes from "./pages/Configuracoes";
@@ -65,8 +68,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Auth - página pública */}
+              {/* Páginas públicas */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/formulario/:token" element={<FormularioPaciente />} />
               
               {/* Rotas protegidas */}
               <Route

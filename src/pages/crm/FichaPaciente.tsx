@@ -16,7 +16,10 @@ import {
   ClipboardList, 
   Stethoscope,
   Plus,
-  Pencil
+  Pencil,
+  Share2,
+  Copy,
+  Check
 } from "lucide-react";
 import { useFichaPacienteData, Anamnese, Prontuario } from "@/components/crm/hooks/useFichaPacienteData";
 import { AnamneseForm } from "@/components/crm/AnamneseForm";
@@ -224,14 +227,34 @@ export default function FichaPaciente() {
               </div>
             </div>
 
-            <div className="flex flex-row md:flex-col gap-2">
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-primary">{totalAtendimentos}</div>
-                <div className="text-xs text-muted-foreground">Atendimentos</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-primary">{anamneses.length}</div>
-                <div className="text-xs text-muted-foreground">Anamneses</div>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const formToken = (paciente as any).form_token;
+                  if (formToken) {
+                    const url = `${window.location.origin}/formulario/${formToken}`;
+                    navigator.clipboard.writeText(url);
+                    toast({ title: "Link copiado!", description: "Envie para o paciente preencher os dados." });
+                  } else {
+                    toast({ title: "Erro", description: "Token não disponível", variant: "destructive" });
+                  }
+                }}
+                className="gap-2"
+              >
+                <Share2 className="h-4 w-4" />
+                Compartilhar Ficha
+              </Button>
+              <div className="flex flex-row md:flex-col gap-2">
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold text-primary">{totalAtendimentos}</div>
+                  <div className="text-xs text-muted-foreground">Atendimentos</div>
+                </div>
+                <div className="text-center p-3 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold text-primary">{anamneses.length}</div>
+                  <div className="text-xs text-muted-foreground">Anamneses</div>
+                </div>
               </div>
             </div>
           </div>
