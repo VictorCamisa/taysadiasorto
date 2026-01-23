@@ -28,6 +28,8 @@ import { ProntuarioForm } from "@/components/crm/ProntuarioForm";
 import { AtendimentosTimeline } from "@/components/crm/AtendimentosTimeline";
 import { HistoricoInteracoes } from "@/components/crm/HistoricoInteracoes";
 import { ConsentimentosPaciente } from "@/components/crm/ConsentimentosPaciente";
+import { PlanoTratamentoForm } from "@/components/crm/PlanoTratamentoForm";
+import { PlanosTratamentoList } from "@/components/crm/PlanosTratamentoList";
 import { Tables } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -47,6 +49,8 @@ export default function FichaPaciente() {
   
   const [prontuarioFormOpen, setProntuarioFormOpen] = useState(false);
   const [selectedProntuario, setSelectedProntuario] = useState<Prontuario | null>(null);
+
+  const [planoFormOpen, setPlanoFormOpen] = useState(false);
 
   const saveAnamnese = useMutation({
     mutationFn: async (anamnese: Partial<Anamnese> & { paciente_id: string }) => {
@@ -250,6 +254,15 @@ export default function FichaPaciente() {
 
         {/* Resumo Tab */}
         <TabsContent value="resumo" className="space-y-4">
+          {/* Plano de Tratamento */}
+          {id && paciente && (
+            <PlanosTratamentoList
+              pacienteId={id}
+              pacienteNome={paciente.nome}
+              onNewPlano={() => setPlanoFormOpen(true)}
+            />
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Última Anamnese */}
             <Card>
@@ -698,6 +711,15 @@ export default function FichaPaciente() {
         pacienteNome={paciente.nome}
         onSave={saveProntuario.mutate}
         isLoading={saveProntuario.isPending}
+      />
+
+      {/* Plano de Tratamento Form */}
+      <PlanoTratamentoForm
+        open={planoFormOpen}
+        onOpenChange={setPlanoFormOpen}
+        pacienteId={paciente.id}
+        pacienteNome={paciente.nome}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["planos-tratamento", id] })}
       />
     </div>
   );

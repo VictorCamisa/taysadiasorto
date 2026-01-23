@@ -2143,6 +2143,47 @@ export type Database = {
           },
         ]
       }
+      planos_tratamento: {
+        Row: {
+          created_at: string
+          id: string
+          itens: Json
+          paciente_id: string
+          pdf_url: string | null
+          status: string | null
+          updated_at: string
+          valor_total: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          itens?: Json
+          paciente_id: string
+          pdf_url?: string | null
+          status?: string | null
+          updated_at?: string
+          valor_total?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          itens?: Json
+          paciente_id?: string
+          pdf_url?: string | null
+          status?: string | null
+          updated_at?: string
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planos_tratamento_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ativo: boolean | null
