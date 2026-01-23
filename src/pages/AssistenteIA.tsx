@@ -26,7 +26,7 @@ const AssistenteIA = () => {
   const [currentConversation, setCurrentConversation] = useState<AIAgentConversation | null>(null);
 
   const { agents, isLoading, createAgent, updateAgent, deleteAgent, isCreating } = useAIAgents();
-  const { documents, addDocument, deleteDocument, isAdding } = useAIAgentDocuments(selectedAgent?.id || null);
+  const { documents, addDocument, deleteDocument, reprocessDocument, isAdding, isReprocessing } = useAIAgentDocuments(selectedAgent?.id || null);
   const { conversations, createConversation, deleteConversation } = useAIAgentConversations(selectedAgent?.id || null);
   const { messages, addMessage, isLoading: isLoadingMessages, refetch: refetchMessages } = useAIAgentMessages(currentConversation?.id || null);
 
@@ -169,8 +169,10 @@ const AssistenteIA = () => {
                       documents={documents}
                       onAddDocument={addDocument}
                       onDeleteDocument={deleteDocument}
+                      onReprocessDocument={reprocessDocument}
                       isLoading={false}
                       isAdding={isAdding}
+                      isReprocessing={isReprocessing}
                     />
                   </div>
                 )}
