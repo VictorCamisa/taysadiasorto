@@ -20,7 +20,6 @@ import {
   Target,
   FileBarChart,
   Kanban,
-  CalendarDays,
   Calendar,
   Heart,
   XCircle,
@@ -46,6 +45,7 @@ interface NavModule {
   icon: LucideIcon;
   basePath: string;
   items: NavItem[];
+  color: string;
 }
 
 const modules: NavModule[] = [
@@ -53,6 +53,7 @@ const modules: NavModule[] = [
     label: "Financeiro",
     icon: DollarSign,
     basePath: "/financeiro",
+    color: "text-emerald-500",
     items: [
       { label: "Dashboard", to: "/financeiro", icon: Home },
       { label: "Diário de Caixa", to: "/financeiro/diario-caixa", icon: FileText },
@@ -70,9 +71,9 @@ const modules: NavModule[] = [
     label: "Comercial",
     icon: Users,
     basePath: "/crm",
+    color: "text-cyan-500",
     items: [
       { label: "Pipeline", to: "/crm/pipeline", icon: Kanban },
-      { label: "Agenda", to: "/crm/agenda", icon: CalendarDays },
       { label: "Agendamentos", to: "/crm/agendamentos", icon: Calendar },
       { label: "Pós-venda", to: "/crm/pos-venda", icon: Heart },
       { label: "Leads Perdidos", to: "/crm/perdidos", icon: XCircle },
@@ -83,6 +84,7 @@ const modules: NavModule[] = [
     label: "Administrativo",
     icon: Building2,
     basePath: "/admin",
+    color: "text-violet-500",
     items: [
       { label: "Usuários", to: "/admin?tab=usuarios", icon: Users },
       { label: "LGPD", to: "/admin?tab=lgpd", icon: Lock },
@@ -94,6 +96,7 @@ const modules: NavModule[] = [
     label: "BI",
     icon: BarChart3,
     basePath: "/bi",
+    color: "text-amber-500",
     items: [
       { label: "Dashboard BI", to: "/bi", icon: BarChart3 },
       { label: "LTV / CAC", to: "/bi?tab=ltv-cac", icon: Users },
@@ -120,26 +123,31 @@ function MobileNavModule({ module, onClose }: { module: NavModule; onClose: () =
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger
         className={cn(
-          "flex w-full items-center justify-between rounded-lg px-3 py-2.5",
-          "text-sm font-medium transition-colors",
+          "flex w-full items-center justify-between rounded-xl px-4 py-3",
+          "text-sm font-medium transition-all duration-300",
           isActive
-            ? "text-foreground bg-muted/50"
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+            ? "bg-primary/10 text-foreground"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
         )}
       >
         <div className="flex items-center gap-3">
-          <Icon className="h-4 w-4" />
+          <div className={cn(
+            "h-9 w-9 rounded-lg flex items-center justify-center",
+            isActive ? "bg-primary/20" : "bg-muted/60"
+          )}>
+            <Icon className={cn("h-4 w-4", isActive && module.color)} />
+          </div>
           <span>{module.label}</span>
         </div>
         <ChevronDown
           className={cn(
-            "h-4 w-4 transition-transform duration-200",
+            "h-4 w-4 transition-transform duration-300",
             isOpen && "rotate-180"
           )}
         />
       </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="ml-4 mt-1 space-y-0.5 border-l border-border/50 pl-3">
+      <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+        <div className="ml-6 mt-1 space-y-0.5 border-l-2 border-border/50 pl-3">
           {module.items.map((item) => {
             const ItemIcon = item.icon;
             const isItemActive =
@@ -153,11 +161,11 @@ function MobileNavModule({ module, onClose }: { module: NavModule; onClose: () =
                   to={item.to}
                   onClick={onClose}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-md px-2.5 py-2",
-                    "text-sm transition-colors",
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2.5",
+                    "text-sm transition-all duration-200",
                     isItemActive
-                      ? "text-primary font-medium bg-primary/5"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                      ? "text-primary font-medium bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                   )}
                 >
                   <ItemIcon className="h-4 w-4" />
@@ -177,43 +185,67 @@ export function TopBar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 h-14 border-b border-border/50 bg-background/80 backdrop-blur-sm lg:hidden">
+    <header className={cn(
+      "sticky top-0 z-40 h-16 lg:hidden",
+      "border-b transition-all duration-300",
+      "bg-background/80 dark:bg-background/60",
+      "backdrop-blur-xl",
+      "border-border/40 dark:border-border/20"
+    )}>
       <div className="flex h-full items-center justify-between px-4">
         {/* Mobile Menu */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={cn(
+                "h-10 w-10 rounded-xl",
+                "hover:bg-muted/60"
+              )}
+            >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Abrir menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] p-0">
-            <SheetHeader className="border-b border-border/50 p-4">
-              <SheetTitle className="text-left">
-                <span className="text-lg font-bold">TD</span>
-                <span className="ml-2 text-sm text-muted-foreground">Clínica</span>
+          <SheetContent side="left" className={cn(
+            "w-[300px] p-0",
+            "bg-background/95 dark:bg-background/90",
+            "backdrop-blur-2xl"
+          )}>
+            <SheetHeader className="border-b border-border/40 p-5">
+              <SheetTitle className="text-left flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+                  <span className="text-lg font-bold text-primary-foreground">TD</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base font-semibold">Clínica</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Sistema de Gestão</span>
+                </div>
               </SheetTitle>
             </SheetHeader>
 
-            <div className="p-3 space-y-1">
+            <div className="p-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)]">
               {/* Home */}
               <SheetClose asChild>
                 <Link
                   to="/"
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5",
-                    "text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-xl px-4 py-3",
+                    "text-sm font-medium transition-all duration-300",
                     location.pathname === "/"
-                      ? "text-foreground bg-muted/50"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  <Home className="h-4 w-4" />
+                  <div className="h-9 w-9 rounded-lg bg-muted/60 flex items-center justify-center">
+                    <Home className="h-4 w-4" />
+                  </div>
                   <span>Início</span>
                 </Link>
               </SheetClose>
 
-              <Separator className="my-2" />
+              <Separator className="my-3 bg-border/40" />
 
               {/* Modules */}
               {modules.map((module) => (
@@ -224,34 +256,46 @@ export function TopBar() {
                 />
               ))}
 
-              <Separator className="my-2" />
+              <Separator className="my-3 bg-border/40" />
 
               {/* Global Items */}
               {globalItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.to;
+                const isAI = item.to === "/assistente-ia";
 
                 return (
                   <SheetClose asChild key={item.to}>
                     <Link
                       to={item.to}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2.5",
-                        "text-sm font-medium transition-colors",
+                        "flex items-center gap-3 rounded-xl px-4 py-3",
+                        "text-sm font-medium transition-all duration-300",
                         isActive
-                          ? "text-primary bg-primary/5"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                          ? "text-primary bg-primary/10"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                        isAI && !isActive && "text-primary/70 hover:text-primary"
                       )}
                     >
-                      <Icon className="h-4 w-4" />
+                      <div className={cn(
+                        "h-9 w-9 rounded-lg flex items-center justify-center",
+                        isAI ? "bg-primary/10" : "bg-muted/60"
+                      )}>
+                        <Icon className="h-4 w-4" />
+                      </div>
                       <span>{item.label}</span>
+                      {isAI && !isActive && (
+                        <span className="ml-auto text-[9px] px-2 py-1 rounded-md bg-primary/10 text-primary font-semibold">
+                          IA
+                        </span>
+                      )}
                     </Link>
                   </SheetClose>
                 );
               })}
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 border-t border-border/50 p-4">
+            <div className="absolute bottom-0 left-0 right-0 border-t border-border/40 p-4 bg-background/80 backdrop-blur-xl">
               <div className="flex items-center justify-between">
                 <ThemeToggle />
                 <UserAuthMenu />
@@ -261,9 +305,11 @@ export function TopBar() {
         </Sheet>
 
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-lg font-bold">TD</span>
-          <span className="text-sm text-muted-foreground">Clínica</span>
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+            <span className="text-base font-bold text-primary-foreground">TD</span>
+          </div>
+          <span className="text-base font-semibold text-foreground">Clínica</span>
         </Link>
 
         {/* Actions */}
