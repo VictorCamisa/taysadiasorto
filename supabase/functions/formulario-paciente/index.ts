@@ -115,11 +115,27 @@ serve(async (req) => {
         });
       }
 
+      // Sanitiza os dados - converte strings vazias em null para campos de data
+      const dateFields = ['data_nascimento', 'responsavel_data_nascimento'];
+      const sanitizedData: Record<string, unknown> = {};
+      
+      for (const [key, value] of Object.entries(updateData)) {
+        if (dateFields.includes(key)) {
+          // Converte string vazia para null em campos de data
+          sanitizedData[key] = value === '' ? null : value;
+        } else {
+          // Para outros campos, mantém string vazia ou valor original
+          sanitizedData[key] = value;
+        }
+      }
+
+      console.log("Dados sanitizados para atualização:", JSON.stringify(sanitizedData));
+
       // Atualiza os dados do paciente
       const { error: updateError } = await supabase
         .from("pacientes")
         .update({
-          ...updateData,
+          ...sanitizedData,
           form_completed_at: new Date().toISOString(),
         })
         .eq("form_token", formToken);
