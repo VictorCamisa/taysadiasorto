@@ -2939,6 +2939,149 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_conversas: {
+        Row: {
+          created_at: string
+          foto_url: string | null
+          id: string
+          instance_id: string | null
+          nao_lidas: number | null
+          nome_contato: string | null
+          paciente_id: string | null
+          remote_jid: string
+          ultima_mensagem: string | null
+          ultima_mensagem_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          instance_id?: string | null
+          nao_lidas?: number | null
+          nome_contato?: string | null
+          paciente_id?: string | null
+          remote_jid: string
+          ultima_mensagem?: string | null
+          ultima_mensagem_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          instance_id?: string | null
+          nao_lidas?: number | null
+          nome_contato?: string | null
+          paciente_id?: string | null
+          remote_jid?: string
+          ultima_mensagem?: string | null
+          ultima_mensagem_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversas_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_conversas_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_instances: {
+        Row: {
+          created_at: string
+          id: string
+          instance_id: string | null
+          instance_name: string
+          nome: string
+          qrcode: string | null
+          status: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instance_id?: string | null
+          instance_name: string
+          nome: string
+          qrcode?: string | null
+          status?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instance_id?: string | null
+          instance_name?: string
+          nome?: string
+          qrcode?: string | null
+          status?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_mensagens: {
+        Row: {
+          conteudo: string | null
+          conversa_id: string
+          created_at: string
+          from_me: boolean
+          id: string
+          media_mimetype: string | null
+          media_url: string | null
+          message_id: string | null
+          status: string | null
+          timestamp_msg: string
+          tipo: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          conversa_id: string
+          created_at?: string
+          from_me?: boolean
+          id?: string
+          media_mimetype?: string | null
+          media_url?: string | null
+          message_id?: string | null
+          status?: string | null
+          timestamp_msg?: string
+          tipo?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          conversa_id?: string
+          created_at?: string
+          from_me?: boolean
+          id?: string
+          media_mimetype?: string | null
+          media_url?: string | null
+          message_id?: string | null
+          status?: string | null
+          timestamp_msg?: string
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_mensagens_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       financeiro_categorias_dropdown: {

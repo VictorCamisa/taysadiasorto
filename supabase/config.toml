@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.formulario-paciente]
 verify_jwt = false
+
+[functions.whatsapp-evolution]
+verify_jwt = true
