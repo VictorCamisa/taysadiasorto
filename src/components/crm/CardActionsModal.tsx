@@ -11,7 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   User,
   ArrowRight,
@@ -21,6 +28,7 @@ import {
   Calendar,
   DollarSign,
   ChevronRight,
+  ChevronDown,
   XCircle,
   RotateCcw,
   Lock,
@@ -37,7 +45,7 @@ import {
   PRIORIDADE_LABELS,
   Prioridade,
 } from "./hooks/useCRMAgendamentos";
-import { useChecklistWithProgress } from "./hooks/usePipelineChecklist";
+import { useChecklistWithProgress, useChecklistProgressMutations } from "./hooks/usePipelineChecklist";
 import { cn } from "@/lib/utils";
 
 interface CardActionsModalProps {
@@ -58,6 +66,7 @@ export function CardActionsModal({
   onQuickAction,
 }: CardActionsModalProps) {
   const navigate = useNavigate();
+  const [checklistOpen, setChecklistOpen] = useState(true);
   const currentStatus = agendamento.status as AgendamentoStatus;
   
   // Buscar checklist da etapa atual
@@ -65,6 +74,16 @@ export function CardActionsModal({
     agendamento.id,
     currentStatus
   );
+  
+  const { toggleProgress } = useChecklistProgressMutations();
+  
+  const handleToggleItem = (itemId: string, currentlyCompleted: boolean) => {
+    toggleProgress.mutate({
+      agendamentoId: agendamento.id,
+      checklistItemId: itemId,
+      concluido: !currentlyCompleted,
+    });
+  };
 
   const getInitials = (nome: string) => {
     return nome
@@ -197,24 +216,77 @@ export function CardActionsModal({
 
           {/* Checklist Progress */}
           {items.length > 0 && (
-            <div className="space-y-2 p-3 rounded-lg bg-muted/50">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Checklist da etapa</span>
-                <span className={cn(
-                  "font-semibold",
-                  isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
-                )}>
-                  {completedItems}/{totalItems}
-                </span>
+            <Collapsible open={checklistOpen} onOpenChange={setChecklistOpen}>
+              <div className="space-y-2 p-3 rounded-lg bg-muted/50">
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <ChevronDown className={cn(
+                        "h-4 w-4 transition-transform",
+                        !checklistOpen && "-rotate-90"
+                      )} />
+                      <span className="font-medium">Checklist da etapa</span>
+                    </div>
+                    <span className={cn(
+                      "font-semibold",
+                      isComplete ? "text-[hsl(145,60%,45%)]" : "text-muted-foreground"
+                    )}>
+                      {completedItems}/{totalItems}
+                    </span>
+                  </div>
+                </CollapsibleTrigger>
+                <Progress value={progressPercent} className="h-2" />
+                
+                <CollapsibleContent>
+                  <ScrollArea className="max-h-48 mt-3">
+                    <div className="space-y-2">
+                      {items.map((item) => {
+                        const isChecked = item.progress?.concluido ?? false;
+                        return (
+                          <div
+                            key={item.id}
+                            className={cn(
+                              "flex items-start gap-3 p-2 rounded-md transition-colors cursor-pointer hover:bg-background",
+                              isChecked && "opacity-70"
+                            )}
+                            onClick={() => handleToggleItem(item.id, isChecked)}
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={() => handleToggleItem(item.id, isChecked)}
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className={cn(
+                                "text-sm font-medium leading-tight",
+                                isChecked && "line-through text-muted-foreground"
+                              )}>
+                                {item.titulo}
+                                {item.obrigatorio && (
+                                  <span className="text-destructive ml-1">*</span>
+                                )}
+                              </p>
+                              {item.descricao && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {item.descricao}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </CollapsibleContent>
+                
+                {!isComplete && (
+                  <p className="text-xs text-warning flex items-center gap-1 mt-2">
+                    <Lock className="h-3 w-3" />
+                    Complete os itens obrigatórios (*) para avançar
+                  </p>
+                )}
               </div>
-              <Progress value={progressPercent} className="h-2" />
-              {!isComplete && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  Complete o checklist para avançar
-                </p>
-              )}
-            </div>
+            </Collapsible>
           )}
         </div>
 
