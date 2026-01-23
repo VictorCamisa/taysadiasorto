@@ -236,10 +236,9 @@ export function PipelineKanban({
 
           {/* Cards Container */}
           <ScrollArea className={cn(
-            "px-2 py-2",
             isAuxiliary ? "h-[calc(100vh-400px)]" : "h-[calc(100vh-320px)]"
           )}>
-            <div className="space-y-2 pb-8">
+            <div className="p-2 pr-3 space-y-2 pb-8">
               {columnAgendamentos.map((agendamento) => (
                 <div
                   key={agendamento.id}
