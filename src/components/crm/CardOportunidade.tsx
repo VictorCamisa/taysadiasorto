@@ -85,22 +85,29 @@ export function CardOportunidade({
 
   return (
     <Card
-      className="cursor-pointer hover:bg-muted/50 transition-all hover:shadow-md group"
+      className="cursor-pointer hover:shadow-lg transition-all group overflow-hidden border-0 shadow-md"
       onClick={onClick}
     >
-      <CardContent className="p-3 space-y-2">
-        {/* Header with Avatar and Temperature */}
+      {/* Treatment Header - Prominent Display */}
+      <div className="bg-primary px-3 py-2">
+        <p className="text-sm font-semibold text-primary-foreground truncate">
+          {agendamento.tratamento?.nome || "Sem procedimento"}
+        </p>
+      </div>
+
+      <CardContent className="p-3 space-y-2.5">
+        {/* Header with Avatar and Patient Info */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Avatar className="h-9 w-9 shrink-0">
-              <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <Avatar className="h-10 w-10 shrink-0 border-2 border-primary/20">
+              <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
                 {agendamento.paciente?.nome
                   ? getInitials(agendamento.paciente.nome)
                   : "?"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-semibold truncate">
                 {agendamento.paciente?.nome || "Paciente"}
               </p>
               {agendamento.paciente?.telefone && (
@@ -117,7 +124,7 @@ export function CardOportunidade({
               <Badge
                 variant="secondary"
                 className={cn(
-                  "text-xs shrink-0",
+                  "text-base shrink-0 h-8 w-8 rounded-full flex items-center justify-center p-0",
                   PRIORIDADE_COLORS[prioridade]
                 )}
               >
@@ -132,37 +139,30 @@ export function CardOportunidade({
 
         {/* Origin Badge */}
         {agendamento.origem && (
-          <Badge variant="outline" className="text-xs w-fit">
+          <Badge variant="outline" className="text-xs">
             {agendamento.origem.nome}
-          </Badge>
-        )}
-
-        {/* Treatment Badge */}
-        {agendamento.tratamento && (
-          <Badge className="text-xs w-fit bg-primary/10 text-primary hover:bg-primary/20">
-            {agendamento.tratamento.nome}
           </Badge>
         )}
 
         {/* Value - Highlighted */}
         {Number(agendamento.valor_previsto) > 0 && (
-          <div className="flex items-center gap-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+          <div className="flex items-center gap-1.5 text-base font-bold text-primary">
             <DollarSign className="h-4 w-4" />
             {formatCurrency(Number(agendamento.valor_previsto))}
           </div>
         )}
 
         {/* Meta info */}
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
           {agendamento.data_agendamento && (
             <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
+              <Calendar className="h-3.5 w-3.5" />
               {formatDate(agendamento.data_agendamento)}
             </span>
           )}
           {agendamento.duracao_minutos && (
             <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+              <Clock className="h-3.5 w-3.5" />
               {agendamento.duracao_minutos}min
             </span>
           )}
