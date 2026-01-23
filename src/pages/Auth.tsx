@@ -144,135 +144,151 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-6">
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader className="text-center pb-2 pt-8">
-            <div className="flex justify-center mb-4">
-              <div className="p-6 border border-border">
-                <img 
-                  src={logoTaysa} 
-                  alt="Dra. Taysa Dias" 
-                  className="h-32 w-auto"
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-12">
+      {/* Logo */}
+      <div className="mb-10">
+        <img 
+          src={logoTaysa} 
+          alt="Dra. Taysa Dias" 
+          className="h-24 w-auto"
+        />
+      </div>
+
+      {/* Form Card */}
+      <div className="w-full max-w-sm">
+        <Tabs defaultValue="login" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/30">
+            <TabsTrigger value="login" className="text-sm">
+              Entrar
+            </TabsTrigger>
+            <TabsTrigger value="register" className="text-sm">
+              Solicitar Acesso
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="login" className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  className="h-11"
+                  required
                 />
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login" className="gap-2">
-                  <LogIn className="h-4 w-4" />
-                  Entrar
-                </TabsTrigger>
-                <TabsTrigger value="register" className="gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Solicitar Acesso
-                </TabsTrigger>
-              </TabsList>
+              <div className="space-y-2">
+                <Label htmlFor="login-password" className="text-sm font-medium">
+                  Senha
+                </Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full h-11 mt-2" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  "Entrar"
+                )}
+              </Button>
+            </form>
+          </TabsContent>
 
-              <TabsContent value="login" className="space-y-4 pt-4">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Senha</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Entrando...
-                      </>
-                    ) : (
-                      "Entrar"
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="register" className="space-y-4 pt-4">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-nome">Nome Completo</Label>
-                    <Input
-                      id="register-nome"
-                      type="text"
-                      placeholder="Seu nome completo"
-                      value={registerNome}
-                      onChange={(e) => setRegisterNome(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
-                    <Input
-                      id="register-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={registerEmail}
-                      onChange={(e) => setRegisterEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-telefone">Telefone (opcional)</Label>
-                    <Input
-                      id="register-telefone"
-                      type="tel"
-                      placeholder="(00) 00000-0000"
-                      value={registerTelefone}
-                      onChange={(e) => setRegisterTelefone(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Senha</Label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      value={registerPassword}
-                      onChange={(e) => setRegisterPassword(e.target.value)}
-                      minLength={6}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      "Solicitar Acesso"
-                    )}
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Sua solicitação será analisada por um administrador antes de liberar o acesso.
-                  </p>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+          <TabsContent value="register" className="space-y-5">
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="register-nome" className="text-sm font-medium">
+                  Nome Completo
+                </Label>
+                <Input
+                  id="register-nome"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={registerNome}
+                  onChange={(e) => setRegisterNome(e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="register-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-telefone" className="text-sm font-medium">
+                  Telefone <span className="text-muted-foreground">(opcional)</span>
+                </Label>
+                <Input
+                  id="register-telefone"
+                  type="tel"
+                  placeholder="(00) 00000-0000"
+                  value={registerTelefone}
+                  onChange={(e) => setRegisterTelefone(e.target.value)}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="register-password" className="text-sm font-medium">
+                  Senha
+                </Label>
+                <Input
+                  id="register-password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  className="h-11"
+                  minLength={6}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full h-11 mt-2" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  "Solicitar Acesso"
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                Sua solicitação será analisada por um administrador.
+              </p>
+            </form>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* Footer */}
+      <p className="mt-12 text-xs text-muted-foreground">
+        Sistema de Gestão — Dra. Taysa Dias
+      </p>
     </div>
   );
 }
