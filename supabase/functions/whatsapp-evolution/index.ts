@@ -53,6 +53,19 @@ serve(async (req) => {
     const { action, ...params } = await req.json();
     console.log("Action:", action, "Params:", JSON.stringify(params));
 
+    // Helper para formatar telefone
+    const formatPhoneNumber = (phone: string) => {
+      if (!phone || phone.length < 10) return phone;
+      // Formato brasileiro: +55 (11) 99999-9999
+      const cleaned = phone.replace(/\D/g, "");
+      if (cleaned.length === 13) { // 55 + DDD + 9 dígitos
+        return `+${cleaned.slice(0, 2)} (${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
+      } else if (cleaned.length === 12) { // 55 + DDD + 8 dígitos
+        return `+${cleaned.slice(0, 2)} (${cleaned.slice(2, 4)}) ${cleaned.slice(4, 8)}-${cleaned.slice(8)}`;
+      }
+      return phone;
+    };
+
     const evolutionFetch = async (endpoint: string, method = "GET", body?: unknown) => {
       // Remove trailing slash from URL and leading slash from endpoint to avoid //
       const baseUrl = EVOLUTION_API_URL.replace(/\/+$/, "");
@@ -209,16 +222,44 @@ serve(async (req) => {
         
         for (const chat of chats) {
           const remoteJid = chat.id || chat.remoteJid;
-          const nome = chat.name || chat.pushName || remoteJid.split("@")[0];
+          
+          // Extrair telefone do remoteJid (formato: 5511999999999@s.whatsapp.net)
+          const telefoneRaw = remoteJid.replace("@s.whatsapp.net", "").replace("@g.us", "").replace(/\D/g, "");
+          
+          // Nome do contato - priorizar pushName que é o nome real do WhatsApp
+          const nome = chat.pushName || chat.name || chat.contact?.name || formatPhoneNumber(telefoneRaw);
+          
+          // Extrair texto da última mensagem (pode vir em diferentes formatos)
+          let ultimaMensagem = null;
+          if (chat.lastMessage) {
+            const msg = chat.lastMessage.message;
+            if (typeof msg === "string") {
+              ultimaMensagem = msg;
+            } else if (msg) {
+              ultimaMensagem = msg.conversation || 
+                              msg.extendedTextMessage?.text ||
+                              msg.imageMessage?.caption ||
+                              msg.videoMessage?.caption ||
+                              msg.documentMessage?.fileName ||
+                              (msg.audioMessage ? "🎵 Áudio" : null) ||
+                              (msg.stickerMessage ? "Sticker" : null) ||
+                              (msg.contactMessage ? "📇 Contato" : null) ||
+                              (msg.locationMessage ? "📍 Localização" : null) ||
+                              "[Mídia]";
+            }
+          }
           
           // Tentar vincular com paciente pelo telefone
-          const telefone = remoteJid.replace("@s.whatsapp.net", "").replace(/\D/g, "");
-          const { data: paciente } = await supabase
-            .from("pacientes")
-            .select("id")
-            .or(`telefone.ilike.%${telefone.slice(-9)}%,telefone.ilike.%${telefone}%`)
-            .limit(1)
-            .single();
+          let pacienteId = null;
+          if (telefoneRaw.length >= 9) {
+            const { data: paciente } = await supabase
+              .from("pacientes")
+              .select("id")
+              .or(`telefone.ilike.%${telefoneRaw.slice(-9)}%,telefone.ilike.%${telefoneRaw}%`)
+              .limit(1)
+              .single();
+            pacienteId = paciente?.id || null;
+          }
           
           await supabase
             .from("whatsapp_conversas")
@@ -226,13 +267,13 @@ serve(async (req) => {
               instance_id: instanceId,
               remote_jid: remoteJid,
               nome_contato: nome,
-              foto_url: chat.profilePicUrl || null,
-              paciente_id: paciente?.id || null,
-              ultima_mensagem: chat.lastMessage?.message || null,
+              foto_url: chat.profilePictureUrl || chat.profilePicUrl || null,
+              paciente_id: pacienteId,
+              ultima_mensagem: ultimaMensagem,
               ultima_mensagem_at: chat.lastMessage?.messageTimestamp 
                 ? new Date(chat.lastMessage.messageTimestamp * 1000).toISOString() 
-                : null,
-              nao_lidas: chat.unreadMessages || 0,
+                : (chat.updatedAt ? new Date(chat.updatedAt).toISOString() : null),
+              nao_lidas: chat.unreadCount || chat.unreadMessages || 0,
             }, {
               onConflict: "instance_id,remote_jid",
             });
