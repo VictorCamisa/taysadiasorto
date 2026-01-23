@@ -36,10 +36,22 @@ export function InstanceManager({ selectedInstance, onSelectInstance }: Instance
   };
 
   const handleShowQR = async (instance: WhatsAppInstance) => {
+    setQrData(null);
+    setShowQRDialog(true);
+    
     try {
       const data = await getQRCode(instance.instance_name);
-      setQrData(data);
-      setShowQRDialog(true);
+      console.log("QR Code response:", data);
+      
+      // Handle different response formats from Evolution API
+      if (data?.base64) {
+        setQrData({ base64: data.base64, code: data.code || data.pairingCode });
+      } else if (data?.qrcode?.base64) {
+        setQrData({ base64: data.qrcode.base64, code: data.qrcode.code || data.qrcode.pairingCode });
+      } else {
+        console.log("No QR data in response:", data);
+        setQrData({ code: "QR Code não disponível. Tente recriar a instância." });
+      }
 
       // Poll for connection status
       const interval = setInterval(async () => {
@@ -52,7 +64,8 @@ export function InstanceManager({ selectedInstance, onSelectInstance }: Instance
 
       setTimeout(() => clearInterval(interval), 120000); // Stop after 2 minutes
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error getting QR:", error);
+      setQrData({ code: "Erro ao obter QR Code. Tente novamente." });
     }
   };
 

@@ -54,7 +54,10 @@ serve(async (req) => {
     console.log("Action:", action, "Params:", JSON.stringify(params));
 
     const evolutionFetch = async (endpoint: string, method = "GET", body?: unknown) => {
-      const url = `${EVOLUTION_API_URL}${endpoint}`;
+      // Remove trailing slash from URL and leading slash from endpoint to avoid //
+      const baseUrl = EVOLUTION_API_URL.replace(/\/+$/, "");
+      const path = endpoint.replace(/^\/+/, "");
+      const url = `${baseUrl}/${path}`;
       console.log(`Evolution API: ${method} ${url}`);
       
       const options: RequestInit = {
